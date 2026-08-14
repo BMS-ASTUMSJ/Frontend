@@ -61,7 +61,7 @@ function RegisterPage() {
       setLoading(true);
 
       const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        "http://localhost:5000/api/applicant/register",
         formData,
       );
 
@@ -102,15 +102,15 @@ function RegisterPage() {
               Registered Successfully!
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-500">
-              Your application has been submitted successfully. You can now
-              continue to the login page.
+              Your application has been submitted successfully. Wish You a
+              Goodluck!
             </p>
 
             <button
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/")}
               className="mt-6 w-full rounded-xl bg-[#2B362E] px-5 py-3 text-sm font-semibold text-[#F5F0E8] transition hover:bg-[#6B8063]"
             >
-              Continue to Login
+              Pls click to return
             </button>
           </div>
         </div>
