@@ -12,7 +12,6 @@ function LandingPage() {
         <div className="mx-auto max-w-7xl text-center"></div>
 
         <div className="mx-auto max-w-7xl text-center">
-          -
           <span className="inline-block rounded-full  px-4 py-2 text-sm font-medium text-[#2B362E] bg-[#BFC4A3]">
             ASTU MSJ Bootcamp
           </span>
@@ -177,6 +176,73 @@ function LandingPage() {
           </div>
         </div>
       </section>
+
+      <section id="mentors" className="bg-[#F5F0E8] px-6 py-20">
+        {" "}
+        <div className="mx-auto max-w-6xl">
+          {" "}
+          <div className="text-center">
+            {" "}
+            <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-[#6B8063]">
+              {" "}
+              Mentors{" "}
+            </p>{" "}
+            <h2 className="text-3xl font-bold text-[#2B362E] md:text-4xl">
+              {" "}
+              Learn from Experienced Mentors{" "}
+            </h2>{" "}
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
+              {" "}
+              Our mentors support students through projects, contests, teamwork,
+              attendance, progress tracking, and career-focused learning.{" "}
+            </p>{" "}
+          </div>{" "}
+          <div className="mt-14 flex flex-wrap justify-center gap-8">
+            {" "}
+            <div className="group w-full max-w-sm rounded-3xl bg-[#EBE5DA] p-8 text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-lg">
+              {" "}
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[#2B362E] text-3xl font-bold text-[#F5F0E8]">
+                {" "}
+                I{" "}
+              </div>{" "}
+              <h3 className="mt-5 text-xl font-semibold text-[#2B362E]">
+                {" "}
+                Iman Ibrahim{" "}
+              </h3>{" "}
+              <p className="mt-1 text-sm font-medium text-[#6B8063]">
+                {" "}
+                Full-Stack Mentor{" "}
+              </p>{" "}
+              <p className="mt-4 text-sm leading-6 text-slate-600">
+                {" "}
+                Guides students in React, Node.js, MongoDB, and building
+                production-ready web applications.{" "}
+              </p>{" "}
+            </div>{" "}
+            <div className="group w-full max-w-sm rounded-3xl bg-[#EBE5DA] p-8 text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-lg">
+              {" "}
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[#2B362E] text-3xl font-bold text-[#F5F0E8]">
+                {" "}
+                M{" "}
+              </div>{" "}
+              <h3 className="mt-5 text-xl font-semibold text-[#2B362E]">
+                {" "}
+                Marya Tawfik{" "}
+              </h3>{" "}
+              <p className="mt-1 text-sm font-medium text-[#6B8063]">
+                {" "}
+                Competitive Programming Mentor{" "}
+              </p>{" "}
+              <p className="mt-4 text-sm leading-6 text-slate-600">
+                {" "}
+                Helps students improve algorithms, data structures,
+                problem-solving, and contest performance.{" "}
+              </p>{" "}
+            </div>{" "}
+          </div>{" "}
+        </div>{" "}
+      </section>
+
       <section id="faq" className=" px-6 py-20 bg-[#F5F0E8]">
         <h2 className="text-center text-3xl font-bold text-[#6B8063]">
           Frequently Asked Questions-FAQ
@@ -248,72 +314,6 @@ function LandingPage() {
             </div>
           ))}
         </div>
-      </section>
-
-      <section id="mentors" className="bg-[#F5F0E8] px-6 py-20">
-        {" "}
-        <div className="mx-auto max-w-6xl">
-          {" "}
-          <div className="text-center">
-            {" "}
-            <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-[#6B8063]">
-              {" "}
-              Mentors{" "}
-            </p>{" "}
-            <h2 className="text-3xl font-bold text-[#2B362E] md:text-4xl">
-              {" "}
-              Learn from Experienced Mentors{" "}
-            </h2>{" "}
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
-              {" "}
-              Our mentors support students through projects, contests, teamwork,
-              attendance, progress tracking, and career-focused learning.{" "}
-            </p>{" "}
-          </div>{" "}
-          <div className="mt-14 flex flex-wrap justify-center gap-8">
-            {" "}
-            <div className="group w-full max-w-sm rounded-3xl bg-[#EBE5DA] p-8 text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-lg">
-              {" "}
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[#2B362E] text-3xl font-bold text-[#F5F0E8]">
-                {" "}
-                I{" "}
-              </div>{" "}
-              <h3 className="mt-5 text-xl font-semibold text-[#2B362E]">
-                {" "}
-                Iman Ibrahim{" "}
-              </h3>{" "}
-              <p className="mt-1 text-sm font-medium text-[#6B8063]">
-                {" "}
-                Full-Stack Mentor{" "}
-              </p>{" "}
-              <p className="mt-4 text-sm leading-6 text-slate-600">
-                {" "}
-                Guides students in React, Node.js, MongoDB, and building
-                production-ready web applications.{" "}
-              </p>{" "}
-            </div>{" "}
-            <div className="group w-full max-w-sm rounded-3xl bg-[#EBE5DA] p-8 text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-lg">
-              {" "}
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[#2B362E] text-3xl font-bold text-[#F5F0E8]">
-                {" "}
-                M{" "}
-              </div>{" "}
-              <h3 className="mt-5 text-xl font-semibold text-[#2B362E]">
-                {" "}
-                Marya Tawfik{" "}
-              </h3>{" "}
-              <p className="mt-1 text-sm font-medium text-[#6B8063]">
-                {" "}
-                Competitive Programming Mentor{" "}
-              </p>{" "}
-              <p className="mt-4 text-sm leading-6 text-slate-600">
-                {" "}
-                Helps students improve algorithms, data structures,
-                problem-solving, and contest performance.{" "}
-              </p>{" "}
-            </div>{" "}
-          </div>{" "}
-        </div>{" "}
       </section>
 
       <section id="contact" className="px-6 py-20 bg-[#F5F0E8]">

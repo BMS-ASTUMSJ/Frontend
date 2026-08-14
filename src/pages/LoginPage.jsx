@@ -89,9 +89,9 @@ function LoginPage() {
               </label>
               <Link
                 to="/forgot-password"
-                className="text-xs font-semibold text-[#6B8063] hover:underline"
+                className="text-sm font-medium text-[#6B8063] hover:underline"
               >
-                Forgot password?
+                Forgot Password?
               </Link>
             </div>
 
@@ -106,7 +106,6 @@ function LoginPage() {
             />
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
@@ -115,14 +114,13 @@ function LoginPage() {
             {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
-        {/* Register Link */}
         <p className="mt-6 text-center text-sm font-medium text-[#2B362E]/80">
-          Don't have an account?{" "}
+          Wanna Continue?{"   "}
           <Link
             to="/register"
             className="font-bold text-[#2B362E] hover:underline"
           >
-            Register
+            Apply
           </Link>
         </p>
       </div>

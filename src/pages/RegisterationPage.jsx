@@ -5,6 +5,8 @@ import axios from "axios";
 function RegisterPage() {
   const navigate = useNavigate();
 
+  const [registered, setRegistered] = useState(false);
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -63,9 +65,9 @@ function RegisterPage() {
         formData,
       );
 
-      setMessage(response.data.message);
+      setRegistered(true);
 
-      // Clear form
+      setMessage(response.data.message);
       setFormData({
         fullName: "",
         email: "",
@@ -77,10 +79,6 @@ function RegisterPage() {
         about: "",
         agreedToRules: false,
       });
-
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
     } catch (err) {
       console.error("Registration error:", err);
 
@@ -94,19 +92,40 @@ function RegisterPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-[#F5F0E8] px-4 py-12">
+      {registered && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2B362E]/40 px-6">
+          <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-xl">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#DDE4D7]">
+              <span className="text-3xl font-bold text-[#2B362E]">✓</span>
+            </div>
+            <h2 className="mt-5 text-2xl font-bold text-[#2B362E]">
+              Registered Successfully!
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-slate-500">
+              Your application has been submitted successfully. You can now
+              continue to the login page.
+            </p>
+
+            <button
+              onClick={() => navigate("/login")}
+              className="mt-6 w-full rounded-xl bg-[#2B362E] px-5 py-3 text-sm font-semibold text-[#F5F0E8] transition hover:bg-[#6B8063]"
+            >
+              Continue to Login
+            </button>
+          </div>
+        </div>
+      )}
       <div className="w-full max-w-md space-y-6 rounded-2xl bg-[#EBE5DA] p-8 shadow-sm">
         <div className="text-center">
           <h2 className="text-lg text-[#2B362E]">
             Please fill in your details to get started
           </h2>
         </div>
-
-        {message && (
+        {message && !registered && (
           <div className="rounded-lg bg-green-100 px-4 py-3 text-sm text-green-700">
             {message}
           </div>
         )}
-
         {error && (
           <div className="rounded-lg bg-red-100 px-4 py-3 text-sm text-red-700">
             {error}
@@ -120,7 +139,6 @@ function RegisterPage() {
           >
             ← Back to Home
           </Link>
-
           <div>
             <label className="block text-sm font-medium text-[#2B362E]">
               Full Name
@@ -184,6 +202,7 @@ function RegisterPage() {
               </select>
             </div>
           </div>
+
           <div className="grid gap-5 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -249,7 +268,6 @@ function RegisterPage() {
               className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#1E293B]"
             />
           </div>
-
           <div className="flex items-start gap-3">
             <input
               type="checkbox"

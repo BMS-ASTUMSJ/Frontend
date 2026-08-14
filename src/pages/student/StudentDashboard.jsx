@@ -1,259 +1,244 @@
 import {
-  LayoutDashboard,
   CalendarCheck,
-  ClipboardList,
   FolderKanban,
+  CheckCircle2,
+  Clock,
   Megaphone,
-  MessageSquare,
-  User,
-  LogOut,
-  Bell,
+  ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 function StudentDashboard() {
+  const navigate = useNavigate();
+
   const stats = [
     {
       title: "Attendance",
-      value: "92%",
+      value: "94%",
+      description: "Your overall attendance",
       icon: CalendarCheck,
     },
     {
-      title: "Assignments",
-      value: "6",
-      icon: ClipboardList,
-    },
-    {
       title: "Projects",
-      value: "3",
+      value: "5",
+      description: "Projects completed",
       icon: FolderKanban,
     },
     {
-      title: "Feedback",
-      value: "4",
-      icon: MessageSquare,
+      title: "Current Status",
+      value: "Active",
+      description: "You are enrolled",
+      icon: CheckCircle2,
     },
   ];
-  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    navigate("/");
-  };
+  const activities = [
+    {
+      title: "Project submitted",
+      description: "Your React project was submitted successfully.",
+      time: "Today",
+      icon: FolderKanban,
+    },
+    {
+      title: "Attendance marked",
+      description: "You were marked present today.",
+      time: "Today",
+      icon: CalendarCheck,
+    },
+    {
+      title: "New announcement",
+      description: "The administration posted a new announcement.",
+      time: "Yesterday",
+      icon: Megaphone,
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#F5F0E8]">
-      <header className="fixed left-0 right-0 top-0 z-20 h-16 border-b border-[#2B362E]/10 bg-white">
-        <div className="flex h-full items-center justify-between px-6">
-          <h1 className="text-xl font-bold text-[#2B362E]">ASTU Bootcamp</h1>
+    <div className="min-h-screen bg-[#F5F0E8] p-6">
+      <div className="mb-8">
+        <div className="rounded-3xl bg-[#2B362E] p-7 text-[#F5F0E8] shadow-sm">
+          <p className="text-sm text-[#DDE4D7]">Student Dashboard</p>
 
-          <div className="flex items-center gap-4">
-            <button className="rounded-full p-2 hover:bg-[#EBE5DA]">
-              <Bell className="h-5 w-5 text-[#2B362E]" />
-            </button>
+          <h2 className="mt-2 text-3xl font-bold">Welcome back, Student 👋</h2>
 
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2B362E] font-semibold text-[#F5F0E8]">
-                S
-              </div>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#DDE4D7]">
+            Keep track of your attendance, projects, announcements, and progress
+            throughout the bootcamp.
+          </p>
+        </div>
+      </div>
 
-              <div className="hidden sm:block">
-                <p className="text-sm font-semibold text-[#2B362E]">Student</p>
+      <div className="grid gap-5 md:grid-cols-3">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
 
-                <p className="text-xs text-slate-500">Bootcamp Student</p>
+          return (
+            <div
+              key={stat.title}
+              className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-slate-500">{stat.title}</p>
+
+                  <p className="mt-2 text-3xl font-bold text-[#2B362E]">
+                    {stat.value}
+                  </p>
+
+                  <p className="mt-2 text-xs text-slate-400">
+                    {stat.description}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#EBE5DA] p-3">
+                  <Icon className="h-6 w-6 text-[#2B362E]" />
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </header>
+          );
+        })}
+      </div>
 
-      <aside className="fixed bottom-0 left-0 top-16 hidden w-64 border-r border-[#2B362E]/10 bg-white md:block">
-        <div className="flex h-full flex-col justify-between p-5">
-          <nav className="space-y-2">
-            <button className="flex w-full items-center gap-3 rounded-xl bg-[#EBE5DA] px-4 py-3 text-left font-medium text-[#2B362E]">
-              <LayoutDashboard className="h-5 w-5" />
-              Dashboard
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-[#2B362E]">
+                Recent Activity
+              </h3>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Your latest bootcamp activity.
+              </p>
+            </div>
+
+            <button className="flex items-center gap-1 text-sm font-medium text-[#6B8063] hover:underline">
+              View all
+              <ArrowRight className="h-4 w-4" />
             </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-slate-600 transition hover:bg-[#F5F0E8] hover:text-[#2B362E]">
-              <CalendarCheck className="h-5 w-5" />
-              My Attendance
-            </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-slate-600 transition hover:bg-[#F5F0E8] hover:text-[#2B362E]">
-              <ClipboardList className="h-5 w-5" />
-              Assignments
-            </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-slate-600 transition hover:bg-[#F5F0E8] hover:text-[#2B362E]">
-              <FolderKanban className="h-5 w-5" />
-              Projects
-            </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-slate-600 transition hover:bg-[#F5F0E8] hover:text-[#2B362E]">
-              <Megaphone className="h-5 w-5" />
-              Announcements
-            </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-slate-600 transition hover:bg-[#F5F0E8] hover:text-[#2B362E]">
-              <User className="h-5 w-5" />
-              Profile
-            </button>
-          </nav>
-
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-red-600 transition hover:bg-red-50"
-          >
-            <LogOut className="h-5 w-5" />
-            Logout
-          </button>
-        </div>
-      </aside>
-
-      <main className="pt-16 md:ml-64">
-        <div className="p-6">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-[#2B362E]">
-              Welcome back, Student 👋
-            </h2>
-
-            <p className="mt-2 text-slate-600">
-              Keep track of your bootcamp progress and upcoming work.
-            </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {stats.map((stat) => {
-              const Icon = stat.icon;
+          <div className="mt-6 space-y-3">
+            {activities.map((activity) => {
+              const Icon = activity.icon;
 
               return (
                 <div
-                  key={stat.title}
-                  className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5"
+                  key={activity.title}
+                  className="flex items-center gap-4 rounded-2xl border border-slate-100 p-4 transition hover:bg-[#F5F0E8]"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-slate-500">{stat.title}</p>
+                  <div className="rounded-xl bg-[#EBE5DA] p-3">
+                    <Icon className="h-5 w-5 text-[#2B362E]" />
+                  </div>
 
-                      <p className="mt-2 text-3xl font-bold text-[#2B362E]">
-                        {stat.value}
-                      </p>
-                    </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-[#2B362E]">
+                      {activity.title}
+                    </p>
 
-                    <div className="rounded-2xl bg-[#EBE5DA] p-3">
-                      <Icon className="h-6 w-6 text-[#2B362E]" />
-                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {activity.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1 text-xs text-slate-400">
+                    <Clock className="h-3.5 w-3.5" />
+                    {activity.time}
                   </div>
                 </div>
               );
             })}
           </div>
+        </div>
 
-          <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5">
-            <div className="flex items-center justify-between">
+        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5">
+          <h3 className="text-lg font-semibold text-[#2B362E]">
+            Quick Actions
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Quickly access important information.
+          </p>
+
+          <div className="mt-6 space-y-3">
+            <button
+              onClick={() => navigate("/student/announcements")}
+              className="flex w-full items-center gap-3 rounded-2xl bg-[#EBE5DA] p-4 text-left transition hover:bg-[#DDE4D7]"
+            >
+              <Megaphone className="h-5 w-5 text-[#2B362E]" />
+
               <div>
-                <h3 className="text-lg font-semibold text-[#2B362E]">
+                <p className="text-sm font-semibold text-[#2B362E]">
                   Announcements
-                </h3>
+                </p>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  Latest updates from the bootcamp
+                <p className="text-xs text-slate-500">View latest updates</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate("/student/attendance")}
+              className="flex w-full items-center gap-3 rounded-2xl bg-[#EBE5DA] p-4 text-left transition hover:bg-[#DDE4D7]"
+            >
+              <CalendarCheck className="h-5 w-5 text-[#2B362E]" />
+
+              <div>
+                <p className="text-sm font-semibold text-[#2B362E]">
+                  My Attendance
+                </p>
+
+                <p className="text-xs text-slate-500">
+                  Check attendance records
                 </p>
               </div>
+            </button>
 
-              <Megaphone className="h-5 w-5 text-[#6B8063]" />
-            </div>
+            <button
+              onClick={() => navigate("/student/projects")}
+              className="flex w-full items-center gap-3 rounded-2xl bg-[#EBE5DA] p-4 text-left transition hover:bg-[#DDE4D7]"
+            >
+              <FolderKanban className="h-5 w-5 text-[#2B362E]" />
 
-            <div className="mt-6 space-y-4">
-              <div className="rounded-2xl bg-[#F5F0E8] p-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-[#2B362E]">
-                    Project Demo Day
-                  </h4>
-
-                  <span className="rounded-full bg-[#EBE5DA] px-3 py-1 text-xs font-medium text-[#6B8063]">
-                    All
-                  </span>
-                </div>
-
-                <p className="mt-2 text-sm text-slate-600">
-                  Project demonstrations will be held this Friday at 2:00 PM.
+              <div>
+                <p className="text-sm font-semibold text-[#2B362E]">
+                  My Projects
                 </p>
+
+                <p className="text-xs text-slate-500">View your projects</p>
               </div>
-
-              <div className="rounded-2xl bg-[#F5F0E8] p-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-[#2B362E]">
-                    Assignment Reminder
-                  </h4>
-
-                  <span className="rounded-full bg-[#EBE5DA] px-3 py-1 text-xs font-medium text-[#6B8063]">
-                    Students
-                  </span>
-                </div>
-
-                <p className="mt-2 text-sm text-slate-600">
-                  Remember to submit your assignment before the deadline.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-[#2B362E]">
-                Upcoming Work
-              </h3>
-
-              <button className="text-sm font-medium text-[#6B8063] hover:underline">
-                View all
-              </button>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <div className="flex items-center justify-between rounded-2xl border border-slate-100 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-[#EBE5DA] p-3">
-                    <ClipboardList className="h-5 w-5 text-[#2B362E]" />
-                  </div>
-
-                  <div>
-                    <p className="font-medium text-[#2B362E]">
-                      React Assignment
-                    </p>
-
-                    <p className="text-sm text-slate-500">Due tomorrow</p>
-                  </div>
-                </div>
-
-                <span className="rounded-full bg-[#EBE5DA] px-3 py-1 text-xs font-medium text-[#6B8063]">
-                  Pending
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between rounded-2xl border border-slate-100 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-[#EBE5DA] p-3">
-                    <FolderKanban className="h-5 w-5 text-[#2B362E]" />
-                  </div>
-
-                  <div>
-                    <p className="font-medium text-[#2B362E]">MERN Project</p>
-
-                    <p className="text-sm text-slate-500">Due Friday</p>
-                  </div>
-                </div>
-
-                <span className="rounded-full bg-[#EBE5DA] px-3 py-1 text-xs font-medium text-[#6B8063]">
-                  In Progress
-                </span>
-              </div>
-            </div>
+            </button>
           </div>
         </div>
-      </main>
+      </div>
+
+      <div className="mt-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5">
+        <h3 className="text-lg font-semibold text-[#2B362E]">
+          Bootcamp Progress
+        </h3>
+
+        <p className="mt-1 text-sm text-slate-500">Keep up the good work!</p>
+
+        <div className="mt-6">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium text-[#2B362E]">Overall Progress</span>
+
+            <span className="font-semibold text-[#6B8063]">72%</span>
+          </div>
+
+          <div className="mt-3 h-3 overflow-hidden rounded-full bg-[#EBE5DA]">
+            <div
+              className="h-full rounded-full bg-[#6B8063]"
+              style={{ width: "72%" }}
+            />
+          </div>
+
+          <div className="mt-3 flex justify-between text-xs text-slate-400">
+            <span>5 projects completed</span>
+
+            <span>Keep going!</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

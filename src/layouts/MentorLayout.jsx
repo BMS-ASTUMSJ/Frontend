@@ -3,16 +3,14 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
-  UserCheck,
   CalendarCheck,
   FolderKanban,
   Megaphone,
-  Settings,
-  LogOut,
   Bell,
+  LogOut,
 } from "lucide-react";
 
-function AdminLayout() {
+function MentorLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,38 +24,28 @@ function AdminLayout() {
   const menuItems = [
     {
       name: "Dashboard",
-      path: "/admin",
+      path: "/mentor",
       icon: LayoutDashboard,
     },
     {
       name: "Students",
-      path: "/admin/students",
+      path: "/mentor/students",
       icon: Users,
     },
     {
-      name: "Mentors",
-      path: "/admin/mentors",
-      icon: UserCheck,
-    },
-    {
       name: "Attendance",
-      path: "/admin/attendance",
+      path: "/mentor/attendance",
       icon: CalendarCheck,
     },
     {
       name: "Projects",
-      path: "/admin/projects",
+      path: "/mentor/projects",
       icon: FolderKanban,
     },
     {
       name: "Announcements",
-      path: "/admin/announcements",
+      path: "/mentor/announcements",
       icon: Megaphone,
-    },
-    {
-      name: "Settings",
-      path: "/admin/settings",
-      icon: Settings,
     },
   ];
 
@@ -66,7 +54,7 @@ function AdminLayout() {
       <header className="fixed left-0 right-0 top-0 z-30 h-16 border-b border-[#2B362E]/10 bg-white">
         <div className="flex h-full items-center justify-between px-6">
           <button
-            onClick={() => navigate("/admin")}
+            onClick={() => navigate("/mentor")}
             className="text-xl font-bold text-[#2B362E]"
           >
             ASTU Bootcamp
@@ -78,14 +66,14 @@ function AdminLayout() {
             </button>
 
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2B362E] font-semibold text-[#F5F0E8]">
-                A
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#6B8063] font-semibold text-white">
+                M
               </div>
 
               <div className="hidden sm:block">
-                <p className="text-sm font-semibold text-[#2B362E]">Admin</p>
+                <p className="text-sm font-semibold text-[#2B362E]">Mentor</p>
 
-                <p className="text-xs text-slate-500">Administrator</p>
+                <p className="text-xs text-slate-500">Mentor</p>
               </div>
             </div>
           </div>
@@ -134,4 +122,4 @@ function AdminLayout() {
   );
 }
 
-export default AdminLayout;
+export default MentorLayout;

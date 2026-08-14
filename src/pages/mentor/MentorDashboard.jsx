@@ -1,239 +1,243 @@
 import {
-  LayoutDashboard,
   Users,
   CalendarCheck,
   FolderKanban,
-  Megaphone,
-  MessageSquare,
-  User,
-  LogOut,
-  Bell,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  ArrowRight,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 function MentorDashboard() {
   const stats = [
     {
       title: "My Students",
       value: "32",
+      description: "Students assigned to you",
       icon: Users,
     },
     {
-      title: "Attendance Today",
-      value: "29",
+      title: "Attendance",
+      value: "94%",
+      description: "Average attendance",
       icon: CalendarCheck,
     },
     {
-      title: "Projects to Review",
-      value: "7",
+      title: "Projects",
+      value: "8",
+      description: "Projects being monitored",
+      icon: FolderKanban,
+    },
+  ];
+
+  const activities = [
+    {
+      title: "Attendance updated",
+      description: "React track attendance was updated.",
+      time: "10 min ago",
+      icon: CheckCircle2,
+    },
+    {
+      title: "Project submitted",
+      description: "Team Alpha submitted their project.",
+      time: "1 hour ago",
       icon: FolderKanban,
     },
     {
-      title: "Messages",
-      value: "5",
-      icon: MessageSquare,
+      title: "Student needs attention",
+      description: "A student has missed two sessions.",
+      time: "3 hours ago",
+      icon: AlertCircle,
     },
   ];
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    navigate("/");
-  };
 
   return (
-    <div className="min-h-screen bg-[#F5F0E8]">
-      <header className="fixed left-0 right-0 top-0 z-20 h-16 border-b border-[#2B362E]/10 bg-white">
-        <div className="flex h-full items-center justify-between px-6">
-          <h1 className="text-xl font-bold text-[#2B362E]">ASTU Bootcamp</h1>
+    <div className="min-h-screen bg-[#F5F0E8] p-6">
+      <div className="mb-8">
+        <div className="rounded-3xl bg-[#2B362E] p-7 text-[#F5F0E8] shadow-sm">
+          <p className="text-sm text-[#DDE4D7]">Mentor Dashboard</p>
 
-          <div className="flex items-center gap-4">
-            <button className="rounded-full p-2 hover:bg-[#EBE5DA]">
-              <Bell className="h-5 w-5 text-[#2B362E]" />
-            </button>
+          <h2 className="mt-2 text-3xl font-bold">Welcome back, Mentor 👋</h2>
 
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2B362E] font-semibold text-[#F5F0E8]">
-                M
-              </div>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#DDE4D7]">
+            Keep track of your students, monitor attendance, review projects,
+            and stay updated with important bootcamp activities.
+          </p>
+        </div>
+      </div>
 
-              <div className="hidden sm:block">
-                <p className="text-sm font-semibold text-[#2B362E]">Mentor</p>
+      <div className="grid gap-5 md:grid-cols-3">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
 
-                <p className="text-xs text-slate-500">Mentor</p>
+          return (
+            <div
+              key={stat.title}
+              className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-slate-500">{stat.title}</p>
+
+                  <p className="mt-2 text-3xl font-bold text-[#2B362E]">
+                    {stat.value}
+                  </p>
+
+                  <p className="mt-2 text-xs text-slate-400">
+                    {stat.description}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#EBE5DA] p-3">
+                  <Icon className="h-6 w-6 text-[#2B362E]" />
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </header>
+          );
+        })}
+      </div>
 
-      <aside className="fixed bottom-0 left-0 top-16 hidden w-64 border-r border-[#2B362E]/10 bg-white md:block">
-        <div className="flex h-full flex-col justify-between p-5">
-          <nav className="space-y-2">
-            <button className="flex w-full items-center gap-3 rounded-xl bg-[#EBE5DA] px-4 py-3 text-left font-medium text-[#2B362E]">
-              <LayoutDashboard className="h-5 w-5" />
-              Dashboard
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-[#2B362E]">
+                Recent Activity
+              </h3>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Latest activity from your students.
+              </p>
+            </div>
+
+            <button className="flex items-center gap-1 text-sm font-medium text-[#6B8063] hover:underline">
+              View all
+              <ArrowRight className="h-4 w-4" />
             </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-slate-600 transition hover:bg-[#F5F0E8] hover:text-[#2B362E]">
-              <Users className="h-5 w-5" />
-              My Students
-            </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-slate-600 transition hover:bg-[#F5F0E8] hover:text-[#2B362E]">
-              <CalendarCheck className="h-5 w-5" />
-              Attendance
-            </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-slate-600 transition hover:bg-[#F5F0E8] hover:text-[#2B362E]">
-              <FolderKanban className="h-5 w-5" />
-              Projects
-            </button>
-
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-slate-600 transition hover:bg-[#F5F0E8] hover:text-[#2B362E]">
-              <User className="h-5 w-5" />
-              Profile
-            </button>
-          </nav>
-
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-red-600 transition hover:bg-red-50"
-          >
-            <LogOut className="h-5 w-5" />
-            Logout
-          </button>
-        </div>
-      </aside>
-
-      <main className="pt-16 md:ml-64">
-        <div className="p-6">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-[#2B362E]">
-              Welcome back, Mentor 👋
-            </h2>
-
-            <p className="mt-2 text-slate-600">
-              Here's what's happening with your students today.
-            </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {stats.map((stat) => {
-              const Icon = stat.icon;
+          <div className="mt-6 space-y-3">
+            {activities.map((activity) => {
+              const Icon = activity.icon;
 
               return (
                 <div
-                  key={stat.title}
-                  className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5"
+                  key={activity.title}
+                  className="flex items-center gap-4 rounded-2xl border border-slate-100 p-4 transition hover:bg-[#F5F0E8]"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-slate-500">{stat.title}</p>
+                  <div className="rounded-xl bg-[#EBE5DA] p-3">
+                    <Icon className="h-5 w-5 text-[#2B362E]" />
+                  </div>
 
-                      <p className="mt-2 text-3xl font-bold text-[#2B362E]">
-                        {stat.value}
-                      </p>
-                    </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-[#2B362E]">
+                      {activity.title}
+                    </p>
 
-                    <div className="rounded-2xl bg-[#EBE5DA] p-3">
-                      <Icon className="h-6 w-6 text-[#2B362E]" />
-                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {activity.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1 text-xs text-slate-400">
+                    <Clock className="h-3.5 w-3.5" />
+                    {activity.time}
                   </div>
                 </div>
               );
             })}
           </div>
+        </div>
 
-          <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5">
-            <div className="flex items-center justify-between">
+        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5">
+          <h3 className="text-lg font-semibold text-[#2B362E]">
+            Quick Actions
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-500">Common mentor tasks.</p>
+
+          <div className="mt-6 space-y-3">
+            <button className="flex w-full items-center gap-3 rounded-2xl bg-[#EBE5DA] p-4 text-left transition hover:bg-[#DDE4D7]">
+              <Users className="h-5 w-5 text-[#2B362E]" />
+
               <div>
-                <h3 className="text-lg font-semibold text-[#2B362E]">
-                  Announcements
-                </h3>
+                <p className="text-sm font-semibold text-[#2B362E]">
+                  View Students
+                </p>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  Updates for mentors
+                <p className="text-xs text-slate-500">
+                  Check your assigned students
                 </p>
               </div>
+            </button>
 
-              <Megaphone className="h-5 w-5 text-[#6B8063]" />
-            </div>
+            <button className="flex w-full items-center gap-3 rounded-2xl bg-[#EBE5DA] p-4 text-left transition hover:bg-[#DDE4D7]">
+              <CalendarCheck className="h-5 w-5 text-[#2B362E]" />
 
-            <div className="mt-6 space-y-4">
-              <div className="rounded-2xl bg-[#F5F0E8] p-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-[#2B362E]">
-                    Project Review
-                  </h4>
+              <div>
+                <p className="text-sm font-semibold text-[#2B362E]">
+                  Mark Attendance
+                </p>
 
-                  <span className="rounded-full bg-[#EBE5DA] px-3 py-1 text-xs font-medium text-[#6B8063]">
-                    Mentor
-                  </span>
-                </div>
-
-                <p className="mt-2 text-sm text-slate-600">
-                  Please complete the assigned project reviews before Friday.
+                <p className="text-xs text-slate-500">
+                  Update today's attendance
                 </p>
               </div>
+            </button>
 
-              <div className="rounded-2xl bg-[#F5F0E8] p-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-[#2B362E]">
-                    Mentor Meeting
-                  </h4>
+            <button className="flex w-full items-center gap-3 rounded-2xl bg-[#EBE5DA] p-4 text-left transition hover:bg-[#DDE4D7]">
+              <FolderKanban className="h-5 w-5 text-[#2B362E]" />
 
-                  <span className="rounded-full bg-[#EBE5DA] px-3 py-1 text-xs font-medium text-[#6B8063]">
-                    Mentor
-                  </span>
-                </div>
+              <div>
+                <p className="text-sm font-semibold text-[#2B362E]">
+                  Review Projects
+                </p>
 
-                <p className="mt-2 text-sm text-slate-600">
-                  Mentor coordination meeting tomorrow at 10:00 AM.
+                <p className="text-xs text-slate-500">
+                  Check student submissions
                 </p>
               </div>
-            </div>
-          </div>
-          <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-[#2B362E]">
-                My Students
-              </h3>
-
-              <button className="text-sm font-medium text-[#6B8063] hover:underline">
-                View all
-              </button>
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {["Sara K.", "Abel M.", "Nathan T.", "Mahi R."].map((student) => (
-                <div
-                  key={student}
-                  className="flex items-center justify-between rounded-2xl border border-slate-100 p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EBE5DA] font-semibold text-[#2B362E]">
-                      {student.charAt(0)}
-                    </div>
-
-                    <div>
-                      <p className="font-medium text-[#2B362E]">{student}</p>
-
-                      <p className="text-sm text-slate-500">MERN Track</p>
-                    </div>
-                  </div>
-
-                  <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">
-                    View
-                  </button>
-                </div>
-              ))}
-            </div>
+            </button>
           </div>
         </div>
-      </main>
+      </div>
+      <div className="mt-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#2B362E]/5">
+        <div>
+          <h3 className="text-lg font-semibold text-[#2B362E]">
+            Today's Overview
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-500">
+            A quick look at your students' current progress.
+          </p>
+        </div>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl bg-[#F5F0E8] p-5">
+            <p className="text-sm text-slate-500">Present Today</p>
+
+            <p className="mt-2 text-2xl font-bold text-[#2B362E]">29</p>
+
+            <p className="mt-1 text-xs text-[#6B8063]">out of 32 students</p>
+          </div>
+
+          <div className="rounded-2xl bg-[#F5F0E8] p-5">
+            <p className="text-sm text-slate-500">Projects Submitted</p>
+
+            <p className="mt-2 text-2xl font-bold text-[#2B362E]">6</p>
+
+            <p className="mt-1 text-xs text-[#6B8063]">this week</p>
+          </div>
+
+          <div className="rounded-2xl bg-[#F5F0E8] p-5">
+            <p className="text-sm text-slate-500">Students Needing Attention</p>
+
+            <p className="mt-2 text-2xl font-bold text-[#2B362E]">3</p>
+
+            <p className="mt-1 text-xs text-slate-500">Check their progress</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

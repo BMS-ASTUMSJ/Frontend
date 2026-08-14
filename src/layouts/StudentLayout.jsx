@@ -2,17 +2,14 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 
 import {
   LayoutDashboard,
-  Users,
-  UserCheck,
   CalendarCheck,
   FolderKanban,
   Megaphone,
-  Settings,
-  LogOut,
   Bell,
+  LogOut,
 } from "lucide-react";
 
-function AdminLayout() {
+function StudentLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,38 +23,23 @@ function AdminLayout() {
   const menuItems = [
     {
       name: "Dashboard",
-      path: "/admin",
+      path: "/student",
       icon: LayoutDashboard,
     },
     {
-      name: "Students",
-      path: "/admin/students",
-      icon: Users,
-    },
-    {
-      name: "Mentors",
-      path: "/admin/mentors",
-      icon: UserCheck,
-    },
-    {
       name: "Attendance",
-      path: "/admin/attendance",
+      path: "/student/attendance",
       icon: CalendarCheck,
     },
     {
       name: "Projects",
-      path: "/admin/projects",
+      path: "/student/projects",
       icon: FolderKanban,
     },
     {
       name: "Announcements",
-      path: "/admin/announcements",
+      path: "/student/announcements",
       icon: Megaphone,
-    },
-    {
-      name: "Settings",
-      path: "/admin/settings",
-      icon: Settings,
     },
   ];
 
@@ -66,7 +48,7 @@ function AdminLayout() {
       <header className="fixed left-0 right-0 top-0 z-30 h-16 border-b border-[#2B362E]/10 bg-white">
         <div className="flex h-full items-center justify-between px-6">
           <button
-            onClick={() => navigate("/admin")}
+            onClick={() => navigate("/student")}
             className="text-xl font-bold text-[#2B362E]"
           >
             ASTU Bootcamp
@@ -78,20 +60,19 @@ function AdminLayout() {
             </button>
 
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2B362E] font-semibold text-[#F5F0E8]">
-                A
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#8C9A7A] font-semibold text-white">
+                S
               </div>
 
               <div className="hidden sm:block">
-                <p className="text-sm font-semibold text-[#2B362E]">Admin</p>
+                <p className="text-sm font-semibold text-[#2B362E]">Student</p>
 
-                <p className="text-xs text-slate-500">Administrator</p>
+                <p className="text-xs text-slate-500">Student</p>
               </div>
             </div>
           </div>
         </div>
       </header>
-
       <aside className="fixed bottom-0 left-0 top-16 z-20 w-64 border-r border-[#2B362E]/10 bg-white">
         <div className="flex h-full flex-col justify-between p-5">
           <nav className="space-y-2">
@@ -127,6 +108,7 @@ function AdminLayout() {
           </button>
         </div>
       </aside>
+
       <main className="ml-64 pt-16">
         <Outlet />
       </main>
@@ -134,4 +116,4 @@ function AdminLayout() {
   );
 }
 
-export default AdminLayout;
+export default StudentLayout;

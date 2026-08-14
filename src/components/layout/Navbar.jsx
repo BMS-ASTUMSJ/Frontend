@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import logo from "../../assets/ASTUMSJ-Pp.jpg";
 function Navbar() {
   return (
-    <nav className="w-full border-b border-slate-200 bg-white">
+    <nav className="fixed left-0 right-0 top-0 z-50 w-full border-b border-slate-200 bg-white">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-3 group">
           <div className="h-12 w-12 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm transition group-hover:shadow-md">
