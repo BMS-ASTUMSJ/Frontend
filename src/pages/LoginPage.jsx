@@ -17,7 +17,6 @@ function LoginPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 🔗 CONNECTED TO BACKEND
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -29,15 +28,12 @@ function LoginPage() {
         formData,
       );
 
-      // Save token
       localStorage.setItem("token", res.data.token);
 
-      // Save user info (optional)
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
       console.log("Login successful:", res.data);
 
-      // Redirect after login
       navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "Invalid email or password");
@@ -49,7 +45,6 @@ function LoginPage() {
   return (
     <main className="flex min-h-[85vh] items-center justify-center bg-[#F5F0E8] px-4 py-12">
       <div className="w-full max-w-md rounded-2xl border border-[#2B362E]/10 bg-[#BFC4A3]/30 p-8 shadow-lg backdrop-blur-sm">
-        {/* Header */}
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-[#2B362E]">
             Welcome Back
@@ -59,16 +54,19 @@ function LoginPage() {
           </p>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="mt-4 rounded-xl bg-red-100 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          {/* Email */}
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-6"
+          >
+            ← Back to Home
+          </Link>
           <div>
             <label className="block text-sm font-semibold text-[#2B362E]">
               Email Address
@@ -84,7 +82,6 @@ function LoginPage() {
             />
           </div>
 
-          {/* Password */}
           <div>
             <div className="flex items-center justify-between">
               <label className="block text-sm font-semibold text-[#2B362E]">
