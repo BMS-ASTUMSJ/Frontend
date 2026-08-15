@@ -17,6 +17,8 @@ import MentorLayout from "./layouts/MentorLayout";
 import StudentLayout from "./layouts/StudentLayout";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+
 import MentorDashboard from "./pages/mentor/MentorDashboard";
 import StudentDashboard from "./pages/student/StudentDashboard";
 
@@ -52,6 +54,13 @@ function AppContent() {
             <Route path="announcements" element={<AdminAnnouncements />} />
           </Route>
         </Route>
+
+
+
+        <Route
+  path="/admin/users"
+  element={<UserManagement />}
+/>
 
         <Route element={<ProtectedRoute allowedRole="mentor" />}>
           <Route path="/mentor" element={<MentorLayout />}>
