@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../utils/api";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 function LoginPage() {
@@ -44,14 +44,11 @@ function LoginPage() {
     try {
       setLoading(true);
 
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        formData,
-      );
+      const response = await api.post("/auth/login", formData);
 
-      const { token, user } = response.data;
+      const { accessToken, user } = response.data;
 
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
 
       if (user.role === "admin") {
@@ -199,7 +196,9 @@ function LoginPage() {
 
               <button
                 type="button"
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-[#B3CFE5] bg-white py-3.5 text-sm font-semibold text-[#0A1931] transition hover:bg-[#F6FAFD]"
+                disabled
+                title="Google login coming soon"
+                className="flex w-full items-center justify-center gap-3 rounded-xl border border-[#B3CFE5] bg-white py-3.5 text-sm font-semibold text-[#0A1931] opacity-60 transition"
               >
                 <span className="text-lg font-bold">G</span>
                 Continue with Google

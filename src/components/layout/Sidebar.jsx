@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import api from "../../utils/api";
 import {
   LayoutDashboard,
   Users,
@@ -49,13 +50,24 @@ function Sidebar({ role }) {
       path: `/${role}/profile`,
       icon: UserCircle,
     },
+    {
+      name: "User-Management",
+      path: `/${role}/users`,
+      icon: UserCircle,
+    },
   ];
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
 
-    navigate("/login");
+      navigate("/");
+    }
   };
 
   return (

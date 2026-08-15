@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../utils/api";
 import { Mail, Lock, KeyRound } from "lucide-react";
 
 function ForgotPassword() {
@@ -31,10 +31,7 @@ function ForgotPassword() {
     try {
       setLoading(true);
 
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/forgot-password",
-        { email },
-      );
+      const response = await api.post("/auth/forgot-password", { email });
 
       setMessage(
         response.data.message ||
@@ -92,9 +89,7 @@ function ForgotPassword() {
     try {
       setLoading(true);
 
-      await axios.post(`http://localhost:5000/api/auth/reset-password/${otp}`, {
-        newPassword,
-      });
+      await api.post("/auth/reset-password", { email, otp, newPassword });
 
       setMessage("Your password has been reset successfully.");
 
