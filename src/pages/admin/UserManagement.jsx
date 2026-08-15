@@ -18,7 +18,7 @@ import {
 function UserManagement() {
   const [activeTab, setActiveTab] = useState("applicants");
 
-  // Applicant status filter
+
   const [applicantStatus, setApplicantStatus] = useState("all");
 
   const [showMentorModal, setShowMentorModal] = useState(false);
@@ -32,10 +32,7 @@ function UserManagement() {
     password: "",
   });
 
-  // =========================================================
-  // APPLICANTS
-  // =========================================================
-
+  
   const [applicants, setApplicants] = useState([
     {
       id: 1,
@@ -67,10 +64,6 @@ function UserManagement() {
     },
   ]);
 
-  // =========================================================
-  // MENTORS
-  // =========================================================
-
   const [mentors, setMentors] = useState([
     {
       id: 1,
@@ -85,10 +78,6 @@ function UserManagement() {
       students: [3],
     },
   ]);
-
-  // =========================================================
-  // STUDENTS
-  // =========================================================
 
   const [students] = useState([
     {
@@ -123,9 +112,7 @@ function UserManagement() {
     },
   ]);
 
-  // =========================================================
-  // BLACKLIST
-  // =========================================================
+  
 
   const [blacklist, setBlacklist] = useState([
     {
@@ -144,9 +131,7 @@ function UserManagement() {
     },
   ]);
 
-  // =========================================================
-  // APPLICANT FILTER
-  // =========================================================
+  
 
   const filteredApplicants = useMemo(() => {
     if (applicantStatus === "all") {
@@ -158,9 +143,7 @@ function UserManagement() {
     );
   }, [applicants, applicantStatus]);
 
-  // =========================================================
-  // UPDATE APPLICANT STATUS
-  // =========================================================
+ 
 
   const updateApplicantStatus = (id, status) => {
     setApplicants((previous) =>
@@ -185,9 +168,7 @@ function UserManagement() {
     */
   };
 
-  // =========================================================
-  // BLACKLIST USER
-  // =========================================================
+  
 
   const addToBlacklist = (user, role = "Student") => {
     const alreadyBlacklisted = blacklist.some(
@@ -212,9 +193,7 @@ function UserManagement() {
     ]);
   };
 
-  // =========================================================
-  // REMOVE FROM BLACKLIST
-  // =========================================================
+  
 
   const removeFromBlacklist = (id) => {
     setBlacklist((previous) =>
@@ -222,9 +201,7 @@ function UserManagement() {
     );
   };
 
-  // =========================================================
-  // MENTOR FORM
-  // =========================================================
+  
 
   const handleMentorChange = (e) => {
     const { name, value } = e.target;
@@ -235,9 +212,7 @@ function UserManagement() {
     }));
   };
 
-  // =========================================================
-  // ADD MENTOR
-  // =========================================================
+  
 
   const handleAddMentor = (e) => {
     e.preventDefault();
@@ -270,23 +245,10 @@ function UserManagement() {
 
     setShowMentorModal(false);
 
-    /*
-      Later:
-
-      POST /api/users
-
-      {
-        name,
-        email,
-        password,
-        role: "mentor"
-      }
-    */
+    
   };
 
-  // =========================================================
-  // STUDENT ASSIGNMENT
-  // =========================================================
+ 
 
   const getAssignedStudentIds = () => {
     const ids = [];
@@ -359,9 +321,7 @@ function UserManagement() {
     );
   };
 
-  // =========================================================
-  // COUNTS
-  // =========================================================
+ 
 
   const pendingCount = applicants.filter(
     (item) => item.status === "pending"
@@ -375,16 +335,11 @@ function UserManagement() {
     (item) => item.status === "rejected"
   ).length;
 
-  // =========================================================
-  // UI
-  // =========================================================
-
+  
   return (
     <div className="min-h-screen bg-[#F6FAFD] p-4 sm:p-6 lg:p-8">
 
-      {/* =====================================================
-          PAGE HEADER
-      ====================================================== */}
+     
 
       <div className="mb-8">
 
@@ -418,15 +373,13 @@ function UserManagement() {
 
       </div>
 
-      {/* =====================================================
-          MAIN TABS
-      ====================================================== */}
+      
 
       <div className="mb-6 overflow-x-auto">
 
         <div className="flex min-w-max gap-2 rounded-2xl border border-[#B3CFE5] bg-white p-2">
 
-          {/* Applicants */}
+        
 
           <button
             onClick={() => {
@@ -442,7 +395,7 @@ function UserManagement() {
             Applicants
           </button>
 
-          {/* Mentors */}
+          
 
           <button
             onClick={() => setActiveTab("mentors")}
@@ -455,7 +408,7 @@ function UserManagement() {
             Mentors
           </button>
 
-          {/* Student Groups */}
+          
 
           <button
             onClick={() => setActiveTab("groups")}
@@ -468,7 +421,7 @@ function UserManagement() {
             Student Groups
           </button>
 
-          {/* BLACKLIST */}
+          
 
           <button
             onClick={() => setActiveTab("blacklist")}
@@ -486,20 +439,16 @@ function UserManagement() {
 
       </div>
 
-      {/* =====================================================
-          APPLICANTS
-      ====================================================== */}
+     
 
       {activeTab === "applicants" && (
         <div>
 
-          {/* =================================================
-              STATUS CARDS
-          ================================================== */}
+          
 
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
 
-            {/* PENDING */}
+           
 
             <button
               onClick={() => setApplicantStatus("pending")}
@@ -536,7 +485,6 @@ function UserManagement() {
 
             </button>
 
-            {/* ACCEPTED */}
 
             <button
               onClick={() => setApplicantStatus("accepted")}
@@ -573,7 +521,7 @@ function UserManagement() {
 
             </button>
 
-            {/* REJECTED */}
+           
 
             <button
               onClick={() => setApplicantStatus("rejected")}
@@ -612,10 +560,6 @@ function UserManagement() {
 
           </div>
 
-          {/* =================================================
-              ALL APPLICANTS BUTTON
-          ================================================== */}
-
           <div className="mb-5 flex items-center justify-between">
 
             <div>
@@ -646,9 +590,7 @@ function UserManagement() {
 
           </div>
 
-          {/* =================================================
-              APPLICANT TABLE
-          ================================================== */}
+         
 
           <div className="overflow-hidden rounded-2xl border border-[#B3CFE5] bg-white shadow-sm">
 
@@ -730,7 +672,7 @@ function UserManagement() {
                         className="border-t border-[#E5EEF5] transition hover:bg-[#F6FAFD]"
                       >
 
-                        {/* NAME */}
+                       
 
                         <td className="px-6 py-5">
 
@@ -748,25 +690,25 @@ function UserManagement() {
 
                         </td>
 
-                        {/* EMAIL */}
+                        
 
                         <td className="px-6 py-5 text-sm text-[#7A7F85]">
                           {applicant.email}
                         </td>
 
-                        {/* DATE */}
+                        
 
                         <td className="px-6 py-5 text-sm text-[#7A7F85]">
                           {applicant.appliedAt}
                         </td>
 
-                        {/* STATUS */}
+                       
 
                         <td className="px-6 py-5">
                           <StatusBadge status={applicant.status} />
                         </td>
 
-                        {/* ACTION */}
+                        
 
                         <td className="px-6 py-5">
 
@@ -836,10 +778,7 @@ function UserManagement() {
         </div>
       )}
 
-      {/* =====================================================
-          MENTORS
-      ====================================================== */}
-
+      
       {activeTab === "mentors" && (
         <div>
 
@@ -934,8 +873,7 @@ function UserManagement() {
 
                   </div>
 
-                  {/* BLACKLIST MENTOR */}
-
+                  
                   <button
                     onClick={() =>
                       addToBlacklist(mentor, "Mentor")
@@ -955,9 +893,7 @@ function UserManagement() {
         </div>
       )}
 
-      {/* =====================================================
-          STUDENT GROUPS
-      ====================================================== */}
+      
 
       {activeTab === "groups" && (
         <div>
@@ -1082,9 +1018,6 @@ function UserManagement() {
         </div>
       )}
 
-      {/* =====================================================
-          BLACKLIST
-      ====================================================== */}
 
       {activeTab === "blacklist" && (
         <div>
@@ -1266,10 +1199,7 @@ function UserManagement() {
         </div>
       )}
 
-      {/* =====================================================
-          ADD MENTOR MODAL
-      ====================================================== */}
-
+      
       {showMentorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0A1931]/50 p-4">
 
@@ -1387,9 +1317,7 @@ function UserManagement() {
         </div>
       )}
 
-      {/* =====================================================
-          ASSIGN STUDENTS MODAL
-      ====================================================== */}
+     
 
       {showAssignModal && selectedMentor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0A1931]/50 p-4">
@@ -1527,9 +1455,7 @@ function UserManagement() {
   );
 }
 
-// =========================================================
-// STATUS BADGE
-// =========================================================
+
 
 function StatusBadge({ status }) {
   if (status === "pending") {
@@ -1558,9 +1484,7 @@ function StatusBadge({ status }) {
   );
 }
 
-// =========================================================
-// CAPITALIZE
-// =========================================================
+
 
 function capitalize(value) {
   if (!value) return "";
