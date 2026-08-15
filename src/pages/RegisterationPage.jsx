@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../utils/api";
+import { CheckCircle2 } from "lucide-react";
 
 function RegisterationPage() {
   const navigate = useNavigate();
@@ -17,7 +18,8 @@ function RegisterationPage() {
     agreedToRules: false,
   });
 
-  const [message, setMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +37,6 @@ function RegisterationPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setMessage("");
     setError("");
 
     if (!formData.fullName.trim()) {
@@ -81,15 +82,14 @@ function RegisterationPage() {
     try {
       setLoading(true);
 
-      const response = await axios.post(
-        "http://localhost:5000/api/applicant/register",
-        formData,
-      );
+      const response = await api.post("/applicant/register", formData);
 
-      setMessage(
+      setSuccessMessage(
         response.data.message ||
           "Registration successful. Your application has been submitted.",
       );
+
+      setShowSuccessModal(true);
 
       setFormData({
         fullName: "",
@@ -102,10 +102,6 @@ function RegisterationPage() {
         about: "",
         agreedToRules: false,
       });
-
-      setTimeout(() => {
-        navigate("/login");
-      }, 2500);
     } catch (err) {
       console.error("Registration error:", err);
 
@@ -115,6 +111,11 @@ function RegisterationPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
+    navigate("/home");
   };
 
   return (
@@ -140,13 +141,6 @@ function RegisterationPage() {
             Fill in your information below to submit your application.
           </p>
         </div>
-
-        {message && (
-          <div className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-4 text-sm text-green-700">
-            <p className="font-semibold">Registration Successful!</p>
-            <p className="mt-1">{message}</p>
-          </div>
-        )}
 
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-600">
@@ -320,6 +314,31 @@ function RegisterationPage() {
           </Link>
         </p>
       </div>
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
+              <CheckCircle2 className="h-9 w-9 text-green-600" />
+            </div>
+
+            <h2 className="text-xl font-bold text-[#0A1931]">
+              Registration Successful!
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-[#7A7F85]">
+              {successMessage}
+            </p>
+
+            <button
+              onClick={handleCloseModal}
+              className="mt-7 w-full rounded-xl bg-[#1A3D63] py-3 text-sm font-semibold text-white transition hover:bg-[#4A7FA7]"
+            >
+              Go to Home
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

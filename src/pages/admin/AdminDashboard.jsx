@@ -150,7 +150,7 @@ function AdminDashboard() {
               </Link>
 
               <Link
-                to="/admin/students"
+                to="/admin/users"
                 className="flex items-center justify-between rounded-xl bg-[#B3CFE5]/40 px-5 py-4 text-[#0A1931] transition hover:bg-[#B3CFE5]"
               >
                 <div>

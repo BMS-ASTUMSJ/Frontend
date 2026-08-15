@@ -28,6 +28,10 @@ function LoginPage() {
     setError("");
   };
 
+  // ======================================================
+  // EMAIL / PASSWORD LOGIN
+  // ======================================================
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -51,10 +55,20 @@ function LoginPage() {
         formData,
       );
 
-      const { token, user } = response.data;
+      // Backend returns accessToken, not token
+      const { accessToken, user } = response.data;
 
-      localStorage.setItem("token", token);
+      if (!accessToken) {
+        setError("Login succeeded but no access token was received.");
+        return;
+      }
+
+      localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
+
+      console.log("Login successful");
+      console.log("Access token saved:", !!accessToken);
+      console.log("User:", user);
 
       if (user.role === "admin") {
         navigate("/admin");
@@ -81,6 +95,11 @@ function LoginPage() {
       setLoading(false);
     }
   };
+
+  // ======================================================
+  // GOOGLE LOGIN
+  // ======================================================
+
   const handleGoogleLogin = async (credentialResponse) => {
     try {
       setLoading(true);
@@ -93,10 +112,22 @@ function LoginPage() {
         },
       );
 
-      const { token, user } = response.data;
+      // Backend should return accessToken
+      const { accessToken, user } = response.data;
 
-      localStorage.setItem("token", token);
+      if (!accessToken) {
+        setError(
+          "Google login succeeded but no access token was received.",
+        );
+        return;
+      }
+
+      localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
+
+      console.log("Google login successful");
+      console.log("Access token saved:", !!accessToken);
+      console.log("User:", user);
 
       if (user.role === "admin") {
         navigate("/admin");
@@ -126,9 +157,15 @@ function LoginPage() {
       setLoading(false);
     }
   };
+
   return (
     <div className="min-h-screen bg-[#F6FAFD] px-4 py-12">
       <div className="mx-auto grid min-h-[calc(100vh-6rem)] max-w-5xl overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-[#B3CFE5] md:grid-cols-2">
+
+        {/* ======================================================
+            LEFT SIDE
+        ====================================================== */}
+
         <div className="hidden bg-[#0A1931] p-10 text-white md:flex md:flex-col md:justify-between">
           <div>
             <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-xl bg-[#4A7FA7]">
@@ -155,11 +192,20 @@ function LoginPage() {
             </p>
           </div>
 
-          <p className="text-sm text-[#7A7F85]">Learn. Build. Compete. Grow.</p>
+          <p className="text-sm text-[#7A7F85]">
+            Learn. Build. Compete. Grow.
+          </p>
         </div>
+
+        {/* ======================================================
+            RIGHT SIDE
+        ====================================================== */}
 
         <div className="flex items-center p-7 sm:p-10">
           <div className="w-full">
+
+            {/* Header */}
+
             <div className="mb-8">
               <Link
                 to="/"
@@ -168,12 +214,16 @@ function LoginPage() {
                 ← Back to Home
               </Link>
 
-              <h2 className="text-3xl font-bold text-[#0A1931]">Login</h2>
+              <h2 className="text-3xl font-bold text-[#0A1931]">
+                Login
+              </h2>
 
               <p className="mt-2 text-sm text-[#7A7F85]">
                 Enter your account details to continue.
               </p>
             </div>
+
+            {/* Error */}
 
             {error && (
               <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
@@ -181,10 +231,18 @@ function LoginPage() {
               </div>
             )}
 
+            {/* ======================================================
+                LOGIN FORM
+            ====================================================== */}
+
             <form onSubmit={handleSubmit} className="space-y-5">
+
+              {/* Email */}
+
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Email Address <span className="text-red-500">*</span>
+                  Email Address{" "}
+                  <span className="text-red-500">*</span>
                 </label>
 
                 <div className="relative">
@@ -201,10 +259,13 @@ function LoginPage() {
                 </div>
               </div>
 
+              {/* Password */}
+
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-sm font-semibold text-[#0A1931]">
-                    Password <span className="text-red-500">*</span>
+                    Password{" "}
+                    <span className="text-red-500">*</span>
                   </label>
 
                   <Link
@@ -229,7 +290,9 @@ function LoginPage() {
 
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() =>
+                      setShowPassword(!showPassword)
+                    }
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A7F85] hover:text-[#1A3D63]"
                   >
                     {showPassword ? (
@@ -241,6 +304,8 @@ function LoginPage() {
                 </div>
               </div>
 
+              {/* Login Button */}
+
               <button
                 type="submit"
                 disabled={loading}
@@ -249,16 +314,22 @@ function LoginPage() {
                 {loading ? "Signing in..." : "Login"}
               </button>
 
+              {/* Google Login */}
+
               <div className="flex w-full justify-center">
                 <GoogleLogin
                   onSuccess={handleGoogleLogin}
                   onError={() => {
-                    setError("Google login failed. Please try again.");
+                    setError(
+                      "Google login failed. Please try again.",
+                    );
                   }}
                   useOneTap={false}
                 />
               </div>
             </form>
+
+            {/* Register */}
 
             <p className="mt-7 text-center text-sm text-[#7A7F85]">
               Don't have an account?{" "}

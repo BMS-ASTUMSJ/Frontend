@@ -22,11 +22,14 @@ import UserManagement from "./pages/admin/UserManagement";
 import MentorDashboard from "./pages/mentor/MentorDashboard";
 import StudentDashboard from "./pages/student/StudentDashboard";
 
+
+
 import AdminAnnouncements from "./pages/admin/Announcements";
 import MentorAnnouncements from "./pages/mentor/Announcements";
 import StudentAnnouncements from "./pages/student/Announcements";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
+import AdminProfile from "./pages/admin/AdminProfile.jsx";
 
 function AppContent() {
   const location = useLocation();
@@ -52,6 +55,10 @@ function AppContent() {
             <Route index element={<AdminDashboard />} />
 
             <Route path="announcements" element={<AdminAnnouncements />} />
+
+            <Route path="profile" element={<AdminProfile />} />
+
+            <Route path="users" element={<UserManagement />} />
           </Route>
         </Route>
 

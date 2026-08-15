@@ -415,7 +415,7 @@ function LandingPage() {
       >
         <div className="mx-auto max-w-5xl text-center">
           <h2 className="text-4xl font-black text-white md:text-5xl">
-            Ready to start?
+            Have a Question?
           </h2>
 
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#B3CFE5]">
@@ -424,10 +424,10 @@ function LandingPage() {
           </p>
 
           <Link
-            to="/register"
+            to="/contactus"
             className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#4A7FA7] px-7 py-3 font-bold text-white transition hover:bg-[#1A3D63]"
           >
-            Apply Now
+            Contact Us
             <ArrowRight className="h-5 w-5" />
           </Link>
         </div>
