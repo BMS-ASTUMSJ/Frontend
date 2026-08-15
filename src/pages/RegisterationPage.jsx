@@ -2,10 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-function RegisterPage() {
+function RegisterationPage() {
   const navigate = useNavigate();
-
-  const [registered, setRegistered] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -30,6 +28,8 @@ function RegisterPage() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -38,22 +38,43 @@ function RegisterPage() {
     setMessage("");
     setError("");
 
-    if (
-      !formData.fullName ||
-      !formData.email ||
-      !formData.phone ||
-      !formData.gender ||
-      !formData.year ||
-      !formData.department ||
-      !formData.experienceLevel ||
-      !formData.about
-    ) {
-      setError("Please fill in all required fields.");
+    if (!formData.fullName.trim()) {
+      setError("Please enter your full name.");
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setError("Please enter your email address.");
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      setError("Please enter your phone number.");
+      return;
+    }
+
+    if (!formData.gender) {
+      setError("Please select your gender.");
+      return;
+    }
+
+    if (!formData.year) {
+      setError("Please select your year.");
+      return;
+    }
+
+    if (!formData.department.trim()) {
+      setError("Please enter your department.");
+      return;
+    }
+
+    if (!formData.about.trim()) {
+      setError("Please tell us something about yourself.");
       return;
     }
 
     if (!formData.agreedToRules) {
-      setError("You must agree to the bootcamp rules.");
+      setError("Please agree to the bootcamp rules.");
       return;
     }
 
@@ -65,9 +86,11 @@ function RegisterPage() {
         formData,
       );
 
-      setRegistered(true);
+      setMessage(
+        response.data.message ||
+          "Registration successful. Your application has been submitted.",
+      );
 
-      setMessage(response.data.message);
       setFormData({
         fullName: "",
         email: "",
@@ -79,6 +102,10 @@ function RegisterPage() {
         about: "",
         agreedToRules: false,
       });
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 2500);
     } catch (err) {
       console.error("Registration error:", err);
 
@@ -91,57 +118,46 @@ function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-[#F5F0E8] px-4 py-12">
-      {registered && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2B362E]/40 px-6">
-          <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-xl">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#DDE4D7]">
-              <span className="text-3xl font-bold text-[#2B362E]">✓</span>
-            </div>
-            <h2 className="mt-5 text-2xl font-bold text-[#2B362E]">
-              Registered Successfully!
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-slate-500">
-              Your application has been submitted successfully. Wish You a
-              Goodluck!
-            </p>
+    <div className="min-h-screen bg-[#B3CFE5] px-4 py-10">
+      <div className="mx-auto max-w-3xl rounded-3xl bg-white p-6 shadow-lg ring-1 ring-[#B3CFE5] sm:p-10">
+        <div className="mb-8">
+          <Link
+            to="/"
+            className="mb-6 inline-flex text-sm font-medium text-[#7A7F85] hover:text-[#1A3D63]"
+          >
+            ← Back to Home
+          </Link>
 
-            <button
-              onClick={() => navigate("/")}
-              className="mt-6 w-full rounded-xl bg-[#2B362E] px-5 py-3 text-sm font-semibold text-[#F5F0E8] transition hover:bg-[#6B8063]"
-            >
-              Pls click to return
-            </button>
-          </div>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#4A7FA7]">
+            ASTU MSJ Bootcamp
+          </p>
+
+          <h1 className="mt-2 text-3xl font-bold text-[#0A1931]">
+            Apply for the Bootcamp
+          </h1>
+
+          <p className="mt-2 text-sm leading-6 text-[#7A7F85]">
+            Fill in your information below to submit your application.
+          </p>
         </div>
-      )}
-      <div className="w-full max-w-md space-y-6 rounded-2xl bg-[#EBE5DA] p-8 shadow-sm">
-        <div className="text-center">
-          <h2 className="text-lg text-[#2B362E]">
-            Please fill in your details to get started
-          </h2>
-        </div>
-        {message && !registered && (
-          <div className="rounded-lg bg-green-100 px-4 py-3 text-sm text-green-700">
-            {message}
+
+        {message && (
+          <div className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-4 text-sm text-green-700">
+            <p className="font-semibold">Registration Successful!</p>
+            <p className="mt-1">{message}</p>
           </div>
         )}
+
         {error && (
-          <div className="rounded-lg bg-red-100 px-4 py-3 text-sm text-red-700">
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-600">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Link
-            to="/"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
-          >
-            ← Back to Home
-          </Link>
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-[#2B362E]">
-              Full Name
+            <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+              Full Name <span className="text-red-500">*</span>
             </label>
 
             <input
@@ -149,14 +165,14 @@ function RegisterPage() {
               name="fullName"
               value={formData.fullName}
               onChange={handleChange}
-              placeholder="John Doe"
-              className="mt-1 w-full rounded-xl border border-[#2B362E]/20 bg-white px-4 py-2.5 text-sm outline-none focus:border-[#2B362E]"
+              placeholder="Enter your full name"
+              className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#2B362E]">
-              Email Address
+            <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+              Email Address <span className="text-red-500">*</span>
             </label>
 
             <input
@@ -165,14 +181,14 @@ function RegisterPage() {
               value={formData.email}
               onChange={handleChange}
               placeholder="student@example.com"
-              className="mt-1 w-full rounded-xl border border-[#2B362E]/20 bg-white px-4 py-2.5 text-sm outline-none focus:border-[#2B362E]"
+              className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
             />
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Phone Number
+              <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+                Phone Number <span className="text-red-500">*</span>
               </label>
 
               <input
@@ -181,22 +197,22 @@ function RegisterPage() {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="09xxxxxxxx"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#1E293B]"
+                className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Gender
+              <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+                Gender <span className="text-red-500">*</span>
               </label>
 
               <select
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#1E293B]"
+                className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
               >
-                <option value="">Select</option>
+                <option value="">Select gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
               </select>
@@ -205,15 +221,15 @@ function RegisterPage() {
 
           <div className="grid gap-5 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Year
+              <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+                Year <span className="text-red-500">*</span>
               </label>
 
               <select
                 name="year"
                 value={formData.year}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#1E293B]"
+                className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
               >
                 <option value="">Select year</option>
                 <option value="1st Year">1st Year</option>
@@ -223,8 +239,8 @@ function RegisterPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Department
+              <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+                Department <span className="text-red-500">*</span>
               </label>
 
               <input
@@ -233,21 +249,21 @@ function RegisterPage() {
                 value={formData.department}
                 onChange={handleChange}
                 placeholder="e.g. Software Engineering"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#1E293B]"
+                className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
               />
             </div>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">
-              Experience Level
+            <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+              Experience Level <span className="text-red-500">*</span>
             </label>
 
             <select
               name="experienceLevel"
               value={formData.experienceLevel}
               onChange={handleChange}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#1E293B]"
+              className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
             >
               <option value="Beginner">Beginner</option>
               <option value="Intermediate">Intermediate</option>
@@ -255,44 +271,57 @@ function RegisterPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">
-              About You
+            <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+              About You <span className="text-red-500">*</span>
             </label>
 
             <textarea
               name="about"
               value={formData.about}
               onChange={handleChange}
-              rows={4}
-              placeholder="Tell us about yourself, your goals, and why you want to join the bootcamp..."
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#1E293B]"
+              rows={5}
+              placeholder="Tell us about yourself, your goals, and why you want to join..."
+              className="w-full resize-none rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
             />
           </div>
-          <div className="flex items-start gap-3">
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] p-4">
             <input
               type="checkbox"
               name="agreedToRules"
               checked={formData.agreedToRules}
               onChange={handleChange}
-              className="mt-1 h-4 w-4"
+              className="mt-1 h-4 w-4 accent-[#1A3D63]"
             />
 
-            <p className="text-sm text-slate-600">
+            <span className="text-sm leading-6 text-[#7A7F85]">
               I agree to follow the bootcamp rules, attend sessions regularly,
               and participate actively in contests, projects, and teamwork.
-            </p>
-          </div>
+              <span className="ml-1 text-red-500">*</span>
+            </span>
+          </label>
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-[#2B362E] py-3 text-sm font-semibold text-[#F5F0E8] transition hover:bg-[#6B8063] disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-xl bg-[#1A3D63] py-3.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Registering..." : "Apply"}
+            {loading ? "Submitting Application..." : "Submit Application"}
           </button>
         </form>
+
+        <p className="mt-7 text-center text-sm text-[#7A7F85]">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="font-semibold text-[#1A3D63] hover:text-[#4A7FA7]"
+          >
+            Login
+          </Link>
+        </p>
       </div>
     </div>
   );
 }
 
-export default RegisterPage;
+export default RegisterationPage;

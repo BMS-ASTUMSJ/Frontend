@@ -6,11 +6,11 @@ import {
 } from "react-router-dom";
 
 import Navbar from "./components/layout/Navbar";
-import ForgotPassword from "./pages/ForgotPassword";
 
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterationPage from "./pages/RegisterationPage";
+import ForgotPassword from "./pages/ForgotPassword";
 
 import AdminLayout from "./layouts/AdminLayout";
 import MentorLayout from "./layouts/MentorLayout";
@@ -24,9 +24,13 @@ import AdminAnnouncements from "./pages/admin/Announcements";
 import MentorAnnouncements from "./pages/mentor/Announcements";
 import StudentAnnouncements from "./pages/student/Announcements";
 
+import ProtectedRoute from "./routes/ProtectedRoute";
+
 function AppContent() {
   const location = useLocation();
-  const showNavbar = location.pathname === "/";
+
+  const showNavbar =
+    location.pathname === "/" || location.pathname.startsWith("/#");
 
   return (
     <>
@@ -38,23 +42,31 @@ function AppContent() {
         <Route path="/login" element={<LoginPage />} />
 
         <Route path="/register" element={<RegisterationPage />} />
+
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
+        <Route element={<ProtectedRoute allowedRole="admin" />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
 
-          <Route path="announcements" element={<AdminAnnouncements />} />
+            <Route path="announcements" element={<AdminAnnouncements />} />
+          </Route>
         </Route>
 
-        <Route path="/mentor" element={<MentorLayout />}>
-          <Route index element={<MentorDashboard />} />
+        <Route element={<ProtectedRoute allowedRole="mentor" />}>
+          <Route path="/mentor" element={<MentorLayout />}>
+            <Route index element={<MentorDashboard />} />
 
-          <Route path="announcements" element={<MentorAnnouncements />} />
+            <Route path="announcements" element={<MentorAnnouncements />} />
+          </Route>
         </Route>
 
-        <Route path="/student" element={<StudentLayout />}>
-          <Route index element={<StudentDashboard />} />
-          <Route path="announcements" element={<StudentAnnouncements />} />
+        <Route element={<ProtectedRoute allowedRole="student" />}>
+          <Route path="/student" element={<StudentLayout />}>
+            <Route index element={<StudentDashboard />} />
+
+            <Route path="announcements" element={<StudentAnnouncements />} />
+          </Route>
         </Route>
       </Routes>
     </>
