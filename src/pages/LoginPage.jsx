@@ -28,9 +28,6 @@ function LoginPage() {
     setError("");
   };
 
-  // ======================================================
-  // EMAIL / PASSWORD LOGIN
-  // ======================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,10 +93,7 @@ function LoginPage() {
     }
   };
 
-  // ======================================================
-  // GOOGLE LOGIN
-  // ======================================================
-
+  
   const handleGoogleLogin = async (credentialResponse) => {
     try {
       setLoading(true);
@@ -112,7 +106,7 @@ function LoginPage() {
         },
       );
 
-      // Backend should return accessToken
+      
       const { accessToken, user } = response.data;
 
       if (!accessToken) {

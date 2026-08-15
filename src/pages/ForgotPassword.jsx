@@ -17,10 +17,6 @@ function ForgotPassword() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ==========================================
-  // STEP 1: SEND OTP
-  // ==========================================
-
   const handleSendOTP = async (e) => {
     e.preventDefault();
 
@@ -35,13 +31,9 @@ function ForgotPassword() {
     try {
       setLoading(true);
 
-
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/forgot-password",
-        {
-          email: email.trim(),
-        },
-      );
+      const response = await api.post("/auth/forgot-password", {
+        email: email.trim(),
+      });
 
       setMessage(
         response.data.message ||
@@ -61,10 +53,6 @@ function ForgotPassword() {
     }
   };
 
-  // ==========================================
-  // STEP 2: VERIFY OTP
-  // ==========================================
-
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
 
@@ -79,18 +67,12 @@ function ForgotPassword() {
     try {
       setLoading(true);
 
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/verify-reset-otp",
-        {
-          email: email.trim(),
-          otp: otp,
-        },
-      );
+      const response = await api.post("/auth/verify-reset-otp", {
+        email: email.trim(),
+        otp,
+      });
 
-      setMessage(
-        response.data.message ||
-          "OTP verified successfully.",
-      );
+      setMessage(response.data.message || "OTP verified successfully.");
 
       setStep(3);
     } catch (err) {
@@ -104,10 +86,6 @@ function ForgotPassword() {
       setLoading(false);
     }
   };
-
-  // ==========================================
-  // STEP 3: RESET PASSWORD
-  // ==========================================
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
@@ -133,19 +111,13 @@ function ForgotPassword() {
     try {
       setLoading(true);
 
-
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/reset-password",
-        {
-          email: email.trim(),
-          newPassword,
-        },
-      );
-
+      const response = await api.post("/auth/reset-password", {
+        email: email.trim(),
+        newPassword,
+      });
 
       setMessage(
-        response.data.message ||
-          "Your password has been reset successfully.",
+        response.data.message || "Your password has been reset successfully.",
       );
 
       setTimeout(() => {
@@ -167,7 +139,6 @@ function ForgotPassword() {
     <div className="min-h-screen bg-[#F6FAFD] px-4 py-12">
       <div className="mx-auto flex min-h-150 max-w-lg items-center justify-center">
         <div className="w-full rounded-3xl bg-white p-7 shadow-lg ring-1 ring-[#B3CFE5] sm:p-10">
-
           {/* Back to Login */}
 
           <Link
@@ -180,46 +151,30 @@ function ForgotPassword() {
           {/* Header */}
 
           <div className="mb-8">
-
             <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-[#B3CFE5]">
+              {step === 1 && <Mail className="h-6 w-6 text-[#1A3D63]" />}
 
-              {step === 1 && (
-                <Mail className="h-6 w-6 text-[#1A3D63]" />
-              )}
+              {step === 2 && <KeyRound className="h-6 w-6 text-[#1A3D63]" />}
 
-              {step === 2 && (
-                <KeyRound className="h-6 w-6 text-[#1A3D63]" />
-              )}
-
-              {step === 3 && (
-                <Lock className="h-6 w-6 text-[#1A3D63]" />
-              )}
-
+              {step === 3 && <Lock className="h-6 w-6 text-[#1A3D63]" />}
             </div>
 
             <h1 className="text-3xl font-bold text-[#0A1931]">
-
               {step === 1 && "Forgot Password?"}
 
               {step === 2 && "Verify Your Email"}
 
               {step === 3 && "Create New Password"}
-
             </h1>
 
             <p className="mt-2 leading-6 text-[#7A7F85]">
-
               {step === 1 &&
                 "Enter your email and we'll send you a verification code."}
 
-              {step === 2 &&
-                `Enter the 6-digit code sent to ${email}.`}
+              {step === 2 && `Enter the 6-digit code sent to ${email}.`}
 
-              {step === 3 &&
-                "Create a new password for your account."}
-
+              {step === 3 && "Create a new password for your account."}
             </p>
-
           </div>
 
           {/* Success message */}
@@ -243,20 +198,13 @@ function ForgotPassword() {
           ====================================== */}
 
           {step === 1 && (
-            <form
-              onSubmit={handleSendOTP}
-              className="space-y-5"
-            >
-
+            <form onSubmit={handleSendOTP} className="space-y-5">
               <div>
-
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Email Address{" "}
-                  <span className="text-red-500">*</span>
+                  Email Address <span className="text-red-500">*</span>
                 </label>
 
                 <div className="relative">
-
                   <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7A7F85]" />
 
                   <input
@@ -266,9 +214,7 @@ function ForgotPassword() {
                     placeholder="you@example.com"
                     className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] py-3 pl-12 pr-4 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
                   />
-
                 </div>
-
               </div>
 
               <button
@@ -278,7 +224,6 @@ function ForgotPassword() {
               >
                 {loading ? "Sending..." : "Send Verification Code"}
               </button>
-
             </form>
           )}
 
@@ -287,16 +232,10 @@ function ForgotPassword() {
           ====================================== */}
 
           {step === 2 && (
-            <form
-              onSubmit={handleVerifyOTP}
-              className="space-y-5"
-            >
-
+            <form onSubmit={handleVerifyOTP} className="space-y-5">
               <div>
-
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  6-Digit OTP{" "}
-                  <span className="text-red-500">*</span>
+                  6-Digit OTP <span className="text-red-500">*</span>
                 </label>
 
                 <input
@@ -304,15 +243,10 @@ function ForgotPassword() {
                   inputMode="numeric"
                   maxLength={6}
                   value={otp}
-                  onChange={(e) =>
-                    setOtp(
-                      e.target.value.replace(/\D/g, ""),
-                    )
-                  }
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
                   className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-4 text-center text-2xl font-bold tracking-[0.5em] text-[#0A1931] outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
                 />
-
               </div>
 
               <button
@@ -335,7 +269,6 @@ function ForgotPassword() {
               >
                 Change email
               </button>
-
             </form>
           )}
 
@@ -344,47 +277,33 @@ function ForgotPassword() {
           ====================================== */}
 
           {step === 3 && (
-            <form
-              onSubmit={handleResetPassword}
-              className="space-y-5"
-            >
-
+            <form onSubmit={handleResetPassword} className="space-y-5">
               <div>
-
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  New Password{" "}
-                  <span className="text-red-500">*</span>
+                  New Password <span className="text-red-500">*</span>
                 </label>
 
                 <input
                   type="password"
                   value={newPassword}
-                  onChange={(e) =>
-                    setNewPassword(e.target.value)
-                  }
+                  onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="At least 8 characters"
                   className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
                 />
-
               </div>
 
               <div>
-
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Confirm Password{" "}
-                  <span className="text-red-500">*</span>
+                  Confirm Password <span className="text-red-500">*</span>
                 </label>
 
                 <input
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) =>
-                    setConfirmPassword(e.target.value)
-                  }
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Enter password again"
                   className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
                 />
-
               </div>
 
               <button
@@ -394,10 +313,8 @@ function ForgotPassword() {
               >
                 {loading ? "Resetting..." : "Reset Password"}
               </button>
-
             </form>
           )}
-
         </div>
       </div>
     </div>
