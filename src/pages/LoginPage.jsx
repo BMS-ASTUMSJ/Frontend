@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import logo from "./../assets/ASTUMSJ-Pp.jpg";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -79,14 +81,64 @@ function LoginPage() {
       setLoading(false);
     }
   };
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      setError("");
 
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/google",
+        {
+          credential: credentialResponse.credential,
+        },
+      );
+
+      const { token, user } = response.data;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      if (user.role === "admin") {
+        navigate("/admin");
+      } else if (user.role === "mentor") {
+        navigate("/mentor");
+      } else if (user.role === "student") {
+        navigate("/student");
+      } else {
+        setError("Your account role is not recognized.");
+      }
+    } catch (err) {
+      console.error("Google login error:", err);
+
+      const message = err.response?.data?.message;
+
+      if (err.response?.status === 404) {
+        setError(
+          message ||
+            "No account exists with this Google email. Please contact the administrator.",
+        );
+      } else if (err.response?.status === 403) {
+        setError(message || "Your account is suspended.");
+      } else {
+        setError(message || "Google login failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-[#F6FAFD] px-4 py-12">
       <div className="mx-auto grid min-h-[calc(100vh-6rem)] max-w-5xl overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-[#B3CFE5] md:grid-cols-2">
         <div className="hidden bg-[#0A1931] p-10 text-white md:flex md:flex-col md:justify-between">
           <div>
             <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-xl bg-[#4A7FA7]">
-              <span className="text-lg font-bold">A</span>
+              <span className="text-lg font-bold">
+                <img
+                  src={logo}
+                  alt="ASTU MSJ Logo"
+                  className="h-full w-full object-cover"
+                />
+              </span>
             </div>
 
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#B3CFE5]">
@@ -197,13 +249,15 @@ function LoginPage() {
                 {loading ? "Signing in..." : "Login"}
               </button>
 
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-[#B3CFE5] bg-white py-3.5 text-sm font-semibold text-[#0A1931] transition hover:bg-[#F6FAFD]"
-              >
-                <span className="text-lg font-bold">G</span>
-                Continue with Google
-              </button>
+              <div className="flex w-full justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleLogin}
+                  onError={() => {
+                    setError("Google login failed. Please try again.");
+                  }}
+                  useOneTap={false}
+                />
+              </div>
             </form>
 
             <p className="mt-7 text-center text-sm text-[#7A7F85]">
