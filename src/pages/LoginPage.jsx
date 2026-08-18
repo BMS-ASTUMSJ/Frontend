@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import api from "../utils/api";
+import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./../assets/ASTUMSJ-Pp.jpg";
 
 function LoginPage() {
@@ -19,40 +19,44 @@ function LoginPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-
     setError("");
   };
 
+  const handleLoginSuccess = (accessToken, user) => {
+    localStorage.setItem("token", accessToken);
+    localStorage.setItem("user", JSON.stringify(user));
+
+    console.log("Login successful. Role:", user.role);
+
+    if (user.role === "admin") {
+      navigate("/admin");
+    } else if (user.role === "mentor") {
+      navigate("/mentor");
+    } else if (user.role === "student") {
+      navigate("/student");
+    } else {
+      setError("Your account role is not recognized.");
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError("");
 
-    if (!formData.email) {
-      setError("Please enter your email address.");
-      return;
-    }
-
-    if (!formData.password) {
-      setError("Please enter your password.");
+    if (!formData.email || !formData.password) {
+      setError("Please enter both email and password.");
       return;
     }
 
     try {
       setLoading(true);
 
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        formData,
-      );
+      const response = await api.post("/auth/login", formData);
 
-      // Backend returns accessToken, not token
       const { accessToken, user } = response.data;
 
       if (!accessToken) {
@@ -60,31 +64,15 @@ function LoginPage() {
         return;
       }
 
-      localStorage.setItem("token", accessToken);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      console.log("Login successful");
-      console.log("Access token saved:", !!accessToken);
-      console.log("User:", user);
-
-      if (user.role === "admin") {
-        navigate("/admin");
-      } else if (user.role === "mentor") {
-        navigate("/mentor");
-      } else if (user.role === "student") {
-        navigate("/student");
-      } else {
-        setError("Your account role is not recognized.");
-      }
+      handleLoginSuccess(accessToken, user);
     } catch (err) {
       console.error("Login error:", err);
-
       const message = err.response?.data?.message;
 
       if (err.response?.status === 401) {
         setError("Incorrect email or password.");
       } else if (err.response?.status === 403) {
-        setError(message || "Your account is not approved.");
+        setError(message || "Your account is suspended or not approved.");
       } else {
         setError(message || "Login failed. Please try again.");
       }
@@ -93,59 +81,33 @@ function LoginPage() {
     }
   };
 
-  
   const handleGoogleLogin = async (credentialResponse) => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/google",
-        {
-          credential: credentialResponse.credential,
-        },
-      );
+      const response = await api.post("/auth/google", {
+        credential: credentialResponse.credential,
+      });
 
-      
       const { accessToken, user } = response.data;
 
       if (!accessToken) {
-        setError(
-          "Google login succeeded but no access token was received.",
-        );
+        setError("Google login failed to retrieve access token.");
         return;
       }
 
-      localStorage.setItem("token", accessToken);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      console.log("Google login successful");
-      console.log("Access token saved:", !!accessToken);
-      console.log("User:", user);
-
-      if (user.role === "admin") {
-        navigate("/admin");
-      } else if (user.role === "mentor") {
-        navigate("/mentor");
-      } else if (user.role === "student") {
-        navigate("/student");
-      } else {
-        setError("Your account role is not recognized.");
-      }
+      handleLoginSuccess(accessToken, user);
     } catch (err) {
       console.error("Google login error:", err);
-
       const message = err.response?.data?.message;
 
       if (err.response?.status === 404) {
-        setError(
-          message ||
-            "No account exists with this Google email. Please contact the administrator.",
-        );
+        setError(message || "No account exists with this Google email.");
       } else if (err.response?.status === 403) {
         setError(message || "Your account is suspended.");
       } else {
-        setError(message || "Google login failed. Please try again.");
+        setError("Google login failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -155,51 +117,33 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-[#F6FAFD] px-4 py-12">
       <div className="mx-auto grid min-h-[calc(100vh-6rem)] max-w-5xl overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-[#B3CFE5] md:grid-cols-2">
-
-        {/* ======================================================
-            LEFT SIDE
-        ====================================================== */}
-
+        {/* Left Side: Branding */}
         <div className="hidden bg-[#0A1931] p-10 text-white md:flex md:flex-col md:justify-between">
           <div>
-            <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-xl bg-[#4A7FA7]">
-              <span className="text-lg font-bold">
-                <img
-                  src={logo}
-                  alt="ASTU MSJ Logo"
-                  className="h-full w-full object-cover"
-                />
-              </span>
+            <div className="mb-8 flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-white p-1">
+              <img
+                src={logo}
+                alt="ASTU MSJ Logo"
+                className="h-full w-full object-cover"
+              />
             </div>
-
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#B3CFE5]">
               ASTU MSJ
             </p>
-
-            <h1 className="text-4xl font-bold leading-tight">
+            <h1 className="text-4xl font-bold leading-tight text-white">
               Welcome back to the bootcamp.
             </h1>
-
             <p className="mt-5 max-w-sm leading-7 text-[#B3CFE5]">
-              Continue your learning journey, connect with mentors, work on
-              projects, and keep growing your technical skills.
+              Continue your learning journey, connect with mentors, and keep
+              growing your technical skills.
             </p>
           </div>
-
-          <p className="text-sm text-[#7A7F85]">
-            Learn. Build. Compete. Grow.
-          </p>
+          <p className="text-sm text-[#7A7F85]">Learn. Build. Compete. Grow.</p>
         </div>
 
-        {/* ======================================================
-            RIGHT SIDE
-        ====================================================== */}
-
+        {/* Right Side: Form */}
         <div className="flex items-center p-7 sm:p-10">
           <div className="w-full">
-
-            {/* Header */}
-
             <div className="mb-8">
               <Link
                 to="/"
@@ -207,17 +151,11 @@ function LoginPage() {
               >
                 ← Back to Home
               </Link>
-
-              <h2 className="text-3xl font-bold text-[#0A1931]">
-                Login
-              </h2>
-
+              <h2 className="text-3xl font-bold text-[#0A1931]">Login</h2>
               <p className="mt-2 text-sm text-[#7A7F85]">
                 Enter your account details to continue.
               </p>
             </div>
-
-            {/* Error */}
 
             {error && (
               <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
@@ -225,23 +163,14 @@ function LoginPage() {
               </div>
             )}
 
-            {/* ======================================================
-                LOGIN FORM
-            ====================================================== */}
-
             <form onSubmit={handleSubmit} className="space-y-5">
-
-              {/* Email */}
-
+              {/* Email Input */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Email Address{" "}
-                  <span className="text-red-500">*</span>
+                  Email Address <span className="text-red-500">*</span>
                 </label>
-
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7A7F85]" />
-
                   <input
                     type="email"
                     name="email"
@@ -253,26 +182,22 @@ function LoginPage() {
                 </div>
               </div>
 
-              {/* Password */}
-
+              {/* Password Input */}
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-sm font-semibold text-[#0A1931]">
-                    Password{" "}
-                    <span className="text-red-500">*</span>
+                    Password <span className="text-red-500">*</span>
                   </label>
-
                   <Link
                     to="/forgot-password"
+                    size="sm"
                     className="text-sm font-medium text-[#4A7FA7] hover:text-[#1A3D63]"
                   >
                     Forgot password?
                   </Link>
                 </div>
-
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7A7F85]" />
-
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
@@ -281,12 +206,9 @@ function LoginPage() {
                     placeholder="Enter your password"
                     className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] py-3 pl-12 pr-12 text-sm text-[#0A1931] outline-none transition focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
                   />
-
                   <button
                     type="button"
-                    onClick={() =>
-                      setShowPassword(!showPassword)
-                    }
+                    onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A7F85] hover:text-[#1A3D63]"
                   >
                     {showPassword ? (
@@ -298,34 +220,40 @@ function LoginPage() {
                 </div>
               </div>
 
-              {/* Login Button */}
-
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-[#1A3D63] py-3.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1A3D63] py-3.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-60"
               >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
                 {loading ? "Signing in..." : "Login"}
               </button>
 
-              {/* Google Login */}
+              {/* Google Login Divider */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-200"></span>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-400">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
 
               <div className="flex w-full justify-center">
                 <GoogleLogin
                   onSuccess={handleGoogleLogin}
-                  onError={() => {
-                    setError(
-                      "Google login failed. Please try again.",
-                    );
-                  }}
+                  onError={() =>
+                    setError("Google login failed. Please try again.")
+                  }
                   useOneTap={false}
                 />
               </div>
             </form>
 
-            {/* Register */}
-
-            <p className="mt-7 text-center text-sm text-[#7A7F85]">
+            <p className="mt-8 text-center text-sm text-[#7A7F85]">
               Don't have an account?{" "}
               <Link
                 to="/register"

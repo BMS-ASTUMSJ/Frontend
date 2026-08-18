@@ -5,91 +5,166 @@ import {
   Send,
   Trash2,
   Pencil,
-  X,
-  Users,
   CalendarDays,
   Bell,
   CheckCircle2,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 function Announcements() {
+  const storedUser = localStorage.getItem("user");
+
+  let user = { role: "student" };
+
+  try {
+    if (storedUser) {
+      user = JSON.parse(storedUser);
+    }
+  } catch (error) {
+    console.error("Invalid user data in localStorage:", error);
+  }
+
+  const isAdmin = user?.role === "admin";
+
+  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [audience, setAudience] = useState("all");
-
-  const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successText, setSuccessText] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editBody, setEditBody] = useState("");
   const [editAudience, setEditAudience] = useState("all");
-  const [editLoading, setEditLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    async function loadAnnouncements() {
-      try {
-        const response = await api.get("/announcements");
-        setAnnouncements(response.data.announcements);
-      } catch (error) {
-        console.error("Fetch announcements error:", error);
-      }
-    }
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successText, setSuccessText] = useState("");
 
-    loadAnnouncements();
-  }, []);
-
-  const refreshAnnouncements = async () => {
-    const response = await api.get("/announcements");
-    setAnnouncements(response.data.announcements);
-  };
-
-  const handlePublish = async (e) => {
-    e.preventDefault();
-
-    if (!title || !body) return;
-
+  const loadAnnouncements = async () => {
     try {
       setLoading(true);
+      setError("");
 
-      await api.post("/announcements", { title, body, audience });
+      const response = await api.get("/announcements");
 
-      await refreshAnnouncements();
+      console.log("Announcements API response:", response.data);
 
-      setTitle("");
-      setBody("");
-      setAudience("all");
+      if (response.data?.success) {
+        setAnnouncements(response.data.announcements || []);
+      } else {
+        setAnnouncements([]);
+        setError(response.data?.message || "Failed to load announcements.");
+      }
+    } catch (err) {
+      console.error("Fetch announcements error:", err);
 
-      setSuccessText(
-        "Your announcement has been published to the selected audience.",
+      if (err.response) {
+        console.error("Status:", err.response.status);
+        console.error("Response:", err.response.data);
+      }
+
+      setError(
+        err.response?.data?.message ||
+          "Failed to load announcements. Please refresh the page.",
       );
-      setShowSuccessModal(true);
-    } catch (error) {
-      console.error("Publish announcement error:", error);
-
-      alert(error.response?.data?.message || "Failed to publish");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
+  useEffect(() => {
+    loadAnnouncements();
+  }, []);
+
+  const handlePublish = async (e) => {
+    e.preventDefault();
+
+    if (!title.trim() || !body.trim()) {
+      setError("Title and message are required.");
+      return;
+    }
+
     try {
-      await api.delete(`/announcements/${id}`);
-      await refreshAnnouncements();
-    } catch (error) {
-      console.error("Delete announcement error:", error);
+      setIsPublishing(true);
+      setError("");
+
+      const response = await api.post("/announcements", {
+        title: title.trim(),
+        body: body.trim(),
+        audience,
+      });
+
+      console.log("Create announcement response:", response.data);
+
+      if (!response.data?.success) {
+        throw new Error(
+          response.data?.message || "Failed to publish announcement.",
+        );
+      }
+
+      setTitle("");
+      setBody("");
+      setAudience("all");
+
+      setSuccessText("Announcement published successfully.");
+      setShowSuccessModal(true);
+
+      await loadAnnouncements();
+    } catch (err) {
+      console.error("Publish announcement error:", err);
+
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Error publishing announcement.",
+      );
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const confirmed = window.confirm("Delete this announcement permanently?");
+
+    if (!confirmed) return;
+
+    try {
+      setError("");
+
+      const response = await api.delete(`/announcements/${id}`);
+
+      if (!response.data?.success) {
+        throw new Error(
+          response.data?.message || "Failed to delete announcement.",
+        );
+      }
+
+      await loadAnnouncements();
+
+      setSuccessText("Announcement deleted successfully.");
+      setShowSuccessModal(true);
+    } catch (err) {
+      console.error("Delete announcement error:", err);
+
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to delete announcement.",
+      );
     }
   };
 
   const startEdit = (item) => {
     setEditingId(item._id);
-    setEditTitle(item.title);
-    setEditBody(item.body);
-    setEditAudience(item.audience);
+    setEditTitle(item.title || "");
+    setEditBody(item.body || "");
+    setEditAudience(item.audience || "all");
+    setError("");
   };
 
   const cancelEdit = () => {
@@ -100,358 +175,364 @@ function Announcements() {
   };
 
   const handleUpdate = async (id) => {
-    if (!editTitle || !editBody) return;
+    if (!editTitle.trim() || !editBody.trim()) {
+      setError("Title and message are required.");
+      return;
+    }
 
     try {
-      setEditLoading(true);
+      setIsUpdating(true);
+      setError("");
 
-      await api.patch(`/announcements/${id}`, {
-        title: editTitle,
-        body: editBody,
+      const response = await api.patch(`/announcements/${id}`, {
+        title: editTitle.trim(),
+        body: editBody.trim(),
         audience: editAudience,
       });
 
-      await refreshAnnouncements();
+      if (!response.data?.success) {
+        throw new Error(
+          response.data?.message || "Failed to update announcement.",
+        );
+      }
 
       cancelEdit();
 
-      setSuccessText("Your announcement has been updated.");
+      setSuccessText("Announcement updated successfully.");
       setShowSuccessModal(true);
-    } catch (error) {
-      console.error("Update announcement error:", error);
 
-      alert(error.response?.data?.message || "Failed to update");
+      await loadAnnouncements();
+    } catch (err) {
+      console.error("Update announcement error:", err);
+
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to update announcement.",
+      );
     } finally {
-      setEditLoading(false);
+      setIsUpdating(false);
     }
   };
 
+  const formatDate = (date) => {
+    if (!date) return "";
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "";
+    }
+
+    return parsedDate.toLocaleString();
+  };
+
   return (
-    <div className="min-h-full bg-[#F6FAFD] p-4 md:p-6">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="rounded-3xl bg-[#0A1931] p-6 shadow-sm md:p-7">
-          <div className="flex items-center gap-4">
-            <div className="rounded-2xl bg-[#1A3D63] p-3.5">
-              <Megaphone className="h-6 w-6 text-white" />
+    <div className="min-h-full bg-[#F6FAFD] p-4 md:p-6 lg:p-8">
+      <div className="mx-auto max-w-5xl space-y-8">
+        <div className="rounded-3xl bg-[#0A1931] p-6 shadow-xl md:p-8">
+          <div className="flex items-center gap-5">
+            <div className="rounded-2xl border border-white/5 bg-[#1A3D63] p-4 shadow-inner">
+              <Megaphone className="h-7 w-7 text-white" />
             </div>
 
             <div>
-              <h1 className="text-2xl font-bold text-white">Announcements</h1>
+              <h1 className="text-3xl font-black tracking-tight text-white">
+                Announcements
+              </h1>
 
-              <p className="mt-1 text-sm text-[#B3CFE5]">
-                Publish important updates for your bootcamp community.
+              <p className="mt-1 text-sm font-medium text-[#B3CFE5]">
+                {isAdmin
+                  ? "Manage communication for the bootcamp"
+                  : "Latest updates from the administration"}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-[#B3CFE5]/50 md:p-7">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="rounded-xl bg-[#EAF3F9] p-2.5">
-              <Bell className="h-5 w-5 text-[#1A3D63]" />
-            </div>
+        {/* ======================================================
+            ERROR
+        ====================================================== */}
 
-            <div>
-              <h2 className="font-semibold text-[#0A1931]">
-                Create Announcement
-              </h2>
+        {error && (
+          <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-700">
+            <AlertCircle size={20} />
 
-              <p className="text-sm text-slate-500">
-                Share an update with your selected audience.
-              </p>
-            </div>
+            <span className="text-sm font-bold">{error}</span>
           </div>
+        )}
 
-          <form onSubmit={handlePublish} className="space-y-5">
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                Title <span className="text-red-500">*</span>
-              </label>
+        {/* ======================================================
+            CREATE ANNOUNCEMENT
+        ====================================================== */}
 
+        {isAdmin && (
+          <div className="rounded-3xl border border-[#B3CFE5]/40 bg-white p-6 shadow-sm md:p-8">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="rounded-xl bg-[#EAF3F9] p-2.5">
+                <Bell className="h-5 w-5 text-[#1A3D63]" />
+              </div>
+
+              <h2 className="text-lg font-bold text-[#0A1931]">
+                New Announcement
+              </h2>
+            </div>
+
+            <form onSubmit={handlePublish} className="space-y-5">
               <input
                 type="text"
+                required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Bootcamp Orientation"
-                className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm text-[#0A1931] outline-none transition placeholder:text-slate-400 focus:border-[#4A7FA7] focus:bg-white focus:ring-2 focus:ring-[#B3CFE5]/40"
+                placeholder="Subject Title"
+                className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm font-semibold outline-none transition-all focus:border-[#4A7FA7] focus:ring-4 focus:ring-[#B3CFE5]/20"
               />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                Message <span className="text-red-500">*</span>
-              </label>
 
               <textarea
-                rows={5}
+                rows={4}
+                required
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="Write your announcement..."
-                className="w-full resize-none rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm text-[#0A1931] outline-none transition placeholder:text-slate-400 focus:border-[#4A7FA7] focus:bg-white focus:ring-2 focus:ring-[#B3CFE5]/40"
+                placeholder="Type your message here..."
+                className="w-full resize-none rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none transition-all focus:border-[#4A7FA7]"
               />
-            </div>
 
-            <div>
-              <label className="mb-3 block text-sm font-semibold text-[#0A1931]">
-                Send to
-              </label>
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <div className="grid flex-1 grid-cols-2 gap-2 rounded-2xl border border-gray-100 bg-gray-50 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setAudience("all")}
+                    className={`rounded-xl py-2.5 text-xs font-black transition-all ${
+                      audience === "all"
+                        ? "bg-[#0A1931] text-white shadow-md"
+                        : "text-gray-400 hover:text-gray-600"
+                    }`}
+                  >
+                    EVERYONE
+                  </button>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setAudience("all")}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    audience === "all"
-                      ? "border-[#1A3D63] bg-[#EAF3F9] ring-2 ring-[#B3CFE5]/50"
-                      : "border-[#B3CFE5] bg-white hover:bg-[#F6FAFD]"
-                  }`}
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="rounded-xl bg-white p-2.5">
-                      <Users className="h-5 w-5 text-[#1A3D63]" />
-                    </div>
-
-                    {audience === "all" && (
-                      <span className="h-2.5 w-2.5 rounded-full bg-[#1A3D63]" />
-                    )}
-                  </div>
-
-                  <p className="font-semibold text-[#0A1931]">Everyone</p>
-
-                  <p className="mt-1 text-xs text-slate-500">
-                    Send to all bootcamp members
-                  </p>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setAudience("mentor")}
+                    className={`rounded-xl py-2.5 text-xs font-black transition-all ${
+                      audience === "mentor"
+                        ? "bg-[#0A1931] text-white shadow-md"
+                        : "text-gray-400 hover:text-gray-600"
+                    }`}
+                  >
+                    MENTORS ONLY
+                  </button>
+                </div>
 
                 <button
-                  type="button"
-                  onClick={() => setAudience("mentor")}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    audience === "mentor"
-                      ? "border-[#1A3D63] bg-[#EAF3F9] ring-2 ring-[#B3CFE5]/50"
-                      : "border-[#B3CFE5] bg-white hover:bg-[#F6FAFD]"
-                  }`}
+                  type="submit"
+                  disabled={isPublishing}
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#4A7FA7] px-10 py-3 text-sm font-bold text-white transition-all hover:bg-[#1A3D63] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="rounded-xl bg-white p-2.5">
-                      <Users className="h-5 w-5 text-[#1A3D63]" />
-                    </div>
-
-                    {audience === "mentor" && (
-                      <span className="h-2.5 w-2.5 rounded-full bg-[#1A3D63]" />
-                    )}
-                  </div>
-
-                  <p className="font-semibold text-[#0A1931]">Mentors Only</p>
-
-                  <p className="mt-1 text-xs text-slate-500">
-                    Send only to bootcamp mentors
-                  </p>
+                  {isPublishing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  Publish
                 </button>
               </div>
-            </div>
+            </form>
+          </div>
+        )}
 
-            <div className="flex justify-end pt-1">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex items-center gap-2 rounded-xl bg-[#0A1931] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#1A3D63] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Send className="h-4 w-4" />
+        {/* ======================================================
+            FEED
+        ====================================================== */}
 
-                {loading ? "Publishing..." : "Publish Announcement"}
-              </button>
-            </div>
-          </form>
-        </div>
+        <div className="space-y-4 pb-10">
+          <div className="flex items-center justify-between px-2">
+            <h2 className="text-xl font-black text-[#0A1931]">Recent Feed</h2>
 
-        <div>
-          <div className="mb-4 flex items-end justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-[#0A1931]">
-                Recent Announcements
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                {announcements.length} announcement
-                {announcements.length !== 1 ? "s" : ""}
-              </p>
-            </div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+              Total: {announcements.length}
+            </span>
           </div>
 
-          <div className="space-y-4">
-            {announcements.map((item) => (
+          {/* LOADING */}
+
+          {loading ? (
+            <div className="rounded-3xl border border-[#B3CFE5]/30 bg-white py-20 text-center">
+              <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#1A3D63]" />
+
+              <p className="mt-4 text-xs font-bold text-gray-400">
+                Fetching Updates...
+              </p>
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="rounded-3xl border-2 border-dashed border-[#B3CFE5] bg-white p-16 text-center">
+              <Megaphone className="mx-auto mb-4 h-12 w-12 text-[#B3CFE5] opacity-50" />
+
+              <p className="font-bold text-[#0A1931]">No announcements yet.</p>
+
+              <p className="mt-1 text-xs text-gray-400">
+                Check back later for important updates.
+              </p>
+            </div>
+          ) : (
+            announcements.map((item) => (
               <div
                 key={item._id}
-                className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-[#B3CFE5]/50 transition hover:shadow-md md:p-6"
+                className="group rounded-3xl border border-[#B3CFE5]/30 bg-white p-6 shadow-sm transition-all hover:border-[#4A7FA7]"
               >
+                {/* EDIT MODE */}
+
                 {editingId === item._id ? (
                   <div className="space-y-4">
-                    <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                        Title
-                      </label>
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full rounded-xl border p-3 font-bold outline-none focus:border-[#4A7FA7]"
+                    />
 
-                      <input
-                        type="text"
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm text-[#0A1931] outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]/40"
-                      />
-                    </div>
+                    <textarea
+                      rows={3}
+                      value={editBody}
+                      onChange={(e) => setEditBody(e.target.value)}
+                      className="w-full rounded-xl border p-3 outline-none focus:border-[#4A7FA7]"
+                    />
 
-                    <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                        Message
-                      </label>
+                    <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                      <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditAudience("all")}
+                          className={`rounded-lg px-4 py-1.5 text-[10px] font-black ${
+                            editAudience === "all"
+                              ? "bg-white text-[#0A1931] shadow-sm"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          ALL
+                        </button>
 
-                      <textarea
-                        rows={4}
-                        value={editBody}
-                        onChange={(e) => setEditBody(e.target.value)}
-                        className="w-full resize-none rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm text-[#0A1931] outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]/40"
-                      />
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() => setEditAudience("mentor")}
+                          className={`rounded-lg px-4 py-1.5 text-[10px] font-black ${
+                            editAudience === "mentor"
+                              ? "bg-white text-[#0A1931] shadow-sm"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          MENTORS
+                        </button>
+                      </div>
 
-                    <div className="flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setEditAudience("all")}
-                        className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${
-                          editAudience === "all"
-                            ? "border-[#1A3D63] bg-[#EAF3F9] text-[#0A1931]"
-                            : "border-[#B3CFE5] bg-white text-slate-600 hover:bg-[#F6FAFD]"
-                        }`}
-                      >
-                        Everyone
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={cancelEdit}
+                          disabled={isUpdating}
+                          className="px-4 text-xs font-bold text-gray-400"
+                        >
+                          Cancel
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => setEditAudience("mentor")}
-                        className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${
-                          editAudience === "mentor"
-                            ? "border-[#1A3D63] bg-[#EAF3F9] text-[#0A1931]"
-                            : "border-[#B3CFE5] bg-white text-slate-600 hover:bg-[#F6FAFD]"
-                        }`}
-                      >
-                        Mentors Only
-                      </button>
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-1">
-                      <button
-                        type="button"
-                        onClick={cancelEdit}
-                        className="flex items-center gap-2 rounded-xl border border-[#B3CFE5] px-5 py-2.5 text-sm font-semibold text-[#0A1931] transition hover:bg-[#F6FAFD]"
-                      >
-                        <X className="h-4 w-4" />
-                        Cancel
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleUpdate(item._id)}
-                        disabled={editLoading}
-                        className="flex items-center gap-2 rounded-xl bg-[#0A1931] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1A3D63] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {editLoading ? "Saving..." : "Save Changes"}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdate(item._id)}
+                          disabled={isUpdating}
+                          className="flex items-center gap-2 rounded-xl bg-[#0A1931] px-6 py-2 text-xs font-bold text-white disabled:opacity-50"
+                        >
+                          {isUpdating && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          )}
+                          Save Changes
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 gap-4">
-                      <div className="hidden h-fit rounded-xl bg-[#EAF3F9] p-3 sm:block">
-                        <Megaphone className="h-5 w-5 text-[#1A3D63]" />
+                  /* NORMAL MODE */
+
+                  <div className="flex flex-col justify-between gap-6 md:flex-row">
+                    <div className="flex items-start gap-5">
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-[#B3CFE5]/40 bg-[#F6FAFD] text-[#1A3D63] transition-all group-hover:bg-[#1A3D63] group-hover:text-white">
+                        <Megaphone size={22} />
                       </div>
 
-                      <div className="min-w-0">
-                        <h3 className="text-lg font-semibold text-[#0A1931]">
-                          {item.title}
-                        </h3>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h3 className="text-lg font-extrabold text-[#0A1931]">
+                            {item.title}
+                          </h3>
 
-                        <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#EAF3F9] px-3 py-1 text-xs font-medium text-[#1A3D63]">
-                          <Users className="h-3.5 w-3.5" />
+                          <span className="rounded border border-[#B3CFE5] bg-[#EAF3F9] px-2 py-0.5 text-[9px] font-black uppercase text-[#1A3D63]">
+                            {item.audience}
+                          </span>
+                        </div>
 
-                          {item.audience === "all"
-                            ? "Everyone"
-                            : "Mentors only"}
-                        </span>
+                        <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tighter text-gray-400">
+                          <CalendarDays size={12} />
 
-                        <p className="mt-4 leading-7 text-slate-600">
+                          {formatDate(item.createdAt)}
+                        </div>
+
+                        <p className="mt-4 text-sm font-medium leading-relaxed text-slate-600">
                           {item.body}
                         </p>
-
-                        <div className="mt-4 flex items-center gap-1.5 text-xs text-slate-400">
-                          <CalendarDays className="h-3.5 w-3.5" />
-
-                          {new Date(item.createdAt).toLocaleString()}
-                        </div>
                       </div>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-1">
-                      <button
-                        onClick={() => startEdit(item)}
-                        className="rounded-xl p-2.5 text-slate-400 transition hover:bg-[#EAF3F9] hover:text-[#1A3D63]"
-                        title="Edit announcement"
-                      >
-                        <Pencil className="h-5 w-5" />
-                      </button>
+                    {/* ADMIN ACTIONS */}
 
-                      <button
-                        onClick={() => handleDelete(item._id)}
-                        className="rounded-xl p-2.5 text-slate-400 transition hover:bg-red-50 hover:text-red-500"
-                        title="Delete announcement"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
+                    {isAdmin && (
+                      <div className="flex gap-2 border-t border-gray-100 pt-4 md:flex-col md:border-l md:border-t-0 md:pl-4 md:pt-0">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(item)}
+                          className="rounded-xl p-2 text-blue-500 transition-colors hover:bg-blue-50"
+                        >
+                          <Pencil size={18} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item._id)}
+                          className="rounded-xl p-2 text-red-400 transition-colors hover:bg-red-50"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            ))}
-
-            {announcements.length === 0 && (
-              <div className="rounded-3xl border border-dashed border-[#B3CFE5] bg-white p-12 text-center shadow-sm">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EAF3F9]">
-                  <Megaphone className="h-6 w-6 text-[#4A7FA7]" />
-                </div>
-
-                <h3 className="font-semibold text-[#0A1931]">
-                  No announcements yet
-                </h3>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Create your first announcement using the form above.
-                </p>
-              </div>
-            )}
-          </div>
+            ))
+          )}
         </div>
       </div>
 
+      {/* ========================================================
+          SUCCESS MODAL
+      ======================================================== */}
+
       {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl">
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
-              <CheckCircle2 className="h-9 w-9 text-green-600" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-[40px] bg-white p-10 text-center shadow-2xl">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 text-green-500 shadow-inner">
+              <CheckCircle2 size={44} strokeWidth={2.5} />
             </div>
 
-            <h2 className="text-xl font-bold text-[#0A1931]">
-              Announced Successfully!
-            </h2>
+            <h2 className="text-2xl font-black text-[#0A1931]">Done!</h2>
 
-            <p className="mt-3 text-sm leading-6 text-[#7A7F85]">
+            <p className="mt-2 text-sm font-semibold text-gray-400">
               {successText}
             </p>
 
             <button
+              type="button"
               onClick={() => setShowSuccessModal(false)}
-              className="mt-7 w-full rounded-xl bg-[#1A3D63] py-3 text-sm font-semibold text-white transition hover:bg-[#4A7FA7]"
+              className="mt-8 w-full rounded-2xl bg-[#0A1931] py-4 text-sm font-bold text-white shadow-lg"
             >
-              Close
+              Great
             </button>
           </div>
         </div>

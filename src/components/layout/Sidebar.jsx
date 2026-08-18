@@ -21,8 +21,13 @@ function Sidebar({ role }) {
       icon: LayoutDashboard,
     },
     {
-      name: "Students",
-      path: `/${role}/students`,
+      name: "Applicants",
+      path: `/${role}/Applicants`,
+      icon: Users,
+    },
+    {
+      name: "batch",
+      path: `/${role}/batches`,
       icon: Users,
     },
     {
@@ -51,7 +56,7 @@ function Sidebar({ role }) {
       icon: UserCircle,
     },
     {
-      name: "User-Management",
+      name: "Users",
       path: `/${role}/users`,
       icon: UserCircle,
     },
@@ -67,7 +72,6 @@ function Sidebar({ role }) {
       localStorage.removeItem("user");
       navigate("/");
     }
-
   };
 
   return (
