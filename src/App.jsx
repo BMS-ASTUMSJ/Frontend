@@ -10,6 +10,10 @@ import BatchManagement from "./pages/admin/BatchManagement";
 import TeamManagement from "./pages/admin/TeamManagement";
 import ApplicantsPage from "./pages/admin/ApplicantsPage";
 
+import AdminAttendance from "./pages/admin/AdminAttendance";
+import MentorAttendance from "./pages/mentor/MentorAttendance";
+import StudentAttendance from "./pages/student/StudentAttendance";
+
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterationPage from "./pages/RegisterationPage";
@@ -51,12 +55,11 @@ function AppContent() {
         <Route element={<ProtectedRoute allowedRole="admin" />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-
             <Route path="batches" element={<BatchManagement />} />
             <Route path="teams" element={<TeamManagement />} />
             <Route path="applicants" element={<ApplicantsPage />} />
 
-            <Route path="students" element={<ApplicantsPage />} />
+            <Route path="attendance" element={<AdminAttendance />} />
 
             <Route path="announcements" element={<AdminAnnouncements />} />
             <Route path="profile" element={<AdminProfile />} />
@@ -68,6 +71,10 @@ function AppContent() {
         <Route element={<ProtectedRoute allowedRole="mentor" />}>
           <Route path="/mentor" element={<MentorLayout />}>
             <Route index element={<MentorDashboard />} />
+
+            {/* Added Mentor Attendance: Marking team members */}
+            <Route path="attendance" element={<MentorAttendance />} />
+
             <Route path="announcements" element={<MentorAnnouncements />} />
           </Route>
         </Route>
@@ -76,9 +83,19 @@ function AppContent() {
         <Route element={<ProtectedRoute allowedRole="student" />}>
           <Route path="/student" element={<StudentLayout />}>
             <Route index element={<StudentDashboard />} />
+
+            {/* Added Student Attendance: View personal records */}
+            <Route path="attendance" element={<StudentAttendance />} />
+
             <Route path="announcements" element={<StudentAnnouncements />} />
           </Route>
         </Route>
+
+        {/* Fallback Route */}
+        <Route
+          path="*"
+          element={<div className="p-20 text-center">404 - Page Not Found</div>}
+        />
       </Routes>
     </>
   );
