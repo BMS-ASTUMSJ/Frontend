@@ -209,8 +209,6 @@ const StudentAttendance = () => {
                   key={record._id}
                   className="flex flex-col gap-5 p-6 transition-colors hover:bg-gray-50 md:flex-row md:items-center md:justify-between"
                 >
-                  {/* DATE */}
-
                   <div>
                     <p className="font-bold text-gray-800">
                       {new Date(record.date).toDateString()}
@@ -220,8 +218,6 @@ const StudentAttendance = () => {
                       {record.sessionType}
                     </p>
                   </div>
-
-                  {/* CHECKS */}
 
                   <div className="flex gap-6">
                     <RecordStatus
@@ -269,11 +265,8 @@ const StatusSummary = ({ icon, label, value, className }) => (
 const RecordStatus = ({ label, status }) => {
   const styles = {
     Present: "bg-green-100 text-green-700",
-
     Late: "bg-amber-100 text-amber-700",
-
     Absent: "bg-red-100 text-red-700",
-
     Excused: "bg-blue-100 text-blue-700",
   };
 

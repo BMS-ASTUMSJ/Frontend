@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../utils/api";
+import { toast } from "react-hot-toast";
 
 import {
   Users,
@@ -37,11 +38,12 @@ function AdminDashboard() {
       } catch (err) {
         console.error("Dashboard stats error:", err);
 
+        const errorMessage =
+          err.response?.data?.message || "Failed to load dashboard statistics.";
+
         if (isMounted) {
-          setError(
-            err.response?.data?.message ||
-              "Failed to load dashboard statistics.",
-          );
+          setError(errorMessage);
+          toast.error(errorMessage);
         }
       } finally {
         if (isMounted) {
@@ -62,7 +64,6 @@ function AdminDashboard() {
       <div className="flex min-h-125 items-center justify-center">
         <div className="flex items-center gap-3 text-[#1A3D63]">
           <Loader2 className="h-7 w-7 animate-spin" />
-
           <span className="text-base font-semibold">
             Loading dashboard overview...
           </span>
@@ -93,9 +94,7 @@ function AdminDashboard() {
   return (
     <div className="min-h-full bg-[#F6FAFD] p-6 sm:p-8">
       <div className="space-y-8">
-        {/* =====================================================
-            HEADER
-        ===================================================== */}
+        {/* HEADER */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-[#4A7FA7]">
@@ -120,11 +119,9 @@ function AdminDashboard() {
           </Link>
         </div>
 
-        {/* =====================================================
-            STAT CARDS
-        ===================================================== */}
+        {/* STAT CARDS */}
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {/* Total Students */}
+          {/* TOTAL STUDENTS */}
           <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div>
               <p className="text-xs font-semibold text-[#7A7F85]">
@@ -143,7 +140,7 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* Active Mentors */}
+          {/* ACTIVE MENTORS */}
           <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div>
               <p className="text-xs font-semibold text-[#7A7F85]">
@@ -162,7 +159,7 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* Pending Applications */}
+          {/* PENDING APPLICATIONS */}
           <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div>
               <p className="text-xs font-semibold text-[#7A7F85]">
@@ -181,7 +178,7 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* Batches */}
+          {/* BATCHES */}
           <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div>
               <p className="text-xs font-semibold text-[#7A7F85]">
@@ -201,11 +198,8 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* =====================================================
-            CURRENT ACTIVE BATCH
-        ===================================================== */}
+        {/* CURRENT ACTIVE BATCH */}
         <div className="overflow-hidden rounded-3xl bg-linear-to-br from-[#0A1931] to-[#1A3D63] text-white shadow-xl">
-          {/* Batch Header */}
           <div className="border-b border-white/10 p-6 sm:p-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div>
@@ -250,9 +244,9 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* Batch Metrics */}
+          {/* BATCH METRICS */}
           <div className="grid gap-4 p-6 sm:grid-cols-2 sm:p-8 lg:grid-cols-4">
-            {/* Students */}
+            {/* STUDENTS */}
             <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
               <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
                 Enrolled Students
@@ -265,12 +259,12 @@ function AdminDashboard() {
 
                 <span className="text-xs text-gray-300">
                   ({currentBatch?.femaleStudents || 0} female /{" "}
-                  {currentBatch?.maleStudents || 0} male )
+                  {currentBatch?.maleStudents || 0} male)
                 </span>
               </div>
             </div>
 
-            {/* Teams */}
+            {/* TEAMS */}
             <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
               <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
                 Active Teams
@@ -283,7 +277,7 @@ function AdminDashboard() {
               <p className="mt-1 text-xs text-gray-300">Teams formed</p>
             </div>
 
-            {/* Mentors */}
+            {/* MENTORS */}
             <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
               <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
                 Available Mentors
@@ -296,7 +290,7 @@ function AdminDashboard() {
               <p className="mt-1 text-xs text-gray-300">Active mentors</p>
             </div>
 
-            {/* Applicants */}
+            {/* APPLICANTS */}
             <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
               <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
                 Cohort Applicants
@@ -313,9 +307,7 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* =====================================================
-            PREVIOUS BATCHES
-        ===================================================== */}
+        {/* PREVIOUS BATCHES */}
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -413,9 +405,7 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* =====================================================
-            QUICK ACTIONS
-        ===================================================== */}
+        {/* QUICK ACTIONS */}
         <div>
           <div className="mb-4">
             <h2 className="text-lg font-bold text-[#0A1931]">Quick Actions</h2>
@@ -426,7 +416,7 @@ function AdminDashboard() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            {/* Applicants */}
+            {/* APPLICANTS */}
             <Link
               to="/admin/applicants"
               className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-[#4A7FA7] hover:shadow-md"
@@ -449,7 +439,7 @@ function AdminDashboard() {
               </p>
             </Link>
 
-            {/* Teams */}
+            {/* TEAMS */}
             <Link
               to="/admin/teams"
               className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-[#4A7FA7] hover:shadow-md"
@@ -469,7 +459,7 @@ function AdminDashboard() {
               </p>
             </Link>
 
-            {/* Batches */}
+            {/* BATCHES */}
             <Link
               to="/admin/batches"
               className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-[#4A7FA7] hover:shadow-md"

@@ -1,9 +1,13 @@
+import { Toaster } from "react-hot-toast";
+
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   useLocation,
 } from "react-router-dom";
+
+import ChangePassword from "./pages/ChangePassword";
 
 import Navbar from "./components/layout/Navbar";
 
@@ -18,8 +22,9 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminAttendance from "./pages/admin/AdminAttendance";
 import AdminProgress from "./pages/admin/AdminProgress";
 import AdminAnnouncements from "./pages/admin/Announcements";
-import AdminProfile from "./pages/admin/AdminProfile.jsx";
+import AdminProfile from "./pages/admin/AdminProfile";
 import UserManagement from "./pages/admin/UserManagement";
+import AdminAssignment from "./pages/admin/Assignment";
 
 // =====================================================
 // MENTOR PAGES
@@ -30,6 +35,7 @@ import MentorAttendance from "./pages/mentor/MentorAttendance";
 import MentorAnnouncements from "./pages/mentor/Announcements";
 import MentorProgress from "./pages/mentor/MentorProgress";
 import MyStudents from "./pages/mentor/MyStudents";
+import MentorAssignment from "./pages/mentor/Assignment";
 
 // =====================================================
 // STUDENT PAGES
@@ -39,6 +45,7 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentAttendance from "./pages/student/StudentAttendance";
 import StudentProgress from "./pages/student/StudentProgress";
 import StudentAnnouncements from "./pages/student/Announcements";
+import StudentAssignment from "./pages/student/Assignment";
 
 // =====================================================
 // PUBLIC PAGES
@@ -72,6 +79,8 @@ function AppContent() {
     <>
       {showNavbar && <Navbar />}
 
+      <Toaster position="top-right" reverseOrder={false} />
+
       <Routes>
         {/* =====================================================
             PUBLIC ROUTES
@@ -84,6 +93,8 @@ function AppContent() {
         <Route path="/register" element={<RegisterationPage />} />
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        <Route path="/change-password" element={<ChangePassword />} />
 
         {/* =====================================================
             ADMIN ROUTES
@@ -120,6 +131,9 @@ function AppContent() {
             {/* Announcements */}
             <Route path="announcements" element={<AdminAnnouncements />} />
 
+            {/* Assignments */}
+            <Route path="assignments" element={<AdminAssignment />} />
+
             {/* Profile */}
             <Route path="profile" element={<AdminProfile />} />
           </Route>
@@ -146,14 +160,7 @@ function AppContent() {
             <Route path="progress" element={<MentorProgress />} />
 
             {/* Assignments */}
-            <Route
-              path="assignments"
-              element={
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">Mentor Assignments</h1>
-                </div>
-              }
-            />
+            <Route path="assignments" element={<MentorAssignment />} />
 
             {/* Announcements */}
             <Route path="announcements" element={<MentorAnnouncements />} />
@@ -179,6 +186,8 @@ function AppContent() {
             {/* Dashboard */}
             <Route index element={<StudentDashboard />} />
 
+            <Route path="dashboard" element={<StudentDashboard />} />
+
             {/* Progress */}
             <Route path="progress" element={<StudentProgress />} />
 
@@ -187,6 +196,9 @@ function AppContent() {
 
             {/* Announcements */}
             <Route path="announcements" element={<StudentAnnouncements />} />
+
+            {/* Assignments */}
+            <Route path="assignments" element={<StudentAssignment />} />
           </Route>
         </Route>
 

@@ -78,6 +78,8 @@ const AdminAttendance = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-8">
+        {/* ================= HEADER ================= */}
+
         <header className="flex flex-col gap-5 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
             <div className="mb-3 flex items-center gap-2">
@@ -104,6 +106,8 @@ const AdminAttendance = () => {
           </div>
         </header>
 
+        {/* ================= ERROR ================= */}
+
         {error && (
           <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-5">
             <AlertCircle size={20} className="mt-0.5 shrink-0 text-red-500" />
@@ -125,6 +129,8 @@ const AdminAttendance = () => {
           </div>
         )}
 
+        {/* ================= LOADING ================= */}
+
         {loading ? (
           <div className="flex min-h-100 flex-col items-center justify-center rounded-3xl border border-gray-100 bg-white shadow-sm">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
@@ -138,6 +144,8 @@ const AdminAttendance = () => {
             <p className="mt-1 text-xs text-gray-400">Please wait</p>
           </div>
         ) : batches.length === 0 ? (
+          /* ================= EMPTY ================= */
+
           <div className="flex min-h-100 flex-col items-center justify-center rounded-3xl border border-gray-100 bg-white p-10 text-center shadow-sm">
             <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
               <Users size={28} className="text-gray-400" />
@@ -151,6 +159,8 @@ const AdminAttendance = () => {
             </p>
           </div>
         ) : (
+          /* ================= BATCH CARDS ================= */
+
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {batches.map((batch) => (
               <BatchCard
@@ -162,6 +172,8 @@ const AdminAttendance = () => {
           </div>
         )}
       </div>
+
+      {/* ================= REPORT MODAL ================= */}
 
       {selectedBatch && (
         <ReportModal
@@ -176,14 +188,22 @@ const AdminAttendance = () => {
   );
 };
 
+// ============================================================
+// BATCH CARD
+// ============================================================
+
 const BatchCard = ({ batch, onViewReport }) => {
   const femaleRate = Number(batch.femaleAttendanceRate || 0);
+
   const maleRate = Number(batch.maleAttendanceRate || 0);
 
   const totalStudents = Number(batch.totalStudents || 0);
+
   const femaleStudents = Number(batch.femaleStudents || 0);
+
   const maleStudents = Number(batch.maleStudents || 0);
 
+  // Calculate overall attendance rate
   const overallRate =
     totalStudents > 0
       ? (
@@ -195,6 +215,7 @@ const BatchCard = ({ batch, onViewReport }) => {
   return (
     <div className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       {/* Card top */}
+
       <div className="border-b border-gray-100 p-6">
         <div className="mb-5 flex items-center justify-between">
           <span
@@ -218,6 +239,8 @@ const BatchCard = ({ batch, onViewReport }) => {
           Attendance overview
         </p>
       </div>
+
+      {/* Overall percentage */}
 
       <div className="border-b border-gray-100 bg-linear-to-br from-indigo-50 to-white p-6">
         <div className="flex items-end justify-between">
@@ -249,6 +272,8 @@ const BatchCard = ({ batch, onViewReport }) => {
           />
         </div>
       </div>
+
+      {/* Statistics */}
 
       <div className="space-y-4 p-6">
         <StatItem
@@ -283,6 +308,8 @@ const BatchCard = ({ batch, onViewReport }) => {
           valueClass="text-blue-600"
         />
 
+        {/* Button */}
+
         <div className="pt-3">
           <button
             onClick={() => onViewReport(batch)}
@@ -296,6 +323,10 @@ const BatchCard = ({ batch, onViewReport }) => {
     </div>
   );
 };
+
+// ============================================================
+// STAT ITEM
+// ============================================================
 
 const StatItem = ({ icon, label, value, valueClass = "text-gray-800" }) => (
   <div className="flex items-center justify-between">
@@ -311,6 +342,10 @@ const StatItem = ({ icon, label, value, valueClass = "text-gray-800" }) => (
   </div>
 );
 
+// ============================================================
+// REPORT MODAL
+// ============================================================
+
 const ReportModal = ({ batch, report, loading, error, onClose }) => {
   return (
     <div
@@ -322,6 +357,8 @@ const ReportModal = ({ batch, report, loading, error, onClose }) => {
       }}
     >
       <div className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+        {/* Modal header */}
+
         <div className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-5 sm:px-8">
           <div>
             <div className="flex items-center gap-2">
@@ -344,6 +381,8 @@ const ReportModal = ({ batch, report, loading, error, onClose }) => {
             <X size={19} />
           </button>
         </div>
+
+        {/* Modal content */}
 
         <div className="overflow-y-auto p-6 sm:p-8">
           {loading ? (
@@ -375,6 +414,10 @@ const ReportModal = ({ batch, report, loading, error, onClose }) => {
   );
 };
 
+// ============================================================
+// FULL REPORT
+// ============================================================
+
 const FullReport = ({ report }) => {
   const summary = report.summary || {};
   const students = report.students || [];
@@ -382,6 +425,7 @@ const FullReport = ({ report }) => {
   return (
     <div className="space-y-6">
       {/* Summary cards */}
+
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <ReportStat
           label="Students"
@@ -409,6 +453,7 @@ const FullReport = ({ report }) => {
       </div>
 
       {/* Table */}
+
       <div className="overflow-hidden rounded-2xl border border-gray-100">
         <div className="overflow-x-auto">
           <table className="w-full min-w-212.5">
@@ -469,6 +514,10 @@ const FullReport = ({ report }) => {
     </div>
   );
 };
+
+// ============================================================
+// STUDENT REPORT ROW
+// ============================================================
 
 const StudentReportRow = ({ student }) => {
   const attendance = Number(student.attendanceRate ?? student.percentage ?? 0);
@@ -544,6 +593,10 @@ const StudentReportRow = ({ student }) => {
     </tr>
   );
 };
+
+// ============================================================
+// REPORT STAT
+// ============================================================
 
 const ReportStat = ({ label, value, icon }) => (
   <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">

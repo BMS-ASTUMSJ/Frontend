@@ -2,7 +2,14 @@ import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../utils/api";
-import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Loader2,
+} from "lucide-react";
+import { toast } from "react-hot-toast";
 import logo from "./../assets/ASTUMSJ-Pp.jpg";
 
 function LoginPage() {
@@ -14,23 +21,30 @@ function LoginPage() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-    setError("");
   };
 
-  const handleLoginSuccess = (accessToken, user) => {
-    localStorage.setItem("token", accessToken);
-    localStorage.setItem("user", JSON.stringify(user));
-
-    console.log("Login successful. Role:", user.role);
+  /**
+   * Decide where the user should go after login.
+   */
+  const redirectUser = (user) => {
+    // Only students and mentors are forced to the
+    // change-password page.
+    if (
+      (user.role === "student" || user.role === "mentor") &&
+      user.mustChangePassword === true
+    ) {
+      navigate("/change-password");
+      return;
+    }
 
     if (user.role === "admin") {
       navigate("/admin");
@@ -39,52 +53,85 @@ function LoginPage() {
     } else if (user.role === "student") {
       navigate("/student");
     } else {
-      setError("Your account role is not recognized.");
+      toast.error("Your account role is not recognized.");
     }
   };
 
+  /**
+   * Save login information and redirect.
+   */
+  const handleLoginSuccess = (accessToken, user) => {
+    localStorage.setItem("token", accessToken);
+    localStorage.setItem("user", JSON.stringify(user));
+
+    console.log("Login successful:", user);
+
+    toast.success("Login successful! Welcome back.");
+
+    redirectUser(user);
+  };
+
+  /**
+   * Normal email/password login
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
 
     if (!formData.email || !formData.password) {
-      setError("Please enter both email and password.");
+      toast.error("Please enter both email and password.");
       return;
     }
 
     try {
       setLoading(true);
 
-      const response = await api.post("/auth/login", formData);
+      const response = await api.post("/auth/login", {
+        email: formData.email,
+        password: formData.password,
+      });
 
       const { accessToken, user } = response.data;
 
-      if (!accessToken) {
-        setError("Login succeeded but no access token was received.");
+      if (!accessToken || !user) {
+        toast.error("Login succeeded but account information was not received.");
         return;
       }
 
       handleLoginSuccess(accessToken, user);
     } catch (err) {
       console.error("Login error:", err);
+
       const message = err.response?.data?.message;
 
       if (err.response?.status === 401) {
-        setError("Incorrect email or password.");
+        toast.error("Incorrect email or password.");
       } else if (err.response?.status === 403) {
-        setError(message || "Your account is suspended or not approved.");
+        toast.error(
+          message || "Your account is suspended or not approved."
+        );
+      } else if (!err.response) {
+        toast.error(
+          "Cannot connect to the server. Make sure the backend is running."
+        );
       } else {
-        setError(message || "Login failed. Please try again.");
+        toast.error(message || "Login failed. Please try again.");
       }
     } finally {
       setLoading(false);
     }
   };
 
+  /**
+   * Google login
+   */
   const handleGoogleLogin = async (credentialResponse) => {
     try {
       setLoading(true);
-      setError("");
+
+      if (!credentialResponse?.credential) {
+        toast.error("Google credential was not received.");
+        return;
+      }
 
       const response = await api.post("/auth/google", {
         credential: credentialResponse.credential,
@@ -92,22 +139,33 @@ function LoginPage() {
 
       const { accessToken, user } = response.data;
 
-      if (!accessToken) {
-        setError("Google login failed to retrieve access token.");
+      if (!accessToken || !user) {
+        toast.error("Google login failed to retrieve account information.");
         return;
       }
 
       handleLoginSuccess(accessToken, user);
     } catch (err) {
       console.error("Google login error:", err);
+
       const message = err.response?.data?.message;
 
       if (err.response?.status === 404) {
-        setError(message || "No account exists with this Google email.");
+        toast.error(
+          message || "No account exists with this Google email."
+        );
       } else if (err.response?.status === 403) {
-        setError(message || "Your account is suspended.");
+        toast.error(
+          message || "Your account is suspended."
+        );
+      } else if (!err.response) {
+        toast.error(
+          "Cannot connect to the server. Make sure the backend is running."
+        );
       } else {
-        setError("Google login failed. Please try again.");
+        toast.error(
+          message || "Google login failed. Please try again."
+        );
       }
     } finally {
       setLoading(false);
@@ -117,7 +175,8 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-[#F6FAFD] px-4 py-12">
       <div className="mx-auto grid min-h-[calc(100vh-6rem)] max-w-5xl overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-[#B3CFE5] md:grid-cols-2">
-        {/* Left Side: Branding */}
+
+        {/* LEFT SIDE */}
         <div className="hidden bg-[#0A1931] p-10 text-white md:flex md:flex-col md:justify-between">
           <div>
             <div className="mb-8 flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-white p-1">
@@ -127,23 +186,30 @@ function LoginPage() {
                 className="h-full w-full object-cover"
               />
             </div>
+
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#B3CFE5]">
               ASTU MSJ
             </p>
+
             <h1 className="text-4xl font-bold leading-tight text-white">
               Welcome back to the bootcamp.
             </h1>
+
             <p className="mt-5 max-w-sm leading-7 text-[#B3CFE5]">
-              Continue your learning journey, connect with mentors, and keep
-              growing your technical skills.
+              Continue your learning journey, connect with mentors,
+              and keep growing your technical skills.
             </p>
           </div>
-          <p className="text-sm text-[#7A7F85]">Learn. Build. Compete. Grow.</p>
+
+          <p className="text-sm text-[#7A7F85]">
+            Learn. Build. Compete. Grow.
+          </p>
         </div>
 
-        {/* Right Side: Form */}
+        {/* RIGHT SIDE */}
         <div className="flex items-center p-7 sm:p-10">
           <div className="w-full">
+
             <div className="mb-8">
               <Link
                 to="/"
@@ -151,64 +217,77 @@ function LoginPage() {
               >
                 ← Back to Home
               </Link>
-              <h2 className="text-3xl font-bold text-[#0A1931]">Login</h2>
+
+              <h2 className="text-3xl font-bold text-[#0A1931]">
+                Login
+              </h2>
+
               <p className="mt-2 text-sm text-[#7A7F85]">
                 Enter your account details to continue.
               </p>
             </div>
 
-            {error && (
-              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                {error}
-              </div>
-            )}
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-5"
+            >
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Email Input */}
+              {/* EMAIL */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Email Address <span className="text-red-500">*</span>
+                  Email Address{" "}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7A7F85]" />
+
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="you@example.com"
+                    autoComplete="email"
                     className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] py-3 pl-12 pr-4 text-sm text-[#0A1931] outline-none transition focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
                   />
                 </div>
               </div>
 
-              {/* Password Input */}
+              {/* PASSWORD */}
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-sm font-semibold text-[#0A1931]">
-                    Password <span className="text-red-500">*</span>
+                    Password{" "}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <Link
                     to="/forgot-password"
-                    size="sm"
                     className="text-sm font-medium text-[#4A7FA7] hover:text-[#1A3D63]"
                   >
                     Forgot password?
                   </Link>
                 </div>
+
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7A7F85]" />
+
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Enter your password"
+                    autoComplete="current-password"
                     className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] py-3 pl-12 pr-12 text-sm text-[#0A1931] outline-none transition focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
                   />
+
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() =>
+                      setShowPassword((prev) => !prev)
+                    }
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A7F85] hover:text-[#1A3D63]"
                   >
                     {showPassword ? (
@@ -220,21 +299,25 @@ function LoginPage() {
                 </div>
               </div>
 
-              {/* Submit Button */}
+              {/* LOGIN BUTTON */}
               <button
                 type="submit"
                 disabled={loading}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1A3D63] py-3.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
+                {loading && (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                )}
+
                 {loading ? "Signing in..." : "Login"}
               </button>
 
-              {/* Google Login Divider */}
+              {/* GOOGLE DIVIDER */}
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-200"></span>
+                  <span className="w-full border-t border-gray-200" />
                 </div>
+
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-white px-2 text-gray-400">
                     Or continue with
@@ -242,11 +325,14 @@ function LoginPage() {
                 </div>
               </div>
 
+              {/* GOOGLE */}
               <div className="flex w-full justify-center">
                 <GoogleLogin
                   onSuccess={handleGoogleLogin}
                   onError={() =>
-                    setError("Google login failed. Please try again.")
+                    toast.error(
+                      "Google login failed. Please try again."
+                    )
                   }
                   useOneTap={false}
                 />
@@ -255,6 +341,7 @@ function LoginPage() {
 
             <p className="mt-8 text-center text-sm text-[#7A7F85]">
               Don't have an account?{" "}
+
               <Link
                 to="/register"
                 className="font-semibold text-[#1A3D63] hover:text-[#4A7FA7]"

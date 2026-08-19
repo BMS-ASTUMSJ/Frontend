@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-
 import Calendar from "react-calendar";
-
 import {
   Calendar as CalIcon,
   Users,
@@ -10,18 +8,14 @@ import {
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
-
 import "react-calendar/dist/Calendar.css";
-
 import api from "../../utils/api";
 
 const STATUS_OPTIONS = ["Absent", "Present", "Late", "Excused"];
 
 const formatDate = (date) => {
   const year = date.getFullYear();
-
   const month = String(date.getMonth() + 1).padStart(2, "0");
-
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
@@ -29,7 +23,6 @@ const formatDate = (date) => {
 
 const MentorAttendance = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-
   const [sessionType, setSessionType] = useState("Contest");
 
   const [teamData, setTeamData] = useState({
@@ -38,15 +31,11 @@ const MentorAttendance = () => {
   });
 
   const [statusMap, setStatusMap] = useState({});
-
   const [savingKey, setSavingKey] = useState(null);
-
   const [loadingTeam, setLoadingTeam] = useState(true);
-
   const [loadingRecords, setLoadingRecords] = useState(false);
 
   const [error, setError] = useState("");
-
   const [successMessage, setSuccessMessage] = useState("");
 
   const dateKey = formatDate(selectedDate);
@@ -60,7 +49,6 @@ const MentorAttendance = () => {
 
       setTeamData({
         name: res.data?.teamName || "",
-
         students: Array.isArray(res.data?.students) ? res.data.students : [],
       });
     } catch (err) {
@@ -116,7 +104,6 @@ const MentorAttendance = () => {
 
         map[String(studentId)] = {
           first: record.firstCheck?.status || "Absent",
-
           second: record.secondCheck?.status || "Absent",
         };
       });
@@ -147,7 +134,6 @@ const MentorAttendance = () => {
 
   const handleMark = async (studentId, checkType, status) => {
     const normalizedStudentId = String(studentId);
-
     const key = `${normalizedStudentId}-${checkType}`;
 
     const previousStatus =
@@ -161,7 +147,6 @@ const MentorAttendance = () => {
 
       [normalizedStudentId]: {
         ...(prev[normalizedStudentId] || {}),
-
         [checkType]: status,
       },
     }));
@@ -171,13 +156,9 @@ const MentorAttendance = () => {
     try {
       await api.post("/attendance/mark", {
         studentId: normalizedStudentId,
-
         date: dateKey,
-
         sessionType,
-
         checkType,
-
         status,
       });
 
@@ -194,7 +175,6 @@ const MentorAttendance = () => {
 
         [normalizedStudentId]: {
           ...(prev[normalizedStudentId] || {}),
-
           [checkType]: previousStatus,
         },
       }));
@@ -213,6 +193,7 @@ const MentorAttendance = () => {
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
+        {/* HEADER */}
         <div className="mb-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -235,6 +216,7 @@ const MentorAttendance = () => {
           </div>
         </div>
 
+        {/* ERROR */}
         {error && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
             <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-600" />
@@ -247,6 +229,7 @@ const MentorAttendance = () => {
           </div>
         )}
 
+        {/* SUCCESS */}
         {successMessage && (
           <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
             <Check size={18} className="text-emerald-600" />
@@ -257,7 +240,9 @@ const MentorAttendance = () => {
           </div>
         )}
 
+        {/* MAIN GRID */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          {/* LEFT */}
           <div className="lg:col-span-4">
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
@@ -279,6 +264,7 @@ const MentorAttendance = () => {
               </div>
 
               <div className="p-4 sm:p-5">
+                {/* CALENDAR */}
                 <div className="attendance-calendar-wrapper">
                   <Calendar
                     onChange={(date) => {
@@ -290,6 +276,7 @@ const MentorAttendance = () => {
                   />
                 </div>
 
+                {/* SESSION */}
                 <div className="mt-6">
                   <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
                     Session Type
@@ -300,7 +287,6 @@ const MentorAttendance = () => {
                     value={sessionType}
                     onChange={(e) => {
                       setSessionType(e.target.value);
-
                       setError("");
                       setSuccessMessage("");
                     }}
@@ -314,7 +300,6 @@ const MentorAttendance = () => {
                 </div>
 
                 {/* DATE */}
-
                 <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 p-4">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">
                     Selected Date
@@ -330,8 +315,10 @@ const MentorAttendance = () => {
             </div>
           </div>
 
+          {/* RIGHT */}
           <div className="lg:col-span-8">
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              {/* TEAM HEADER */}
               <div className="bg-linear-to-r from-indigo-600 to-indigo-700 px-5 py-5 text-white sm:px-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
@@ -365,6 +352,7 @@ const MentorAttendance = () => {
                 </div>
               </div>
 
+              {/* TEAM LOADING */}
               {loadingTeam ? (
                 <div className="flex min-h-75 flex-col items-center justify-center p-10">
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50">
@@ -415,7 +403,6 @@ const MentorAttendance = () => {
                     <tbody className="divide-y divide-slate-100">
                       {teamData.students.map((student) => {
                         const studentId = String(student._id);
-
                         const studentStatus = statusMap[studentId] || {};
 
                         return (
