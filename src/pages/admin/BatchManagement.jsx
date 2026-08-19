@@ -279,7 +279,7 @@ function BatchManagement() {
 
         {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">
-            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            <AlertCircle className="h-5 w-5 shrink-0" />
 
             <p className="text-sm font-medium">{error}</p>
           </div>
@@ -291,7 +291,7 @@ function BatchManagement() {
 
         {success && (
           <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 text-green-700">
-            <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+            <CheckCircle2 className="h-5 w-5 shrink-0" />
 
             <p className="text-sm font-medium">{success}</p>
           </div>

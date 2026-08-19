@@ -59,7 +59,7 @@ function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[500px] items-center justify-center">
+      <div className="flex min-h-125 items-center justify-center">
         <div className="flex items-center gap-3 text-[#1A3D63]">
           <Loader2 className="h-7 w-7 animate-spin" />
 
@@ -75,7 +75,7 @@ function AdminDashboard() {
     return (
       <div className="p-6 sm:p-8">
         <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-          <AlertCircle className="h-5 w-5 flex-shrink-0" />
+          <AlertCircle className="h-5 w-5 shrink-0" />
           <span>{error}</span>
         </div>
       </div>
@@ -204,7 +204,7 @@ function AdminDashboard() {
         {/* =====================================================
             CURRENT ACTIVE BATCH
         ===================================================== */}
-        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#0A1931] to-[#1A3D63] text-white shadow-xl">
+        <div className="overflow-hidden rounded-3xl bg-linear-to-br from-[#0A1931] to-[#1A3D63] text-white shadow-xl">
           {/* Batch Header */}
           <div className="border-b border-white/10 p-6 sm:p-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
