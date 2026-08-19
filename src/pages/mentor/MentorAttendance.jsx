@@ -11,9 +11,36 @@ import {
 import "react-calendar/dist/Calendar.css";
 import api from "../../utils/api";
 
-const STATUS_OPTIONS = ["Absent", "Present", "Late", "Excused"];
+const STATUS_OPTIONS = ["Present", "Absent", "Late", "Excused"];
+
+const SESSION_OPTIONS = [
+  {
+    type: "Lecture",
+    name: "Lecture 1",
+    label: "Lecture 1",
+  },
+  {
+    type: "Lecture",
+    name: "Lecture 2",
+    label: "Lecture 2",
+  },
+  {
+    type: "Experience Sharing",
+    name: "Experience Sharing",
+    label: "Experience Sharing",
+  },
+  {
+    type: "Contest",
+    name: "Contest",
+    label: "Weekly Contest",
+  },
+];
 
 const formatDate = (date) => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -23,15 +50,19 @@ const formatDate = (date) => {
 
 const MentorAttendance = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
+
   const [sessionType, setSessionType] = useState("Contest");
+  const [sessionName, setSessionName] = useState("Contest");
 
   const [teamData, setTeamData] = useState({
     name: "",
+    teamId: null,
     students: [],
   });
 
   const [statusMap, setStatusMap] = useState({});
   const [savingKey, setSavingKey] = useState(null);
+
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [loadingRecords, setLoadingRecords] = useState(false);
 
@@ -40,6 +71,10 @@ const MentorAttendance = () => {
 
   const dateKey = formatDate(selectedDate);
 
+  // ==========================================================
+  // LOAD MY TEAM
+  // ==========================================================
+
   const fetchMyTeam = useCallback(async () => {
     setLoadingTeam(true);
     setError("");
@@ -47,15 +82,23 @@ const MentorAttendance = () => {
     try {
       const res = await api.get("/attendance/my-team");
 
+      console.log("MY TEAM RESPONSE:", res.data);
+
+      const students = Array.isArray(res.data?.students)
+        ? res.data.students
+        : [];
+
       setTeamData({
-        name: res.data?.teamName || "",
-        students: Array.isArray(res.data?.students) ? res.data.students : [],
+        name: res.data?.teamName || res.data?.team?.name || "My Team",
+        teamId: res.data?.teamId || res.data?.team?._id || null,
+        students,
       });
     } catch (err) {
-      console.error("Failed to load mentor team:", err);
+      console.error("FAILED TO LOAD TEAM:", err);
 
       setTeamData({
         name: "",
+        teamId: null,
         students: [],
       });
 
@@ -67,12 +110,16 @@ const MentorAttendance = () => {
     }
   }, []);
 
+  // ==========================================================
+  // LOAD ATTENDANCE RECORDS
+  // ==========================================================
+
   const fetchTeamRecords = useCallback(async () => {
     if (loadingTeam) {
       return;
     }
 
-    if (!teamData.students.length) {
+    if (!teamData.teamId) {
       setStatusMap({});
       return;
     }
@@ -85,12 +132,15 @@ const MentorAttendance = () => {
         params: {
           date: dateKey,
           sessionType,
+          sessionName,
         },
       });
 
-      const map = {};
+      console.log("TEAM RECORDS RESPONSE:", res.data);
 
       const records = Array.isArray(res.data?.records) ? res.data.records : [];
+
+      const map = {};
 
       records.forEach((record) => {
         const studentId =
@@ -103,14 +153,15 @@ const MentorAttendance = () => {
         }
 
         map[String(studentId)] = {
-          first: record.firstCheck?.status || "Absent",
-          second: record.secondCheck?.status || "Absent",
+          first: record.firstCheck?.status || "",
+          second: record.secondCheck?.status || "",
         };
       });
 
       setStatusMap(map);
     } catch (err) {
-      console.error("Failed to load attendance records:", err);
+      console.error("FAILED TO LOAD ATTENDANCE:", err);
+      console.error("SERVER RESPONSE:", err.response?.data);
 
       setStatusMap({});
 
@@ -120,31 +171,95 @@ const MentorAttendance = () => {
     } finally {
       setLoadingRecords(false);
     }
-  }, [dateKey, sessionType, loadingTeam, teamData.students.length]);
+  }, [dateKey, sessionType, sessionName, loadingTeam, teamData.teamId]);
+
+  // ==========================================================
+  // INITIAL LOAD
+  // ==========================================================
 
   useEffect(() => {
     fetchMyTeam();
   }, [fetchMyTeam]);
 
+  // ==========================================================
+  // LOAD RECORDS
+  // ==========================================================
+
   useEffect(() => {
-    if (!loadingTeam) {
+    if (!loadingTeam && teamData.teamId) {
       fetchTeamRecords();
     }
-  }, [fetchTeamRecords, loadingTeam]);
+  }, [loadingTeam, teamData.teamId, fetchTeamRecords]);
+
+  // ==========================================================
+  // SESSION CHANGE
+  // ==========================================================
+
+  const handleSessionChange = (value) => {
+    const selected = SESSION_OPTIONS.find((session) => session.name === value);
+
+    if (!selected) {
+      return;
+    }
+
+    setSessionType(selected.type);
+    setSessionName(selected.name);
+
+    setStatusMap({});
+    setError("");
+    setSuccessMessage("");
+  };
+
+  // ==========================================================
+  // DATE CHANGE
+  // ==========================================================
+
+  const handleDateChange = (date) => {
+    if (!(date instanceof Date)) {
+      return;
+    }
+
+    setSelectedDate(date);
+
+    setStatusMap({});
+    setError("");
+    setSuccessMessage("");
+  };
+
+  // ==========================================================
+  // MARK ATTENDANCE
+  // ==========================================================
 
   const handleMark = async (studentId, checkType, status) => {
+    if (!studentId) {
+      setError("Invalid student ID.");
+      return;
+    }
+
+    if (!teamData.teamId) {
+      setError("Your team could not be identified.");
+      return;
+    }
+
+    if (!status) {
+      return;
+    }
+
     const normalizedStudentId = String(studentId);
+
     const key = `${normalizedStudentId}-${checkType}`;
 
-    const previousStatus =
-      statusMap[normalizedStudentId]?.[checkType] || "Absent";
+    const previousStatus = statusMap[normalizedStudentId]?.[checkType] || "";
 
     setError("");
     setSuccessMessage("");
 
+    // ========================================================
+    // OPTIMISTIC UPDATE
+    // ========================================================
+
     setStatusMap((prev) => ({
       ...prev,
-
       [normalizedStudentId]: {
         ...(prev[normalizedStudentId] || {}),
         [checkType]: status,
@@ -154,46 +269,86 @@ const MentorAttendance = () => {
     setSavingKey(key);
 
     try {
-      await api.post("/attendance/mark", {
+      const payload = {
         studentId: normalizedStudentId,
         date: dateKey,
         sessionType,
+        sessionName,
         checkType,
         status,
-      });
+      };
 
-      setSuccessMessage("Attendance saved successfully.");
+      console.log("SENDING ATTENDANCE:", payload);
+
+      const response = await api.post("/attendance/mark", payload);
+
+      console.log("ATTENDANCE RESPONSE:", response.data);
+
+      if (!response.data?.success) {
+        throw new Error(
+          response.data?.message || "Attendance could not be saved.",
+        );
+      }
+
+      // Keep exactly what was selected
+      setStatusMap((prev) => ({
+        ...prev,
+        [normalizedStudentId]: {
+          ...(prev[normalizedStudentId] || {}),
+          [checkType]: status,
+        },
+      }));
+
+      setSuccessMessage(`${status} attendance saved successfully.`);
 
       setTimeout(() => {
         setSuccessMessage("");
-      }, 2500);
+      }, 2000);
     } catch (err) {
-      console.error("Failed to save attendance:", err);
+      console.error("ATTENDANCE SAVE ERROR:", err);
 
+      console.error("SERVER RESPONSE:", err.response?.data);
+
+      // Restore previous value ONLY if saving failed
       setStatusMap((prev) => ({
         ...prev,
-
         [normalizedStudentId]: {
           ...(prev[normalizedStudentId] || {}),
           [checkType]: previousStatus,
         },
       }));
 
-      setError(err.response?.data?.message || "Failed to save attendance.");
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          err.message ||
+          "Failed to save attendance.",
+      );
     } finally {
       setSavingKey(null);
     }
   };
 
-  const handleRefresh = () => {
+  // ==========================================================
+  // REFRESH
+  // ==========================================================
+
+  const handleRefresh = async () => {
     setError("");
-    fetchTeamRecords();
+    setSuccessMessage("");
+
+    await fetchMyTeam();
   };
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
         {/* HEADER */}
+
         <div className="mb-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -217,6 +372,7 @@ const MentorAttendance = () => {
         </div>
 
         {/* ERROR */}
+
         {error && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
             <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-600" />
@@ -230,6 +386,7 @@ const MentorAttendance = () => {
         )}
 
         {/* SUCCESS */}
+
         {successMessage && (
           <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
             <Check size={18} className="text-emerald-600" />
@@ -241,8 +398,10 @@ const MentorAttendance = () => {
         )}
 
         {/* MAIN GRID */}
+
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* LEFT */}
+
           <div className="lg:col-span-4">
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
@@ -265,41 +424,57 @@ const MentorAttendance = () => {
 
               <div className="p-4 sm:p-5">
                 {/* CALENDAR */}
+
                 <div className="attendance-calendar-wrapper">
-                  <Calendar
-                    onChange={(date) => {
-                      setSelectedDate(date);
-                      setError("");
-                      setSuccessMessage("");
-                    }}
-                    value={selectedDate}
-                  />
+                  <Calendar onChange={handleDateChange} value={selectedDate} />
                 </div>
 
                 {/* SESSION */}
+
                 <div className="mt-6">
                   <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Session Type
+                    Session
                   </label>
 
                   <select
+                    value={sessionName}
+                    onChange={(e) => handleSessionChange(e.target.value)}
                     className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50"
-                    value={sessionType}
-                    onChange={(e) => {
-                      setSessionType(e.target.value);
-                      setError("");
-                      setSuccessMessage("");
-                    }}
                   >
-                    <option value="Contest">Weekly Contest</option>
-
-                    <option value="Experience Sharing">
-                      Experience Sharing
-                    </option>
+                    {SESSION_OPTIONS.map((session) => (
+                      <option key={session.name} value={session.name}>
+                        {session.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
+                {/* SESSION TYPE */}
+
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Session Type
+                  </p>
+
+                  <p className="mt-1 text-sm font-bold text-slate-700">
+                    {sessionType}
+                  </p>
+                </div>
+
+                {/* TEAM */}
+
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Team
+                  </p>
+
+                  <p className="mt-1 text-sm font-bold text-slate-700">
+                    {teamData.name || "My Team"}
+                  </p>
+                </div>
+
                 {/* DATE */}
+
                 <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 p-4">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">
                     Selected Date
@@ -316,9 +491,11 @@ const MentorAttendance = () => {
           </div>
 
           {/* RIGHT */}
+
           <div className="lg:col-span-8">
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               {/* TEAM HEADER */}
+
               <div className="bg-linear-to-r from-indigo-600 to-indigo-700 px-5 py-5 text-white sm:px-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
@@ -332,7 +509,11 @@ const MentorAttendance = () => {
                       </h2>
 
                       <p className="mt-1 text-xs font-medium text-indigo-100">
-                        Only mentors assigned to this team can mark attendance.
+                        {teamData.students.length}{" "}
+                        {teamData.students.length === 1
+                          ? "student"
+                          : "students"}{" "}
+                        assigned
                       </p>
                     </div>
                   </div>
@@ -340,19 +521,24 @@ const MentorAttendance = () => {
                   <button
                     type="button"
                     onClick={handleRefresh}
-                    disabled={loadingRecords}
+                    disabled={
+                      loadingTeam || loadingRecords || savingKey !== null
+                    }
                     className="flex items-center justify-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto"
                   >
                     <RefreshCw
                       size={14}
-                      className={loadingRecords ? "animate-spin" : ""}
+                      className={
+                        loadingTeam || loadingRecords ? "animate-spin" : ""
+                      }
                     />
                     Refresh
                   </button>
                 </div>
               </div>
 
-              {/* TEAM LOADING */}
+              {/* LOADING TEAM */}
+
               {loadingTeam ? (
                 <div className="flex min-h-75 flex-col items-center justify-center p-10">
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50">
@@ -367,6 +553,8 @@ const MentorAttendance = () => {
                   </p>
                 </div>
               ) : teamData.students.length === 0 ? (
+                /* NO STUDENTS */
+
                 <div className="flex min-h-75 flex-col items-center justify-center p-10">
                   <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
                     <Users size={24} className="text-slate-400" />
@@ -382,6 +570,8 @@ const MentorAttendance = () => {
                   </p>
                 </div>
               ) : (
+                /* STUDENTS */
+
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-175">
                     <thead>
@@ -403,6 +593,7 @@ const MentorAttendance = () => {
                     <tbody className="divide-y divide-slate-100">
                       {teamData.students.map((student) => {
                         const studentId = String(student._id);
+
                         const studentStatus = statusMap[studentId] || {};
 
                         return (
@@ -410,6 +601,8 @@ const MentorAttendance = () => {
                             key={studentId}
                             className="group transition hover:bg-slate-50/80"
                           >
+                            {/* STUDENT */}
+
                             <td className="px-6 py-5">
                               <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-600">
@@ -435,22 +628,34 @@ const MentorAttendance = () => {
                               </div>
                             </td>
 
+                            {/* FIRST CHECK */}
+
                             <td className="px-6 py-5 text-center">
                               <StatusDropdown
-                                value={studentStatus.first || "Absent"}
+                                value={studentStatus.first || ""}
                                 saving={savingKey === `${studentId}-first`}
-                                disabled={loadingRecords || savingKey !== null}
+                                disabled={
+                                  loadingRecords ||
+                                  (savingKey !== null &&
+                                    savingKey !== `${studentId}-first`)
+                                }
                                 onChange={(value) =>
                                   handleMark(studentId, "first", value)
                                 }
                               />
                             </td>
 
+                            {/* SECOND CHECK */}
+
                             <td className="px-6 py-5 text-center">
                               <StatusDropdown
-                                value={studentStatus.second || "Absent"}
+                                value={studentStatus.second || ""}
                                 saving={savingKey === `${studentId}-second`}
-                                disabled={loadingRecords || savingKey !== null}
+                                disabled={
+                                  loadingRecords ||
+                                  (savingKey !== null &&
+                                    savingKey !== `${studentId}-second`)
+                                }
                                 onChange={(value) =>
                                   handleMark(studentId, "second", value)
                                 }
@@ -463,6 +668,8 @@ const MentorAttendance = () => {
                   </table>
                 </div>
               )}
+
+              {/* FOOTER */}
 
               {!loadingTeam && teamData.students.length > 0 && (
                 <div className="border-t border-slate-100 bg-slate-50 px-6 py-4">
@@ -487,6 +694,8 @@ const MentorAttendance = () => {
         </div>
       </div>
 
+      {/* CALENDAR CSS */}
+
       <style>{`
         .attendance-calendar-wrapper {
           width: 100%;
@@ -499,11 +708,14 @@ const MentorAttendance = () => {
           background: transparent;
         }
 
-        .attendance-calendar-wrapper .react-calendar__navigation {
+        .attendance-calendar-wrapper
+          .react-calendar__navigation {
           margin-bottom: 10px;
         }
 
-        .attendance-calendar-wrapper .react-calendar__navigation button {
+        .attendance-calendar-wrapper
+          .react-calendar__navigation
+          button {
           min-width: 40px;
           border-radius: 10px;
           font-weight: 700;
@@ -511,23 +723,29 @@ const MentorAttendance = () => {
           transition: all 0.2s ease;
         }
 
-        .attendance-calendar-wrapper .react-calendar__navigation button:hover {
+        .attendance-calendar-wrapper
+          .react-calendar__navigation
+          button:hover {
           background: #eef2ff;
           color: #4f46e5;
         }
 
-        .attendance-calendar-wrapper .react-calendar__month-view__weekdays {
+        .attendance-calendar-wrapper
+          .react-calendar__month-view__weekdays {
           font-size: 10px;
           font-weight: 800;
           text-transform: uppercase;
           color: #94a3b8;
         }
 
-        .attendance-calendar-wrapper .react-calendar__month-view__weekdays__weekday {
+        .attendance-calendar-wrapper
+          .react-calendar__month-view__weekdays__weekday {
           padding: 10px 4px;
         }
 
-        .attendance-calendar-wrapper .react-calendar__month-view__days button {
+        .attendance-calendar-wrapper
+          .react-calendar__month-view__days
+          button {
           border-radius: 10px;
           font-size: 13px;
           font-weight: 600;
@@ -536,35 +754,46 @@ const MentorAttendance = () => {
           transition: all 0.2s ease;
         }
 
-        .attendance-calendar-wrapper .react-calendar__month-view__days button:hover {
+        .attendance-calendar-wrapper
+          .react-calendar__month-view__days
+          button:hover {
           background: #eef2ff;
           color: #4f46e5;
         }
 
-        .attendance-calendar-wrapper .react-calendar__tile--now {
+        .attendance-calendar-wrapper
+          .react-calendar__tile--now {
           background: #f1f5f9;
           color: #4f46e5;
           font-weight: 800;
         }
 
-        .attendance-calendar-wrapper .react-calendar__tile--active {
+        .attendance-calendar-wrapper
+          .react-calendar__tile--active {
           background: #4f46e5 !important;
           color: white !important;
           border-radius: 10px;
           font-weight: 800;
         }
 
-        .attendance-calendar-wrapper .react-calendar__tile--active:hover {
+        .attendance-calendar-wrapper
+          .react-calendar__tile--active:hover {
           background: #4338ca !important;
         }
 
-        .attendance-calendar-wrapper .react-calendar__month-view__days button:disabled {
+        .attendance-calendar-wrapper
+          .react-calendar__month-view__days
+          button:disabled {
           color: #cbd5e1;
         }
       `}</style>
     </div>
   );
 };
+
+// ==========================================================
+// STATUS DROPDOWN
+// ==========================================================
 
 const StatusDropdown = ({ value, onChange, saving, disabled }) => {
   const statusStyles = {
@@ -576,16 +805,24 @@ const StatusDropdown = ({ value, onChange, saving, disabled }) => {
     Late: "border-amber-200 bg-amber-50 text-amber-700 focus:ring-amber-100",
 
     Excused: "border-blue-200 bg-blue-50 text-blue-700 focus:ring-blue-100",
+
+    "": "border-slate-200 bg-slate-50 text-slate-500 focus:ring-slate-100",
   };
 
   return (
     <div className="inline-flex items-center gap-2">
       <select
-        value={value}
+        value={value || ""}
         disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          const selectedStatus = e.target.value;
+
+          console.log("STATUS SELECTED:", selectedStatus);
+
+          onChange(selectedStatus);
+        }}
         className={`
-          min-w-26.25
+          min-w-32
           cursor-pointer
           rounded-lg
           border
@@ -598,9 +835,11 @@ const StatusDropdown = ({ value, onChange, saving, disabled }) => {
           focus:ring-4
           disabled:cursor-not-allowed
           disabled:opacity-50
-          ${statusStyles[value] || statusStyles.Absent}
+          ${statusStyles[value || ""] || statusStyles[""]}
         `}
       >
+        <option value="">Not marked</option>
+
         {STATUS_OPTIONS.map((option) => (
           <option key={option} value={option}>
             {option}
@@ -609,11 +848,11 @@ const StatusDropdown = ({ value, onChange, saving, disabled }) => {
       </select>
 
       <div className="flex h-6 w-6 items-center justify-center">
-        {saving ? (
+        {saving && (
           <Loader2 size={15} className="animate-spin text-indigo-500" />
-        ) : (
-          <Check size={15} className="text-emerald-500" />
         )}
+
+        {!saving && value && <Check size={15} className="text-emerald-500" />}
       </div>
     </div>
   );

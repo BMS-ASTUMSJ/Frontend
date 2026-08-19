@@ -9,6 +9,7 @@ import {
   FileText,
   Megaphone,
   UserCircle,
+  Archive,
   LogOut,
 } from "lucide-react";
 
@@ -16,8 +17,6 @@ function Sidebar({ role }) {
   const navigate = useNavigate();
 
   const currentRole = role?.toLowerCase();
-
-  
 
   const studentMenuItems = [
     {
@@ -52,7 +51,6 @@ function Sidebar({ role }) {
     },
   ];
 
-
   const adminMenuItems = [
     {
       name: "Dashboard",
@@ -61,12 +59,17 @@ function Sidebar({ role }) {
     },
     {
       name: "Applicants",
-      path: "/admin/Applicants",
+      path: "/admin/applicants",
       icon: Users,
     },
     {
       name: "Batch",
       path: "/admin/batches",
+      icon: Users,
+    },
+    {
+      name: "Teams",
+      path: "/admin/teams",
       icon: Users,
     },
     {
@@ -99,9 +102,13 @@ function Sidebar({ role }) {
       path: "/admin/users",
       icon: UserCircle,
     },
+    {
+      name: "Batch History",
+      path: "/admin/batch-history",
+      icon: Archive,
+    },
   ];
 
-  
   const mentorMenuItems = [
     {
       name: "Dashboard",
@@ -138,6 +145,11 @@ function Sidebar({ role }) {
       path: "/mentor/profile",
       icon: UserCircle,
     },
+    {
+      name: "my Batch",
+      path: "/mentor/my-batch",
+      icon: Archive,
+    },
   ];
 
   let menuItems = studentMenuItems;
@@ -148,8 +160,6 @@ function Sidebar({ role }) {
     menuItems = mentorMenuItems;
   }
 
-  
-
   const handleLogout = async () => {
     try {
       await api.post("/auth/logout");
@@ -158,31 +168,21 @@ function Sidebar({ role }) {
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-
       navigate("/");
     }
   };
 
- 
   return (
     <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col bg-[#0A1931] text-white">
-
       <div className="flex h-20 items-center border-b border-white/10 px-6">
         <div>
-          <h1 className="text-xl font-bold">
-            ASTU MSJ
-          </h1>
+          <h1 className="text-xl font-bold">ASTU MSJ</h1>
 
-          <p className="text-xs tracking-[0.2em] text-[#B3CFE5]">
-            BOOTCAMP
-          </p>
+          <p className="text-xs tracking-[0.2em] text-[#B3CFE5]">BOOTCAMP</p>
         </div>
       </div>
 
-      
-
       <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-6">
-
         {menuItems.map((item) => {
           const Icon = item.icon;
 
@@ -200,14 +200,11 @@ function Sidebar({ role }) {
               }
             >
               <Icon className="h-5 w-5" />
-
               <span>{item.name}</span>
             </NavLink>
           );
         })}
-
       </nav>
-
 
       <div className="border-t border-white/10 p-4">
         <button
@@ -216,11 +213,9 @@ function Sidebar({ role }) {
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-[#D6D6D6] transition hover:bg-red-500/10 hover:text-red-300"
         >
           <LogOut className="h-5 w-5" />
-
           <span>Logout</span>
         </button>
       </div>
-
     </aside>
   );
 }

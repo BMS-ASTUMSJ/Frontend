@@ -62,8 +62,7 @@ function AdminProfile() {
         console.error("Failed to load profile:", err);
 
         const message =
-          err.response?.data?.message ||
-          "Failed to load your profile.";
+          err.response?.data?.message || "Failed to load your profile.";
 
         toast.error(message);
       } finally {
@@ -146,15 +145,12 @@ function AdminProfile() {
         }
       }
 
-      toast.success(
-        response.data?.message || "Profile updated successfully."
-      );
+      toast.success(response.data?.message || "Profile updated successfully.");
     } catch (err) {
       console.error("Profile update error:", err);
 
       const message =
-        err.response?.data?.message ||
-        "Failed to update your profile.";
+        err.response?.data?.message || "Failed to update your profile.";
 
       toast.error(message);
     } finally {
@@ -195,9 +191,7 @@ function AdminProfile() {
         newPassword: formData.newPassword,
       });
 
-      toast.success(
-        response.data?.message || "Password updated successfully."
-      );
+      toast.success(response.data?.message || "Password updated successfully.");
 
       // Clear password fields
       setFormData((prev) => ({
@@ -216,8 +210,7 @@ function AdminProfile() {
       console.error("Password change error:", err);
 
       const message =
-        err.response?.data?.message ||
-        "Failed to update your password.";
+        err.response?.data?.message || "Failed to update your password.";
 
       toast.error(message);
     } finally {
@@ -230,13 +223,11 @@ function AdminProfile() {
   // ============================================================
   if (loadingProfile) {
     return (
-      <div className="flex min-h-[500px] items-center justify-center bg-[#F6FAFD]">
+      <div className="flex min-h-125 items-center justify-center bg-[#F6FAFD]">
         <div className="flex items-center gap-3 text-[#1A3D63]">
           <Loader2 className="h-6 w-6 animate-spin" />
 
-          <span className="font-semibold">
-            Loading your profile...
-          </span>
+          <span className="font-semibold">Loading your profile...</span>
         </div>
       </div>
     );
@@ -449,8 +440,7 @@ function AdminProfile() {
               {/* CURRENT PASSWORD */}
               <div className="mb-5">
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Current Password{" "}
-                  <span className="text-red-500">*</span>
+                  Current Password <span className="text-red-500">*</span>
                 </label>
 
                 <div className="relative">
@@ -466,9 +456,7 @@ function AdminProfile() {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      setShowCurrentPassword(!showCurrentPassword)
-                    }
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4A7FA7]"
                   >
                     {showCurrentPassword ? (
@@ -483,8 +471,7 @@ function AdminProfile() {
               {/* NEW PASSWORD */}
               <div className="mb-5">
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  New Password{" "}
-                  <span className="text-red-500">*</span>
+                  New Password <span className="text-red-500">*</span>
                 </label>
 
                 <div className="relative">
@@ -515,8 +502,7 @@ function AdminProfile() {
               {/* CONFIRM PASSWORD */}
               <div className="mb-7">
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Confirm New Password{" "}
-                  <span className="text-red-500">*</span>
+                  Confirm New Password <span className="text-red-500">*</span>
                 </label>
 
                 <div className="relative">
@@ -532,9 +518,7 @@ function AdminProfile() {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      setShowConfirmPassword(!showConfirmPassword)
-                    }
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4A7FA7]"
                   >
                     {showConfirmPassword ? (
