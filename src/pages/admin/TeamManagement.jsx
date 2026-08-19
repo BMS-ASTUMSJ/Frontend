@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import api from "../../utils/api";
-import { Users, UserPlus, Loader2, UserRound } from "lucide-react";
+import {
+  Users,
+  UserPlus,
+  Loader2,
+  UserRound,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
+import { toast } from "react-hot-toast";
 
 function TeamManagement() {
   const [teams, setTeams] = useState([]);
@@ -20,25 +28,41 @@ function TeamManagement() {
 
   const [selectedStudents, setSelectedStudents] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [tRes, sRes, mRes] = await Promise.all([
+  /*
+  |--------------------------------------------------------------------------
+  | FETCH DATA
+  |--------------------------------------------------------------------------
+  */
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      const [teamsResponse, studentsResponse, mentorsResponse] =
+        await Promise.all([
           api.get("/teams"),
           api.get("/users/students"),
           api.get("/users/mentors"),
         ]);
 
-        setTeams(tRes.data.teams || []);
-        setStudents(sRes.data.students || []);
-        setMentors(mRes.data.mentors || []);
-      } catch (err) {
-        console.error("Fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setTeams(teamsResponse.data?.teams || []);
+      setStudents(studentsResponse.data?.students || []);
+      setMentors(mentorsResponse.data?.mentors || []);
+    } catch (err) {
+      console.error("Fetch team management data error:", err);
 
+      const message =
+        err.response?.data?.message ||
+        "Failed to load teams, students, and mentors.";
+
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -48,7 +72,11 @@ function TeamManagement() {
   |--------------------------------------------------------------------------
   */
 
-  const filteredMentors = mentors.filter((mentor) => mentor.gender === gender);
+  const filteredMentors = mentors.filter(
+    (mentor) =>
+      !gender ||
+      mentor.gender?.toLowerCase() === gender.toLowerCase(),
+  );
 
   /*
   |--------------------------------------------------------------------------
@@ -62,18 +90,40 @@ function TeamManagement() {
     setFormError("");
     setFormSuccess("");
 
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
+      const message = "Team name is required.";
+      setFormError(message);
+      toast.error(message);
+      return;
+    }
+
+    if (!gender) {
+      const message = "Please select a team gender.";
+      setFormError(message);
+      toast.error(message);
+      return;
+    }
+
     if (!mentor1 || !mentor2) {
-      setFormError("Please select exactly 2 mentors.");
+      const message = "Please select exactly 2 mentors.";
+      setFormError(message);
+      toast.error(message);
       return;
     }
 
     if (mentor1 === mentor2) {
-      setFormError("Please select two different mentors.");
+      const message = "Please select two different mentors.";
+      setFormError(message);
+      toast.error(message);
       return;
     }
 
     if (selectedStudents.length === 0) {
-      setFormError("Please select at least one student.");
+      const message = "Please select at least one student.";
+      setFormError(message);
+      toast.error(message);
       return;
     }
 
@@ -83,7 +133,7 @@ function TeamManagement() {
       const mentorIds = [mentor1, mentor2];
 
       const response = await api.post("/teams", {
-        name,
+        name: trimmedName,
         gender,
         mentorIds,
         studentIds: selectedStudents,
@@ -91,7 +141,11 @@ function TeamManagement() {
 
       console.log("Team created:", response.data);
 
-      setFormSuccess("Team created successfully!");
+      const message =
+        response.data?.message || "Team created successfully.";
+
+      setFormSuccess(message);
+      toast.success(message);
 
       setName("");
       setGender("");
@@ -101,11 +155,15 @@ function TeamManagement() {
 
       const teamsResponse = await api.get("/teams");
 
-      setTeams(teamsResponse.data.teams || []);
+      setTeams(teamsResponse.data?.teams || []);
     } catch (err) {
       console.error("Create team error:", err);
 
-      setFormError(err.response?.data?.message || "Error creating team");
+      const message =
+        err.response?.data?.message || "Failed to create team.";
+
+      setFormError(message);
+      toast.error(message);
     } finally {
       setCreating(false);
     }
@@ -119,8 +177,8 @@ function TeamManagement() {
 
   if (loading) {
     return (
-      <div className="p-10 text-center">
-        <Loader2 className="animate-spin mx-auto text-[#1A3D63]" />
+      <div className="flex min-h-screen items-center justify-center bg-[#F6FAFD]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#1A3D63]" />
       </div>
     );
   }
@@ -132,23 +190,43 @@ function TeamManagement() {
   */
 
   return (
-    <div className="min-h-screen bg-[#F6FAFD] p-6">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-6">
+      <div className="mx-auto max-w-7xl space-y-6">
         {/* =====================================================
             HEADER
         ====================================================== */}
 
-        <div className="flex items-center justify-between bg-[#0A1931] p-8 rounded-3xl text-white">
+        <div className="flex flex-col justify-between gap-5 rounded-3xl bg-[#0A1931] p-6 text-white shadow-sm md:flex-row md:items-center md:p-8">
           <div>
-            <h1 className="text-2xl font-bold">Team Management</h1>
+            <div className="flex items-center gap-4">
+              <div className="rounded-2xl bg-[#1A3D63] p-3">
+                <Users size={28} />
+              </div>
 
-            <p className="text-[#B3CFE5]">
-              Group students with two mentors for projects.
-            </p>
+              <div>
+                <h1 className="text-2xl font-bold md:text-3xl">
+                  Team Management
+                </h1>
+
+                <p className="mt-1 text-sm text-[#B3CFE5]">
+                  Group students with two mentors for projects.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <Users size={42} />
+          <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-3">
+            <Users size={18} />
+
+            <span className="text-sm font-semibold">
+              {teams.length} Team{teams.length !== 1 ? "s" : ""}
+            </span>
+          </div>
         </div>
+
+        {/* =====================================================
+            MAIN CONTENT
+        ====================================================== */}
 
         <div className="grid gap-8 lg:grid-cols-3">
           {/* ===================================================
@@ -157,30 +235,57 @@ function TeamManagement() {
 
           <form
             onSubmit={handleCreateTeam}
-            className="bg-white p-6 rounded-3xl border border-[#B3CFE5] space-y-5"
+            className="h-fit space-y-5 rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm"
           >
             <div className="flex items-center gap-2">
-              <UserPlus size={20} className="text-[#1A3D63]" />
+              <div className="rounded-xl bg-[#EAF3F9] p-2">
+                <UserPlus size={20} className="text-[#1A3D63]" />
+              </div>
 
-              <h2 className="font-bold text-lg text-[#0A1931]">New Team</h2>
+              <div>
+                <h2 className="text-lg font-bold text-[#0A1931]">
+                  New Team
+                </h2>
+
+                <p className="text-xs text-[#7A7F85]">
+                  Assign 2 mentors and students
+                </p>
+              </div>
             </div>
 
-            {/* Inline feedback */}
+            {/* =================================================
+                INLINE ERROR
+            ================================================== */}
+
             {formError && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                {formError}
+              <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+                <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
+
+                <span>{formError}</span>
               </div>
             )}
+
+            {/* =================================================
+                INLINE SUCCESS
+            ================================================== */}
 
             {formSuccess && (
-              <div className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm font-semibold text-green-700">
-                {formSuccess}
+              <div className="flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 p-3 text-sm font-semibold text-green-700">
+                <CheckCircle2
+                  size={18}
+                  className="mt-0.5 flex-shrink-0"
+                />
+
+                <span>{formSuccess}</span>
               </div>
             )}
 
-            {/* Team Name */}
+            {/* =================================================
+                TEAM NAME
+            ================================================== */}
+
             <div>
-              <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+              <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
                 Team Name
               </label>
 
@@ -188,15 +293,22 @@ function TeamManagement() {
                 type="text"
                 placeholder="Enter team name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-[#B3CFE5] p-3 outline-none focus:ring-2 focus:ring-[#4A7FA7]"
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setFormError("");
+                  setFormSuccess("");
+                }}
+                className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
                 required
               />
             </div>
 
-            {/* Gender */}
+            {/* =================================================
+                GENDER
+            ================================================== */}
+
             <div>
-              <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+              <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
                 Team Gender
               </label>
 
@@ -204,11 +316,12 @@ function TeamManagement() {
                 value={gender}
                 onChange={(e) => {
                   setGender(e.target.value);
-
                   setMentor1("");
                   setMentor2("");
+                  setFormError("");
+                  setFormSuccess("");
                 }}
-                className="w-full rounded-xl border border-[#B3CFE5] p-3 outline-none focus:ring-2 focus:ring-[#4A7FA7]"
+                className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
                 required
               >
                 <option value="">Select Team Gender</option>
@@ -220,22 +333,22 @@ function TeamManagement() {
             </div>
 
             {/* =================================================
-                MENTOR SECTION
+                MENTORS
             ================================================== */}
 
             <div className="pt-2">
-              <div className="flex items-center justify-between mb-3">
+              <div className="mb-3 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-[#0A1931]">
                     Team Mentors
                   </p>
 
-                  <p className="text-xs text-[#7A7F85] mt-1">
+                  <p className="mt-1 text-xs text-[#7A7F85]">
                     Select exactly 2 mentors
                   </p>
                 </div>
 
-                <div className="flex items-center gap-1 bg-[#EAF3F9] px-3 py-1.5 rounded-full">
+                <div className="flex items-center gap-1 rounded-full bg-[#EAF3F9] px-3 py-1.5">
                   <UserRound size={14} className="text-[#1A3D63]" />
 
                   <span className="text-xs font-bold text-[#1A3D63]">
@@ -248,32 +361,30 @@ function TeamManagement() {
                 <div className="rounded-xl border border-dashed border-[#B3CFE5] bg-[#F6FAFD] p-4 text-center">
                   <UserRound
                     size={28}
-                    className="mx-auto text-[#B3CFE5] mb-2"
+                    className="mx-auto mb-2 text-[#B3CFE5]"
                   />
 
                   <p className="text-sm text-[#7A7F85]">
                     Select a team gender first
                   </p>
 
-                  <p className="text-xs text-[#7A7F85] mt-1">
+                  <p className="mt-1 text-xs text-[#7A7F85]">
                     Available mentors will appear here
                   </p>
                 </div>
               ) : filteredMentors.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-[#B3CFE5] bg-[#F6FAFD] p-4 text-center">
-                  <p className="text-sm text-red-500 font-medium">
+                <div className="rounded-xl border border-dashed border-red-200 bg-red-50 p-4 text-center">
+                  <p className="text-sm font-medium text-red-600">
                     No approved {gender.toLowerCase()} mentors available.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* ================================
-                      MENTOR 1
-                  ================================= */}
+                  {/* Mentor 1 */}
 
-                  <div className="rounded-2xl border border-[#B3CFE5] p-4 bg-[#FAFCFE]">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="h-7 w-7 rounded-full bg-[#1A3D63] text-white flex items-center justify-center text-xs font-bold">
+                  <div className="rounded-2xl border border-[#B3CFE5] bg-[#FAFCFE] p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1A3D63] text-xs font-bold text-white">
                         1
                       </div>
 
@@ -282,14 +393,19 @@ function TeamManagement() {
                           First Mentor
                         </p>
 
-                        <p className="text-xs text-[#7A7F85]">Primary mentor</p>
+                        <p className="text-xs text-[#7A7F85]">
+                          Primary mentor
+                        </p>
                       </div>
                     </div>
 
                     <select
                       value={mentor1}
-                      onChange={(e) => setMentor1(e.target.value)}
-                      className="w-full rounded-xl border border-[#B3CFE5] p-3 outline-none focus:ring-2 focus:ring-[#4A7FA7] bg-white"
+                      onChange={(e) => {
+                        setMentor1(e.target.value);
+                        setFormError("");
+                      }}
+                      className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
                       required
                     >
                       <option value="">Select first mentor</option>
@@ -306,19 +422,17 @@ function TeamManagement() {
                     </select>
 
                     {mentor1 && (
-                      <div className="mt-2 text-xs text-green-600 font-medium">
+                      <div className="mt-2 text-xs font-medium text-green-600">
                         ✓ Mentor selected
                       </div>
                     )}
                   </div>
 
-                  {/* ================================
-                      MENTOR 2
-                  ================================= */}
+                  {/* Mentor 2 */}
 
-                  <div className="rounded-2xl border border-[#B3CFE5] p-4 bg-[#FAFCFE]">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="h-7 w-7 rounded-full bg-[#4A7FA7] text-white flex items-center justify-center text-xs font-bold">
+                  <div className="rounded-2xl border border-[#B3CFE5] bg-[#FAFCFE] p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#4A7FA7] text-xs font-bold text-white">
                         2
                       </div>
 
@@ -327,14 +441,19 @@ function TeamManagement() {
                           Second Mentor
                         </p>
 
-                        <p className="text-xs text-[#7A7F85]">Co-mentor</p>
+                        <p className="text-xs text-[#7A7F85]">
+                          Co-mentor
+                        </p>
                       </div>
                     </div>
 
                     <select
                       value={mentor2}
-                      onChange={(e) => setMentor2(e.target.value)}
-                      className="w-full rounded-xl border border-[#B3CFE5] p-3 outline-none focus:ring-2 focus:ring-[#4A7FA7] bg-white"
+                      onChange={(e) => {
+                        setMentor2(e.target.value);
+                        setFormError("");
+                      }}
+                      className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
                       required
                     >
                       <option value="">Select second mentor</option>
@@ -351,57 +470,71 @@ function TeamManagement() {
                     </select>
 
                     {mentor2 && (
-                      <div className="mt-2 text-xs text-green-600 font-medium">
+                      <div className="mt-2 text-xs font-medium text-green-600">
                         ✓ Mentor selected
                       </div>
                     )}
                   </div>
 
-                  {/* ================================
-                      SELECTED MENTOR SUMMARY
-                  ================================= */}
+                  {/* Selected mentors */}
 
                   {mentor1 && mentor2 && (
-                    <div className="rounded-2xl bg-[#EAF3F9] border border-[#B3CFE5] p-4">
-                      <p className="text-xs font-bold text-[#1A3D63] mb-3">
+                    <div className="rounded-2xl border border-[#B3CFE5] bg-[#EAF3F9] p-4">
+                      <p className="mb-3 text-xs font-bold text-[#1A3D63]">
                         TEAM MENTORS
                       </p>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {/* Mentor 1 */}
-                        <div className="flex items-center gap-2 bg-white rounded-xl p-3">
-                          <div className="h-9 w-9 rounded-full bg-[#1A3D63] text-white flex items-center justify-center">
+
+                        <div className="flex items-center gap-2 rounded-xl bg-white p-3">
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#1A3D63] text-white">
                             <UserRound size={17} />
                           </div>
 
                           <div className="min-w-0">
-                            <p className="text-xs text-[#7A7F85]">Mentor 1</p>
+                            <p className="text-xs text-[#7A7F85]">
+                              Mentor 1
+                            </p>
 
-                            <p className="text-sm font-bold text-[#0A1931] truncate">
+                            <p className="truncate text-sm font-bold text-[#0A1931]">
                               {
-                                mentors.find((m) => m._id === mentor1)
-                                  ?.firstName
+                                mentors.find(
+                                  (mentor) => mentor._id === mentor1,
+                                )?.firstName
                               }{" "}
-                              {mentors.find((m) => m._id === mentor1)?.lastName}
+                              {
+                                mentors.find(
+                                  (mentor) => mentor._id === mentor1,
+                                )?.lastName
+                              }
                             </p>
                           </div>
                         </div>
 
                         {/* Mentor 2 */}
-                        <div className="flex items-center gap-2 bg-white rounded-xl p-3">
-                          <div className="h-9 w-9 rounded-full bg-[#4A7FA7] text-white flex items-center justify-center">
+
+                        <div className="flex items-center gap-2 rounded-xl bg-white p-3">
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#4A7FA7] text-white">
                             <UserRound size={17} />
                           </div>
 
                           <div className="min-w-0">
-                            <p className="text-xs text-[#7A7F85]">Mentor 2</p>
+                            <p className="text-xs text-[#7A7F85]">
+                              Mentor 2
+                            </p>
 
-                            <p className="text-sm font-bold text-[#0A1931] truncate">
+                            <p className="truncate text-sm font-bold text-[#0A1931]">
                               {
-                                mentors.find((m) => m._id === mentor2)
-                                  ?.firstName
+                                mentors.find(
+                                  (mentor) => mentor._id === mentor2,
+                                )?.firstName
                               }{" "}
-                              {mentors.find((m) => m._id === mentor2)?.lastName}
+                              {
+                                mentors.find(
+                                  (mentor) => mentor._id === mentor2,
+                                )?.lastName
+                              }
                             </p>
                           </div>
                         </div>
@@ -417,40 +550,47 @@ function TeamManagement() {
             ================================================== */}
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-bold text-[#0A1931]">Students</p>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-bold text-[#0A1931]">
+                  Students
+                </p>
 
                 <span className="text-xs font-bold text-[#4A7FA7]">
                   {selectedStudents.length} selected
                 </span>
               </div>
 
-              <div className="border border-[#B3CFE5] rounded-xl p-3 h-32 overflow-y-auto">
+              <div className="h-40 overflow-y-auto rounded-xl border border-[#B3CFE5] p-3">
                 {students.length === 0 ? (
-                  <p className="text-sm text-gray-500">
-                    No students available.
-                  </p>
+                  <div className="flex h-full items-center justify-center">
+                    <p className="text-sm text-gray-500">
+                      No students available.
+                    </p>
+                  </div>
                 ) : (
                   students.map((student) => (
                     <label
                       key={student._id}
-                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#F6FAFD] cursor-pointer"
+                      className="flex cursor-pointer items-center gap-2 rounded-lg p-2 hover:bg-[#F6FAFD]"
                     >
                       <input
                         type="checkbox"
                         checked={selectedStudents.includes(student._id)}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedStudents((prev) => [
-                              ...prev,
+                            setSelectedStudents((previous) => [
+                              ...previous,
                               student._id,
                             ]);
                           } else {
-                            setSelectedStudents((prev) =>
-                              prev.filter((id) => id !== student._id),
+                            setSelectedStudents((previous) =>
+                              previous.filter(
+                                (id) => id !== student._id,
+                              ),
                             );
                           }
                         }}
+                        className="h-4 w-4"
                       />
 
                       <span className="text-sm text-[#0A1931]">
@@ -468,10 +608,20 @@ function TeamManagement() {
 
             <button
               type="submit"
-              disabled={creating || !mentor1 || !mentor2 || mentor1 === mentor2}
-              className={`w-full py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 ${
-                creating || !mentor1 || !mentor2 || mentor1 === mentor2
-                  ? "bg-gray-400 cursor-not-allowed text-white"
+              disabled={
+                creating ||
+                !mentor1 ||
+                !mentor2 ||
+                mentor1 === mentor2 ||
+                selectedStudents.length === 0
+              }
+              className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 font-bold transition ${
+                creating ||
+                !mentor1 ||
+                !mentor2 ||
+                mentor1 === mentor2 ||
+                selectedStudents.length === 0
+                  ? "cursor-not-allowed bg-gray-400 text-white"
                   : "bg-[#1A3D63] text-white hover:bg-[#4A7FA7]"
               }`}
             >
@@ -493,81 +643,109 @@ function TeamManagement() {
               TEAMS LIST
           ==================================================== */}
 
-          <div className="lg:col-span-2 grid gap-4">
+          <div className="grid gap-4 lg:col-span-2">
             {teams.length === 0 ? (
-              <div className="rounded-3xl border border-[#B3CFE5] bg-white p-10 text-center">
-                <Users size={40} className="mx-auto text-[#B3CFE5] mb-3" />
+              <div className="rounded-3xl border border-[#B3CFE5] bg-white p-10 text-center shadow-sm">
+                <Users
+                  size={40}
+                  className="mx-auto mb-3 text-[#B3CFE5]"
+                />
 
-                <p className="text-[#7A7F85]">No teams created yet.</p>
+                <p className="font-semibold text-[#0A1931]">
+                  No teams created yet.
+                </p>
+
+                <p className="mt-1 text-sm text-[#7A7F85]">
+                  Create a team using the form.
+                </p>
               </div>
             ) : (
               teams.map((team) => (
                 <div
                   key={team._id}
-                  className="rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm"
+                  className="rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm transition hover:shadow-md"
                 >
                   {/* Team Header */}
-                  <div className="flex justify-between items-center mb-5">
-                    <h3 className="text-xl font-bold text-[#0A1931]">
-                      {team.name}
-                    </h3>
 
-                    <span className="bg-[#EAF3F9] px-3 py-1 rounded-full text-xs font-bold text-[#1A3D63]">
-                      {team.gender}
+                  <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold text-[#0A1931]">
+                        {team.name}
+                      </h3>
+
+                      {team.description && (
+                        <p className="mt-1 text-sm text-[#7A7F85]">
+                          {team.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <span className="w-fit rounded-full bg-[#EAF3F9] px-3 py-1 text-xs font-bold text-[#1A3D63]">
+                      {team.gender || "Mixed"}
                     </span>
                   </div>
 
-                  {/* Mentors — every team has exactly two */}
+                  {/* Mentors */}
+
                   <div className="mb-5">
-                    <p className="text-xs font-bold text-[#4A7FA7] mb-2">
+                    <p className="mb-2 text-xs font-bold text-[#4A7FA7]">
                       MENTORS
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {team.mentors?.map((mentor, index) => (
-                        <div
-                          key={mentor._id}
-                          className="flex items-center gap-3 bg-[#F6FAFD] rounded-xl p-3"
-                        >
-                          <div className="h-9 w-9 rounded-full bg-[#1A3D63] text-white flex items-center justify-center">
-                            <UserRound size={16} />
-                          </div>
+                    {team.mentors?.length ? (
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {team.mentors.map((mentor, index) => (
+                          <div
+                            key={mentor._id}
+                            className="flex items-center gap-3 rounded-xl bg-[#F6FAFD] p-3"
+                          >
+                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#1A3D63] text-white">
+                              <UserRound size={16} />
+                            </div>
 
-                          <div>
-                            <p className="text-xs text-[#7A7F85]">
-                              Mentor {index + 1}
-                            </p>
+                            <div className="min-w-0">
+                              <p className="text-xs text-[#7A7F85]">
+                                Mentor {index + 1}
+                              </p>
 
-                            <p className="text-sm font-bold text-[#0A1931]">
-                              {mentor.firstName} {mentor.lastName}
-                            </p>
+                              <p className="truncate text-sm font-bold text-[#0A1931]">
+                                {mentor.firstName} {mentor.lastName}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-[#7A7F85]">
+                        No mentors assigned.
+                      </p>
+                    )}
                   </div>
 
-                  {/* Students — displayed the same style as mentors */}
+                  {/* Students */}
+
                   <div className="mb-5">
-                    <p className="text-xs font-bold text-[#4A7FA7] mb-2">
+                    <p className="mb-2 text-xs font-bold text-[#4A7FA7]">
                       STUDENTS
                     </p>
 
                     {team.students?.length ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         {team.students.map((student) => (
                           <div
                             key={student._id}
-                            className="flex items-center gap-3 bg-[#F6FAFD] rounded-xl p-3"
+                            className="flex items-center gap-3 rounded-xl bg-[#F6FAFD] p-3"
                           >
-                            <div className="h-9 w-9 rounded-full bg-[#4A7FA7] text-white flex items-center justify-center">
+                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#4A7FA7] text-white">
                               <UserRound size={16} />
                             </div>
 
-                            <div>
-                              <p className="text-xs text-[#7A7F85]">Student</p>
+                            <div className="min-w-0">
+                              <p className="text-xs text-[#7A7F85]">
+                                Student
+                              </p>
 
-                              <p className="text-sm font-bold text-[#0A1931]">
+                              <p className="truncate text-sm font-bold text-[#0A1931]">
                                 {student.firstName} {student.lastName}
                               </p>
                             </div>
@@ -582,10 +760,15 @@ function TeamManagement() {
                   </div>
 
                   {/* Bottom Stats */}
-                  <div className="flex items-center justify-between text-xs font-semibold text-[#4A7FA7] border-t border-[#EAF3F9] pt-4">
-                    <span>Mentors: {team.mentors?.length || 0}</span>
 
-                    <span>Students: {team.students?.length || 0}</span>
+                  <div className="flex items-center justify-between border-t border-[#EAF3F9] pt-4 text-xs font-semibold text-[#4A7FA7]">
+                    <span>
+                      Mentors: {team.mentors?.length || 0}
+                    </span>
+
+                    <span>
+                      Students: {team.students?.length || 0}
+                    </span>
                   </div>
                 </div>
               ))

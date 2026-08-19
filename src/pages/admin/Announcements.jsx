@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import api from "../../utils/api";
 import {
   Megaphone,
@@ -7,15 +8,15 @@ import {
   Pencil,
   CalendarDays,
   Bell,
-  CheckCircle2,
   Loader2,
   AlertCircle,
+  Layers,
 } from "lucide-react";
 
 function Announcements() {
   const storedUser = localStorage.getItem("user");
 
-  let user = { role: "student" };
+  let user = { role: "student", batch: null };
 
   try {
     if (storedUser) {
@@ -25,7 +26,19 @@ function Announcements() {
     console.error("Invalid user data in localStorage:", error);
   }
 
-  const isAdmin = user?.role === "admin";
+  const role = user?.role || "student";
+  const isAdmin = role === "admin";
+
+  const currentBatchId =
+    user?.batch?._id ||
+    user?.batch?.id ||
+    user?.batch ||
+    null;
+
+  const currentBatchName =
+    typeof user?.batch === "object"
+      ? user?.batch?.name || user?.batch?.title || "Current Batch"
+      : "Current Batch";
 
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,9 +55,6 @@ function Announcements() {
   const [editAudience, setEditAudience] = useState("all");
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successText, setSuccessText] = useState("");
-
   const loadAnnouncements = async () => {
     try {
       setLoading(true);
@@ -52,25 +62,24 @@ function Announcements() {
 
       const response = await api.get("/announcements");
 
-      console.log("Announcements API response:", response.data);
-
       if (response.data?.success) {
         setAnnouncements(response.data.announcements || []);
       } else {
         setAnnouncements([]);
-        setError(response.data?.message || "Failed to load announcements.");
+
+        setError(
+          response.data?.message ||
+            "Failed to load announcements."
+        );
       }
     } catch (err) {
       console.error("Fetch announcements error:", err);
 
-      if (err.response) {
-        console.error("Status:", err.response.status);
-        console.error("Response:", err.response.data);
-      }
+      setAnnouncements([]);
 
       setError(
         err.response?.data?.message ||
-          "Failed to load announcements. Please refresh the page.",
+          "Failed to load announcements. Please refresh the page."
       );
     } finally {
       setLoading(false);
@@ -84,8 +93,20 @@ function Announcements() {
   const handlePublish = async (e) => {
     e.preventDefault();
 
-    if (!title.trim() || !body.trim()) {
-      setError("Title and message are required.");
+    if (!title.trim()) {
+      toast.error("Title is required.");
+      return;
+    }
+
+    if (!body.trim()) {
+      toast.error("Announcement message is required.");
+      return;
+    }
+
+    if (!currentBatchId) {
+      toast.error(
+        "No current batch is assigned to your account."
+      );
       return;
     }
 
@@ -97,13 +118,13 @@ function Announcements() {
         title: title.trim(),
         body: body.trim(),
         audience,
+        batch: currentBatchId,
       });
-
-      console.log("Create announcement response:", response.data);
 
       if (!response.data?.success) {
         throw new Error(
-          response.data?.message || "Failed to publish announcement.",
+          response.data?.message ||
+            "Failed to publish announcement."
         );
       }
 
@@ -111,52 +132,99 @@ function Announcements() {
       setBody("");
       setAudience("all");
 
-      setSuccessText("Announcement published successfully.");
-      setShowSuccessModal(true);
+      toast.success(
+        "Announcement published successfully."
+      );
 
       await loadAnnouncements();
     } catch (err) {
-      console.error("Publish announcement error:", err);
+      console.error(
+        "Publish announcement error:",
+        err
+      );
 
-      setError(
+      toast.error(
         err.response?.data?.message ||
           err.message ||
-          "Error publishing announcement.",
+          "Error publishing announcement."
       );
     } finally {
       setIsPublishing(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    const confirmed = window.confirm("Delete this announcement permanently?");
+  const handleDelete = (id) => {
+    if (!id) return;
 
-    if (!confirmed) return;
+    toast(
+      (t) => (
+        <div className="w-[320px]">
+          <p className="mb-2 text-sm font-bold text-[#0A1931]">
+            Delete this announcement?
+          </p>
 
-    try {
-      setError("");
+          <p className="mb-4 text-xs text-gray-500">
+            This action cannot be undone.
+          </p>
 
-      const response = await api.delete(`/announcements/${id}`);
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => toast.dismiss(t.id)}
+              className="rounded-lg px-4 py-2 text-xs font-bold text-gray-500 transition hover:bg-gray-100"
+            >
+              Cancel
+            </button>
 
-      if (!response.data?.success) {
-        throw new Error(
-          response.data?.message || "Failed to delete announcement.",
-        );
+            <button
+              type="button"
+              onClick={async () => {
+                toast.dismiss(t.id);
+
+                try {
+                  setError("");
+
+                  const response = await api.delete(
+                    `/announcements/${id}`
+                  );
+
+                  if (!response.data?.success) {
+                    throw new Error(
+                      response.data?.message ||
+                        "Failed to delete announcement."
+                    );
+                  }
+
+                  toast.success(
+                    "Announcement deleted successfully."
+                  );
+
+                  await loadAnnouncements();
+                } catch (err) {
+                  console.error(
+                    "Delete announcement error:",
+                    err
+                  );
+
+                  toast.error(
+                    err.response?.data?.message ||
+                      err.message ||
+                      "Failed to delete announcement."
+                  );
+                }
+              }}
+              className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-700"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: Infinity,
+        position: "top-center",
       }
-
-      await loadAnnouncements();
-
-      setSuccessText("Announcement deleted successfully.");
-      setShowSuccessModal(true);
-    } catch (err) {
-      console.error("Delete announcement error:", err);
-
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          "Failed to delete announcement.",
-      );
-    }
+    );
   };
 
   const startEdit = (item) => {
@@ -175,8 +243,20 @@ function Announcements() {
   };
 
   const handleUpdate = async (id) => {
-    if (!editTitle.trim() || !editBody.trim()) {
-      setError("Title and message are required.");
+    if (!editTitle.trim()) {
+      toast.error("Title is required.");
+      return;
+    }
+
+    if (!editBody.trim()) {
+      toast.error("Announcement message is required.");
+      return;
+    }
+
+    if (!currentBatchId) {
+      toast.error(
+        "No current batch is assigned to your account."
+      );
       return;
     }
 
@@ -184,31 +264,40 @@ function Announcements() {
       setIsUpdating(true);
       setError("");
 
-      const response = await api.patch(`/announcements/${id}`, {
-        title: editTitle.trim(),
-        body: editBody.trim(),
-        audience: editAudience,
-      });
+      const response = await api.patch(
+        `/announcements/${id}`,
+        {
+          title: editTitle.trim(),
+          body: editBody.trim(),
+          audience: editAudience,
+          batch: currentBatchId,
+        }
+      );
 
       if (!response.data?.success) {
         throw new Error(
-          response.data?.message || "Failed to update announcement.",
+          response.data?.message ||
+            "Failed to update announcement."
         );
       }
 
       cancelEdit();
 
-      setSuccessText("Announcement updated successfully.");
-      setShowSuccessModal(true);
+      toast.success(
+        "Announcement updated successfully."
+      );
 
       await loadAnnouncements();
     } catch (err) {
-      console.error("Update announcement error:", err);
+      console.error(
+        "Update announcement error:",
+        err
+      );
 
-      setError(
+      toast.error(
         err.response?.data?.message ||
           err.message ||
-          "Failed to update announcement.",
+          "Failed to update announcement."
       );
     } finally {
       setIsUpdating(false);
@@ -227,9 +316,22 @@ function Announcements() {
     return parsedDate.toLocaleString();
   };
 
+  const getAudienceLabel = (announcementAudience) => {
+    if (announcementAudience === "all") {
+      return "Everyone";
+    }
+
+    if (announcementAudience === "mentor") {
+      return "Mentors Only";
+    }
+
+    return announcementAudience;
+  };
+
   return (
     <div className="min-h-full bg-[#F6FAFD] p-4 md:p-6 lg:p-8">
       <div className="mx-auto max-w-5xl space-y-8">
+
         <div className="rounded-3xl bg-[#0A1931] p-6 shadow-xl md:p-8">
           <div className="flex items-center gap-5">
             <div className="rounded-2xl border border-white/5 bg-[#1A3D63] p-4 shadow-inner">
@@ -243,47 +345,54 @@ function Announcements() {
 
               <p className="mt-1 text-sm font-medium text-[#B3CFE5]">
                 {isAdmin
-                  ? "Manage communication for the bootcamp"
+                  ? "Manage communication for the current batch"
                   : "Latest updates from the administration"}
               </p>
             </div>
           </div>
         </div>
 
-        {/* ======================================================
-            ERROR
-        ====================================================== */}
-
         {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-700">
             <AlertCircle size={20} />
 
-            <span className="text-sm font-bold">{error}</span>
+            <span className="text-sm font-bold">
+              {error}
+            </span>
           </div>
         )}
 
-        {/* ======================================================
-            CREATE ANNOUNCEMENT
-        ====================================================== */}
-
         {isAdmin && (
           <div className="rounded-3xl border border-[#B3CFE5]/40 bg-white p-6 shadow-sm md:p-8">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="rounded-xl bg-[#EAF3F9] p-2.5">
-                <Bell className="h-5 w-5 text-[#1A3D63]" />
+
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-[#EAF3F9] p-2.5">
+                  <Bell className="h-5 w-5 text-[#1A3D63]" />
+                </div>
+
+                <h2 className="text-lg font-bold text-[#0A1931]">
+                  New Announcement
+                </h2>
               </div>
 
-              <h2 className="text-lg font-bold text-[#0A1931]">
-                New Announcement
-              </h2>
+              <div className="flex items-center gap-2 rounded-xl bg-[#F6FAFD] px-3 py-2 text-xs font-bold text-[#1A3D63]">
+                <Layers size={15} />
+                {currentBatchName}
+              </div>
             </div>
 
-            <form onSubmit={handlePublish} className="space-y-5">
+            <form
+              onSubmit={handlePublish}
+              className="space-y-5"
+            >
               <input
                 type="text"
                 required
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) =>
+                  setTitle(e.target.value)
+                }
                 placeholder="Subject Title"
                 className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm font-semibold outline-none transition-all focus:border-[#4A7FA7] focus:ring-4 focus:ring-[#B3CFE5]/20"
               />
@@ -292,7 +401,9 @@ function Announcements() {
                 rows={4}
                 required
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
+                onChange={(e) =>
+                  setBody(e.target.value)
+                }
                 placeholder="Type your message here..."
                 className="w-full resize-none rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none transition-all focus:border-[#4A7FA7]"
               />
@@ -301,7 +412,9 @@ function Announcements() {
                 <div className="grid flex-1 grid-cols-2 gap-2 rounded-2xl border border-gray-100 bg-gray-50 p-1">
                   <button
                     type="button"
-                    onClick={() => setAudience("all")}
+                    onClick={() =>
+                      setAudience("all")
+                    }
                     className={`rounded-xl py-2.5 text-xs font-black transition-all ${
                       audience === "all"
                         ? "bg-[#0A1931] text-white shadow-md"
@@ -313,7 +426,9 @@ function Announcements() {
 
                   <button
                     type="button"
-                    onClick={() => setAudience("mentor")}
+                    onClick={() =>
+                      setAudience("mentor")
+                    }
                     className={`rounded-xl py-2.5 text-xs font-black transition-all ${
                       audience === "mentor"
                         ? "bg-[#0A1931] text-white shadow-md"
@@ -326,7 +441,9 @@ function Announcements() {
 
                 <button
                   type="submit"
-                  disabled={isPublishing}
+                  disabled={
+                    isPublishing || !currentBatchId
+                  }
                   className="flex items-center justify-center gap-2 rounded-2xl bg-[#4A7FA7] px-10 py-3 text-sm font-bold text-white transition-all hover:bg-[#1A3D63] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isPublishing ? (
@@ -334,6 +451,7 @@ function Announcements() {
                   ) : (
                     <Send className="h-4 w-4" />
                   )}
+
                   Publish
                 </button>
               </div>
@@ -341,20 +459,16 @@ function Announcements() {
           </div>
         )}
 
-        {/* ======================================================
-            FEED
-        ====================================================== */}
-
         <div className="space-y-4 pb-10">
           <div className="flex items-center justify-between px-2">
-            <h2 className="text-xl font-black text-[#0A1931]">Recent Feed</h2>
+            <h2 className="text-xl font-black text-[#0A1931]">
+              Recent Feed
+            </h2>
 
             <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
               Total: {announcements.length}
             </span>
           </div>
-
-          {/* LOADING */}
 
           {loading ? (
             <div className="rounded-3xl border border-[#B3CFE5]/30 bg-white py-20 text-center">
@@ -368,7 +482,9 @@ function Announcements() {
             <div className="rounded-3xl border-2 border-dashed border-[#B3CFE5] bg-white p-16 text-center">
               <Megaphone className="mx-auto mb-4 h-12 w-12 text-[#B3CFE5] opacity-50" />
 
-              <p className="font-bold text-[#0A1931]">No announcements yet.</p>
+              <p className="font-bold text-[#0A1931]">
+                No announcements yet.
+              </p>
 
               <p className="mt-1 text-xs text-gray-400">
                 Check back later for important updates.
@@ -380,21 +496,23 @@ function Announcements() {
                 key={item._id}
                 className="group rounded-3xl border border-[#B3CFE5]/30 bg-white p-6 shadow-sm transition-all hover:border-[#4A7FA7]"
               >
-                {/* EDIT MODE */}
-
                 {editingId === item._id ? (
                   <div className="space-y-4">
                     <input
                       type="text"
                       value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
+                      onChange={(e) =>
+                        setEditTitle(e.target.value)
+                      }
                       className="w-full rounded-xl border p-3 font-bold outline-none focus:border-[#4A7FA7]"
                     />
 
                     <textarea
                       rows={3}
                       value={editBody}
-                      onChange={(e) => setEditBody(e.target.value)}
+                      onChange={(e) =>
+                        setEditBody(e.target.value)
+                      }
                       className="w-full rounded-xl border p-3 outline-none focus:border-[#4A7FA7]"
                     />
 
@@ -402,7 +520,9 @@ function Announcements() {
                       <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
                         <button
                           type="button"
-                          onClick={() => setEditAudience("all")}
+                          onClick={() =>
+                            setEditAudience("all")
+                          }
                           className={`rounded-lg px-4 py-1.5 text-[10px] font-black ${
                             editAudience === "all"
                               ? "bg-white text-[#0A1931] shadow-sm"
@@ -414,7 +534,9 @@ function Announcements() {
 
                         <button
                           type="button"
-                          onClick={() => setEditAudience("mentor")}
+                          onClick={() =>
+                            setEditAudience("mentor")
+                          }
                           className={`rounded-lg px-4 py-1.5 text-[10px] font-black ${
                             editAudience === "mentor"
                               ? "bg-white text-[#0A1931] shadow-sm"
@@ -437,21 +559,22 @@ function Announcements() {
 
                         <button
                           type="button"
-                          onClick={() => handleUpdate(item._id)}
+                          onClick={() =>
+                            handleUpdate(item._id)
+                          }
                           disabled={isUpdating}
                           className="flex items-center gap-2 rounded-xl bg-[#0A1931] px-6 py-2 text-xs font-bold text-white disabled:opacity-50"
                         >
                           {isUpdating && (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           )}
+
                           Save Changes
                         </button>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  /* NORMAL MODE */
-
                   <div className="flex flex-col justify-between gap-6 md:flex-row">
                     <div className="flex items-start gap-5">
                       <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-[#B3CFE5]/40 bg-[#F6FAFD] text-[#1A3D63] transition-all group-hover:bg-[#1A3D63] group-hover:text-white">
@@ -465,13 +588,21 @@ function Announcements() {
                           </h3>
 
                           <span className="rounded border border-[#B3CFE5] bg-[#EAF3F9] px-2 py-0.5 text-[9px] font-black uppercase text-[#1A3D63]">
-                            {item.audience}
+                            {getAudienceLabel(
+                              item.audience
+                            )}
                           </span>
+
+                          {item.batch?.name && (
+                            <span className="flex items-center gap-1 rounded border border-[#B3CFE5] bg-white px-2 py-0.5 text-[9px] font-black uppercase text-[#4A7FA7]">
+                              <Layers size={10} />
+                              {item.batch.name}
+                            </span>
+                          )}
                         </div>
 
                         <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tighter text-gray-400">
                           <CalendarDays size={12} />
-
                           {formatDate(item.createdAt)}
                         </div>
 
@@ -481,22 +612,26 @@ function Announcements() {
                       </div>
                     </div>
 
-                    {/* ADMIN ACTIONS */}
-
                     {isAdmin && (
                       <div className="flex gap-2 border-t border-gray-100 pt-4 md:flex-col md:border-l md:border-t-0 md:pl-4 md:pt-0">
                         <button
                           type="button"
-                          onClick={() => startEdit(item)}
+                          onClick={() =>
+                            startEdit(item)
+                          }
                           className="rounded-xl p-2 text-blue-500 transition-colors hover:bg-blue-50"
+                          title="Edit announcement"
                         >
                           <Pencil size={18} />
                         </button>
 
                         <button
                           type="button"
-                          onClick={() => handleDelete(item._id)}
+                          onClick={() =>
+                            handleDelete(item._id)
+                          }
                           className="rounded-xl p-2 text-red-400 transition-colors hover:bg-red-50"
+                          title="Delete announcement"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -509,34 +644,6 @@ function Announcements() {
           )}
         </div>
       </div>
-
-      {/* ========================================================
-          SUCCESS MODAL
-      ======================================================== */}
-
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-[40px] bg-white p-10 text-center shadow-2xl">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 text-green-500 shadow-inner">
-              <CheckCircle2 size={44} strokeWidth={2.5} />
-            </div>
-
-            <h2 className="text-2xl font-black text-[#0A1931]">Done!</h2>
-
-            <p className="mt-2 text-sm font-semibold text-gray-400">
-              {successText}
-            </p>
-
-            <button
-              type="button"
-              onClick={() => setShowSuccessModal(false)}
-              className="mt-8 w-full rounded-2xl bg-[#0A1931] py-4 text-sm font-bold text-white shadow-lg"
-            >
-              Great
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

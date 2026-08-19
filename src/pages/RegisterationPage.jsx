@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../utils/api";
-import { CheckCircle2, AlertCircle, Lock } from "lucide-react";
+import { CheckCircle2, Lock } from "lucide-react";
+import toast from "react-hot-toast";
 
 function RegisterationPage() {
   const navigate = useNavigate();
@@ -29,7 +30,6 @@ function RegisterationPage() {
 
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -54,7 +54,13 @@ function RegisterationPage() {
       } catch (err) {
         console.error("Failed to fetch registration status:", err);
 
+        // Keep registration open if checking fails
         setIsRegistrationOpen(true);
+
+        toast.error(
+          err.response?.data?.message ||
+            "Could not check registration status. Please try again."
+        );
       } finally {
         setCheckingRegistration(false);
       }
@@ -70,71 +76,68 @@ function RegisterationPage() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-
-    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
 
     if (!formData.fullName.trim()) {
-      setError("Please enter your full name.");
+      toast.error("Please enter your full name.");
       return;
     }
 
     if (!formData.email.trim()) {
-      setError("Please enter your email address.");
+      toast.error("Please enter your email address.");
       return;
     }
 
     if (!formData.phone.trim()) {
-      setError("Please enter your phone number.");
+      toast.error("Please enter your phone number.");
       return;
     }
 
     if (!formData.schoolId.trim()) {
-      setError("Please enter your School / Student ID Number.");
+      toast.error("Please enter your School / Student ID Number.");
       return;
     }
 
     if (!formData.gender) {
-      setError("Please select your gender.");
+      toast.error("Please select your gender.");
       return;
     }
 
     if (!formData.year) {
-      setError("Please select your academic year.");
+      toast.error("Please select your academic year.");
       return;
     }
 
     if (!formData.department.trim()) {
-      setError("Please enter your department.");
+      toast.error("Please enter your department.");
       return;
     }
 
     if (!formData.githubUrl.trim()) {
-      setError("Please enter your GitHub profile URL.");
+      toast.error("Please enter your GitHub profile URL.");
       return;
     }
 
     if (!formData.leetcodeUrl.trim()) {
-      setError("Please enter your LeetCode profile URL.");
+      toast.error("Please enter your LeetCode profile URL.");
       return;
     }
 
     if (!formData.codeforcesUrl.trim()) {
-      setError("Please enter your Codeforces profile URL.");
+      toast.error("Please enter your Codeforces profile URL.");
       return;
     }
 
     if (!formData.about.trim()) {
-      setError("Please tell us something about yourself.");
+      toast.error("Please tell us something about yourself.");
       return;
     }
 
     if (!formData.agreedToRules) {
-      setError("Please agree to the bootcamp rules.");
+      toast.error("Please agree to the bootcamp rules.");
       return;
     }
 
@@ -143,11 +146,16 @@ function RegisterationPage() {
 
       const response = await api.post("/applicants/register", formData);
 
-      setSuccessMessage(
+      const message =
         response.data?.message ||
-          "Registration successful. Your application has been submitted.",
-      );
+        "Registration successful. Your application has been submitted.";
 
+      setSuccessMessage(message);
+
+      // Toast success
+      toast.success("Application submitted successfully!");
+
+      // Keep your existing success modal
       setShowSuccessModal(true);
 
       setFormData({
@@ -169,9 +177,11 @@ function RegisterationPage() {
     } catch (err) {
       console.error("Registration error:", err);
 
-      setError(
-        err.response?.data?.message || "Registration failed. Please try again.",
-      );
+      const message =
+        err.response?.data?.message ||
+        "Registration failed. Please try again.";
+
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -199,9 +209,7 @@ function RegisterationPage() {
   return (
     <div className="min-h-screen bg-[#B3CFE5] px-4 py-10">
       <div className="mx-auto max-w-3xl rounded-3xl bg-white p-6 shadow-lg ring-1 ring-[#B3CFE5] sm:p-10">
-        {/* ==========================================
-            Header
-        ========================================== */}
+        {/* Header */}
         <div className="mb-8">
           <Link
             to="/"
@@ -231,9 +239,7 @@ function RegisterationPage() {
           </p>
         </div>
 
-        {/* ==========================================
-            Registration Closed
-        ========================================== */}
+        {/* Registration Closed */}
         {!isRegistrationOpen ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600">
@@ -258,20 +264,7 @@ function RegisterationPage() {
           </div>
         ) : (
           <>
-            {/* ==========================================
-                Error Message
-            ========================================== */}
-            {error && (
-              <div className="mb-6 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-600">
-                <AlertCircle className="h-5 w-5 flex-shrink-0" />
-
-                <span>{error}</span>
-              </div>
-            )}
-
-            {/* ==========================================
-                Registration Form
-            ========================================== */}
+            {/* Registration Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Full Name */}
               <div>
@@ -357,6 +350,7 @@ function RegisterationPage() {
                 </div>
               </div>
 
+              {/* Year & Department */}
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
@@ -394,6 +388,7 @@ function RegisterationPage() {
                 </div>
               </div>
 
+              {/* Coding Profiles */}
               <div className="space-y-4 rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD]/50 p-5">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-[#1A3D63]">
                   Coding & Competitive Profiles
@@ -449,6 +444,7 @@ function RegisterationPage() {
                 </div>
               </div>
 
+              {/* Experience */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
                   Experience Level <span className="text-red-500">*</span>
@@ -466,6 +462,7 @@ function RegisterationPage() {
                 </select>
               </div>
 
+              {/* About */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
                   About You <span className="text-red-500">*</span>
@@ -493,8 +490,8 @@ function RegisterationPage() {
 
                 <span className="text-sm leading-6 text-[#7A7F85]">
                   I agree to follow the bootcamp rules, attend sessions
-                  regularly, and participate actively in contests, projects, and
-                  teamwork.
+                  regularly, and participate actively in contests, projects,
+                  and teamwork.
                   <span className="ml-1 text-red-500">*</span>
                 </span>
               </label>
@@ -505,7 +502,9 @@ function RegisterationPage() {
                 disabled={loading}
                 className="w-full rounded-xl bg-[#1A3D63] py-3.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Submitting Application..." : "Submit Application"}
+                {loading
+                  ? "Submitting Application..."
+                  : "Submit Application"}
               </button>
             </form>
 
@@ -521,6 +520,7 @@ function RegisterationPage() {
           </>
         )}
 
+        {/* Success Modal */}
         {showSuccessModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
             <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl">

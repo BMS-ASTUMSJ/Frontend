@@ -1,9 +1,25 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Code2, Users, Trophy, CheckCircle2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 function LandingPage() {
+  const handleLearnMore = () => {
+    toast.success("Explore the ASTU MSJ Bootcamp and discover your path!");
+  };
+
+  const handleApply = () => {
+    toast.success("Let's get started with your bootcamp application!");
+  };
+
+  const handleContact = () => {
+    toast.success("We're happy to hear from you!");
+  };
+
   return (
     <div className="min-h-screen bg-[#F6FAFD] text-[#0A1931]">
+      {/* =========================
+          HOME
+      ========================== */}
       <section
         id="home"
         className="relative overflow-hidden bg-[#0A1931] px-6 py-24 md:px-12 lg:px-20"
@@ -24,13 +40,14 @@ function LandingPage() {
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-[#B3CFE5]">
               A practical bootcamp designed to help students develop real-world
-              software engineering skills through hands-on projects, competitive
-              programming, teamwork, and mentorship.
+              software engineering skills through hands-on projects,
+              competitive programming, teamwork, and mentorship.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
                 to="/register"
+                onClick={handleApply}
                 className="inline-flex items-center gap-2 rounded-xl bg-[#4A7FA7] px-6 py-3 font-bold text-white transition hover:bg-[#1A3D63]"
               >
                 Apply Now
@@ -39,6 +56,7 @@ function LandingPage() {
 
               <a
                 href="#about"
+                onClick={handleLearnMore}
                 className="rounded-xl border border-[#B3CFE5]/40 px-6 py-3 font-semibold text-white transition hover:bg-[#1A3D63]"
               >
                 Learn More
@@ -80,13 +98,16 @@ function LandingPage() {
                 </div>
 
                 <div className="rounded-2xl bg-[#0A1931] p-4">
-                  <p className="text-sm text-white">03</p>
+                  <p className="text-sm text-[#B3CFE5]">03</p>
 
                   <div>
                     <h3 className="font-semibold text-white">
-                      Create & Compete!Build projects and challenge yourself
-                      through contests.
+                      Create & Compete!
                     </h3>
+
+                    <p className="mt-1 text-sm leading-6 text-[#B3CFE5]">
+                      Build projects and challenge yourself through contests.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -95,6 +116,9 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* =========================
+          ABOUT
+      ========================== */}
       <section
         id="about"
         className="scroll-mt-16 bg-[#B3CFE5] px-6 py-24 md:px-12 lg:px-20"
@@ -121,8 +145,8 @@ function LandingPage() {
             <p className="mt-5 text-lg leading-8 text-[#1A3D63]">
               Throughout the program, students are encouraged to improve their
               problem-solving abilities, strengthen their understanding of
-              software development, and develop the confidence needed to work on
-              real-world technology projects.
+              software development, and develop the confidence needed to work
+              on real-world technology projects.
             </p>
           </div>
 
@@ -165,6 +189,9 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* =========================
+          TRACKS
+      ========================== */}
       <section
         id="tracks"
         className="bg-[#B3CFE5] px-6 py-24 md:px-12 lg:px-20"
@@ -238,7 +265,7 @@ function LandingPage() {
                   <div key={item} className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 text-white" />
 
-                    <span className="text-white font-bold">{item}</span>
+                    <span className="font-bold text-white">{item}</span>
                   </div>
                 ))}
               </div>
@@ -247,6 +274,9 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* =========================
+          MENTORS
+      ========================== */}
       <section
         id="mentors"
         className="scroll-mt-16 bg-[#1A3D63] px-6 py-24 md:px-12 lg:px-20"
@@ -258,13 +288,13 @@ function LandingPage() {
             Learn with people who guide you.
           </h2>
 
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#1A3D63]">
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#B3CFE5]">
             Our mentors help students understand difficult concepts, improve
             their projects, solve technical problems, and stay motivated
             throughout the bootcamp.
           </p>
 
-          <div className="mx-auto mt-12 max-w-3xl rounded-3xl bg-[#1A3D63] p-10 text-left">
+          <div className="mx-auto mt-12 max-w-3xl rounded-3xl bg-[#0A1931] p-10 text-left">
             <div className="flex items-start gap-5">
               <div className="rounded-2xl bg-[#4A7FA7] p-4">
                 <Users className="h-7 w-7 text-white" />
@@ -276,9 +306,9 @@ function LandingPage() {
                 </h3>
 
                 <p className="mt-3 leading-7 text-[#B3CFE5]">
-                  Mentorship is an important part of the bootcamp. Students have
-                  access to people who can provide technical feedback, project
-                  guidance, career advice, and support when they face
+                  Mentorship is an important part of the bootcamp. Students
+                  have access to people who can provide technical feedback,
+                  project guidance, career advice, and support when they face
                   challenges.
                 </p>
               </div>
@@ -287,13 +317,16 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* =========================
+          FAQ
+      ========================== */}
       <section
         id="faq"
         className="scroll-mt-16 bg-[#4A7FA7] px-6 py-20 md:px-12 lg:px-20"
       >
         <div className="mx-auto max-w-5xl">
           <div className="mb-12">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#4A7FA7]">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#0A1931]">
               FAQ
             </p>
 
@@ -308,18 +341,18 @@ function LandingPage() {
           </div>
 
           <div className="space-y-4">
-            <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#4A7FA7]">
+            <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#1A3D63]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-6 py-5">
                 <span className="font-semibold text-[#0A1931]">
                   Who can join the bootcamp?
                 </span>
 
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B3CFE5] text-[#0A1931] transition group-open:rotate-180">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4A7FA7] text-white transition group-open:rotate-180">
                   ↓
                 </span>
               </summary>
 
-              <div className="border-t border-[#B3CFE5] px-6 py-5">
+              <div className="border-t border-[#4A7FA7] px-6 py-5">
                 <p className="leading-7 text-slate-600">
                   The bootcamp is designed for students who are interested in
                   software development, competitive programming, and improving
@@ -328,18 +361,18 @@ function LandingPage() {
               </div>
             </details>
 
-            <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#4A7FA7]">
+            <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#1A3D63]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-6 py-5">
                 <span className="font-semibold text-[#0A1931]">
                   Do I need previous programming experience?
                 </span>
 
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B3CFE5] text-[#0A1931] transition group-open:rotate-180">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4A7FA7] text-white transition group-open:rotate-180">
                   ↓
                 </span>
               </summary>
 
-              <div className="border-t border-[#B3CFE5] px-6 py-5">
+              <div className="border-t border-[#4A7FA7] px-6 py-5">
                 <p className="leading-7 text-slate-600">
                   No. Beginners are welcome. The bootcamp provides structured
                   learning activities that help students improve their
@@ -348,37 +381,37 @@ function LandingPage() {
               </div>
             </details>
 
-            <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#4A7FA7]">
+            <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#1A3D63]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-6 py-5">
                 <span className="font-semibold text-[#0A1931]">
                   What tracks are available?
                 </span>
 
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B3CFE5] text-[#0A1931] transition group-open:rotate-180">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4A7FA7] text-white transition group-open:rotate-180">
                   ↓
                 </span>
               </summary>
 
-              <div className="border-t border-[#B3CFE5] px-6 py-5">
+              <div className="border-t border-[#4A7FA7] px-6 py-5">
                 <p className="leading-7 text-slate-600">
-                  Students can explore tracks such as Full-Stack Web Development
-                  and Competitive Programming.
+                  Students can explore tracks such as Full-Stack Web
+                  Development and Competitive Programming.
                 </p>
               </div>
             </details>
 
-            <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#4A7FA7]">
+            <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#1A3D63]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-6 py-5">
                 <span className="font-semibold text-[#0A1931]">
                   Will I work on real projects?
                 </span>
 
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B3CFE5] text-[#0A1931] transition group-open:rotate-180">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4A7FA7] text-white transition group-open:rotate-180">
                   ↓
                 </span>
               </summary>
 
-              <div className="border-t border-[#B3CFE5] px-6 py-5">
+              <div className="border-t border-[#4A7FA7] px-6 py-5">
                 <p className="leading-7 text-slate-600">
                   Yes. Students work on practical projects that allow them to
                   apply what they learn and gain experience working with modern
@@ -387,21 +420,21 @@ function LandingPage() {
               </div>
             </details>
 
-            <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#4A7FA7]">
+            <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#1A3D63]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-6 py-5">
                 <span className="font-semibold text-[#0A1931]">
                   How can I apply?
                 </span>
 
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B3CFE5] text-[#0A1931] transition group-open:rotate-180">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4A7FA7] text-white transition group-open:rotate-180">
                   ↓
                 </span>
               </summary>
 
-              <div className="border-t border-[#B3CFE5] px-6 py-5">
+              <div className="border-t border-[#4A7FA7] px-6 py-5">
                 <p className="leading-7 text-slate-600">
-                  Click the Apply Now button in the navigation bar and complete
-                  the registration form with your information.
+                  Click the Apply Now button and complete the registration form
+                  with your information.
                 </p>
               </div>
             </details>
@@ -409,6 +442,9 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* =========================
+          CONTACT
+      ========================== */}
       <section
         id="contact"
         className="bg-[#0A1931] px-6 py-24 md:px-12 lg:px-20"
@@ -425,6 +461,7 @@ function LandingPage() {
 
           <Link
             to="/contactus"
+            onClick={handleContact}
             className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#4A7FA7] px-7 py-3 font-bold text-white transition hover:bg-[#1A3D63]"
           >
             Contact Us
@@ -433,6 +470,7 @@ function LandingPage() {
         </div>
       </section>
 
+     
       <footer className="border-t border-[#1A3D63] bg-[#0A1931] px-6 py-8 text-center">
         <p className="text-sm text-[#B3CFE5]">
           © 2026 ASTU MSJ Bootcamp. All rights reserved.

@@ -1,9 +1,13 @@
+import { Toaster } from "react-hot-toast";
+
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   useLocation,
 } from "react-router-dom";
+
+import ChangePassword from "./pages/ChangePassword";
 
 import Navbar from "./components/layout/Navbar";
 import BatchManagement from "./pages/admin/BatchManagement";
@@ -31,10 +35,14 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 
 import AdminAnnouncements from "./pages/admin/Announcements";
 import MentorAnnouncements from "./pages/mentor/Announcements";
-import StudentAnnouncements from "./pages/student/Announcements";
+import StudentAnnouncements from "./pages/student/Announcement";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
-import AdminProfile from "./pages/admin/AdminProfile.jsx";
+import AdminProfile from "./pages/admin/AdminProfile";
+
+import AdminAssignment from "./pages/admin/Assignment";
+import StudentAssignment from "./pages/student/Assignment";
+import MentorAssignment from "./pages/mentor/Assignment";
 
 function AppContent() {
   const location = useLocation();
@@ -46,55 +54,85 @@ function AppContent() {
     <>
       {showNavbar && <Navbar />}
 
+      <Toaster position="top-right" reverseOrder={false} />
+
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterationPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/change-password" element={<ChangePassword />} />
 
         <Route element={<ProtectedRoute allowedRole="admin" />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
+
             <Route path="batches" element={<BatchManagement />} />
             <Route path="teams" element={<TeamManagement />} />
             <Route path="applicants" element={<ApplicantsPage />} />
-
             <Route path="attendance" element={<AdminAttendance />} />
+            <Route path="students" element={<ApplicantsPage />} />
 
-            <Route path="announcements" element={<AdminAnnouncements />} />
+            <Route
+              path="announcements"
+              element={<AdminAnnouncements />}
+            />
+
             <Route path="profile" element={<AdminProfile />} />
             <Route path="users" element={<UserManagement />} />
+            <Route path="assignments" element={<AdminAssignment />} />
           </Route>
         </Route>
 
-        {/* MENTOR ROUTES */}
         <Route element={<ProtectedRoute allowedRole="mentor" />}>
           <Route path="/mentor" element={<MentorLayout />}>
             <Route index element={<MentorDashboard />} />
 
-            {/* Added Mentor Attendance: Marking team members */}
-            <Route path="attendance" element={<MentorAttendance />} />
+            <Route
+              path="attendance"
+              element={<MentorAttendance />}
+            />
 
-            <Route path="announcements" element={<MentorAnnouncements />} />
+            <Route
+              path="announcements"
+              element={<MentorAnnouncements />}
+            />
+
+            <Route
+              path="assignments"
+              element={<MentorAssignment />}
+            />
           </Route>
         </Route>
 
-        {/* STUDENT ROUTES */}
         <Route element={<ProtectedRoute allowedRole="student" />}>
           <Route path="/student" element={<StudentLayout />}>
             <Route index element={<StudentDashboard />} />
 
-            {/* Added Student Attendance: View personal records */}
-            <Route path="attendance" element={<StudentAttendance />} />
+            <Route
+              path="attendance"
+              element={<StudentAttendance />}
+            />
 
-            <Route path="announcements" element={<StudentAnnouncements />} />
+            <Route
+              path="announcements"
+              element={<StudentAnnouncements />}
+            />
+
+            <Route
+              path="assignments"
+              element={<StudentAssignment />}
+            />
           </Route>
         </Route>
 
-        {/* Fallback Route */}
         <Route
           path="*"
-          element={<div className="p-20 text-center">404 - Page Not Found</div>}
+          element={
+            <div className="p-20 text-center">
+              404 - Page Not Found
+            </div>
+          }
         />
       </Routes>
     </>

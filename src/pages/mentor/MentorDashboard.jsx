@@ -1,6 +1,12 @@
+import { useEffect } from "react";
 import { Users, ClipboardCheck, FileText, Megaphone } from "lucide-react";
+import toast from "react-hot-toast";
 
 function MentorDashboard() {
+  useEffect(() => {
+    toast.success("Welcome back, Mentor!");
+  }, []);
+
   const stats = [
     {
       title: "My Students",
@@ -27,7 +33,9 @@ function MentorDashboard() {
   return (
     <div className="min-h-screen bg-[#F6FAFD]">
       <header className="border-b border-[#D6D6D6] bg-white px-8 py-6">
-        <p className="text-sm font-medium text-[#4A7FA7]">Mentor Dashboard</p>
+        <p className="text-sm font-medium text-[#4A7FA7]">
+          Mentor Dashboard
+        </p>
 
         <h1 className="mt-1 text-2xl font-bold text-[#0A1931]">
           Welcome back, Mentor
@@ -67,7 +75,9 @@ function MentorDashboard() {
         </div>
 
         <div className="mt-8 rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-[#0A1931]">Today's Overview</h2>
+          <h2 className="text-lg font-bold text-[#0A1931]">
+            Today's Overview
+          </h2>
 
           <p className="mt-1 text-sm text-gray-500">
             Here is what needs your attention today.
@@ -75,7 +85,9 @@ function MentorDashboard() {
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             <div className="rounded-xl bg-[#F6FAFD] p-5">
-              <p className="text-sm font-medium text-[#0A1931]">Attendance</p>
+              <p className="text-sm font-medium text-[#0A1931]">
+                Attendance
+              </p>
 
               <p className="mt-2 text-sm text-gray-500">
                 Make sure today's attendance is recorded.
@@ -83,7 +95,9 @@ function MentorDashboard() {
             </div>
 
             <div className="rounded-xl bg-[#F6FAFD] p-5">
-              <p className="text-sm font-medium text-[#0A1931]">Assignments</p>
+              <p className="text-sm font-medium text-[#0A1931]">
+                Assignments
+              </p>
 
               <p className="mt-2 text-sm text-gray-500">
                 Review submitted assignments from your students.

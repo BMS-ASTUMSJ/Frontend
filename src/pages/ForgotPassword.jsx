@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../utils/api";
+import toast from "react-hot-toast";
 import { Mail, Lock, KeyRound } from "lucide-react";
 
 function ForgotPassword() {
@@ -13,18 +14,13 @@ function ForgotPassword() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
 
-    setError("");
-    setMessage("");
-
     if (!email.trim()) {
-      setError("Please enter your email address.");
+      toast.error("Please enter your email address.");
       return;
     }
 
@@ -35,7 +31,7 @@ function ForgotPassword() {
         email: email.trim(),
       });
 
-      setMessage(
+      toast.success(
         response.data.message ||
           "A verification code has been sent to your email.",
       );
@@ -44,7 +40,7 @@ function ForgotPassword() {
     } catch (err) {
       console.error("Forgot password error:", err);
 
-      setError(
+      toast.error(
         err.response?.data?.message ||
           "Unable to send verification code. Please try again.",
       );
@@ -56,11 +52,8 @@ function ForgotPassword() {
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
 
-    setError("");
-    setMessage("");
-
     if (!/^\d{6}$/.test(otp)) {
-      setError("Please enter the 6-digit OTP sent to your email.");
+      toast.error("Please enter the 6-digit OTP sent to your email.");
       return;
     }
 
@@ -72,13 +65,13 @@ function ForgotPassword() {
         otp,
       });
 
-      setMessage(response.data.message || "OTP verified successfully.");
+      toast.success(response.data.message || "OTP verified successfully.");
 
       setStep(3);
     } catch (err) {
       console.error("Verify OTP error:", err);
 
-      setError(
+      toast.error(
         err.response?.data?.message ||
           "Invalid or expired OTP. Please try again.",
       );
@@ -90,21 +83,18 @@ function ForgotPassword() {
   const handleResetPassword = async (e) => {
     e.preventDefault();
 
-    setError("");
-    setMessage("");
-
     if (!newPassword) {
-      setError("Please enter a new password.");
+      toast.error("Please enter a new password.");
       return;
     }
 
     if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters.");
+      toast.error("Password must be at least 8 characters.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
 
@@ -116,8 +106,9 @@ function ForgotPassword() {
         newPassword,
       });
 
-      setMessage(
-        response.data.message || "Your password has been reset successfully.",
+      toast.success(
+        response.data.message ||
+          "Your password has been reset successfully.",
       );
 
       setTimeout(() => {
@@ -126,7 +117,7 @@ function ForgotPassword() {
     } catch (err) {
       console.error("Reset password error:", err);
 
-      setError(
+      toast.error(
         err.response?.data?.message ||
           "Unable to reset password. Please try again.",
       );
@@ -152,18 +143,22 @@ function ForgotPassword() {
 
           <div className="mb-8">
             <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-[#B3CFE5]">
-              {step === 1 && <Mail className="h-6 w-6 text-[#1A3D63]" />}
+              {step === 1 && (
+                <Mail className="h-6 w-6 text-[#1A3D63]" />
+              )}
 
-              {step === 2 && <KeyRound className="h-6 w-6 text-[#1A3D63]" />}
+              {step === 2 && (
+                <KeyRound className="h-6 w-6 text-[#1A3D63]" />
+              )}
 
-              {step === 3 && <Lock className="h-6 w-6 text-[#1A3D63]" />}
+              {step === 3 && (
+                <Lock className="h-6 w-6 text-[#1A3D63]" />
+              )}
             </div>
 
             <h1 className="text-3xl font-bold text-[#0A1931]">
               {step === 1 && "Forgot Password?"}
-
               {step === 2 && "Verify Your Email"}
-
               {step === 3 && "Create New Password"}
             </h1>
 
@@ -171,27 +166,13 @@ function ForgotPassword() {
               {step === 1 &&
                 "Enter your email and we'll send you a verification code."}
 
-              {step === 2 && `Enter the 6-digit code sent to ${email}.`}
+              {step === 2 &&
+                `Enter the 6-digit code sent to ${email}.`}
 
-              {step === 3 && "Create a new password for your account."}
+              {step === 3 &&
+                "Create a new password for your account."}
             </p>
           </div>
-
-          {/* Success message */}
-
-          {message && (
-            <div className="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-              {message}
-            </div>
-          )}
-
-          {/* Error message */}
-
-          {error && (
-            <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-              {error}
-            </div>
-          )}
 
           {/* ======================================
               STEP 1
@@ -243,7 +224,9 @@ function ForgotPassword() {
                   inputMode="numeric"
                   maxLength={6}
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  onChange={(e) =>
+                    setOtp(e.target.value.replace(/\D/g, ""))
+                  }
                   placeholder="000000"
                   className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-4 text-center text-2xl font-bold tracking-[0.5em] text-[#0A1931] outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
                 />
@@ -262,8 +245,6 @@ function ForgotPassword() {
                 onClick={() => {
                   setStep(1);
                   setOtp("");
-                  setError("");
-                  setMessage("");
                 }}
                 className="w-full text-sm font-medium text-[#4A7FA7] hover:text-[#1A3D63]"
               >
