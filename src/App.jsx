@@ -7,45 +7,66 @@ import {
 
 import Navbar from "./components/layout/Navbar";
 
-// Admin pages
+// =====================================================
+// ADMIN PAGES
+// =====================================================
+
 import BatchManagement from "./pages/admin/BatchManagement";
 import TeamManagement from "./pages/admin/TeamManagement";
 import ApplicantsPage from "./pages/admin/ApplicantsPage";
-import AdminAttendance from "./pages/admin/AdminAttendance";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import UserManagement from "./pages/admin/UserManagement";
+import AdminAttendance from "./pages/admin/AdminAttendance";
+import AdminProgress from "./pages/admin/AdminProgress";
 import AdminAnnouncements from "./pages/admin/Announcements";
 import AdminProfile from "./pages/admin/AdminProfile.jsx";
+import UserManagement from "./pages/admin/UserManagement";
 
-// Mentor pages
+// =====================================================
+// MENTOR PAGES
+// =====================================================
+
 import MentorDashboard from "./pages/mentor/MentorDashboard";
 import MentorAttendance from "./pages/mentor/MentorAttendance";
 import MentorAnnouncements from "./pages/mentor/Announcements";
+import MentorProgress from "./pages/mentor/MentorProgress";
+import MyStudents from "./pages/mentor/MyStudents";
 
-// Student pages
+// =====================================================
+// STUDENT PAGES
+// =====================================================
+
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentAttendance from "./pages/student/StudentAttendance";
+import StudentProgress from "./pages/student/StudentProgress";
 import StudentAnnouncements from "./pages/student/Announcements";
 
-// Public pages
+// =====================================================
+// PUBLIC PAGES
+// =====================================================
+
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterationPage from "./pages/RegisterationPage";
 import ForgotPassword from "./pages/ForgotPassword";
 
-// Layouts
+// =====================================================
+// LAYOUTS
+// =====================================================
+
 import AdminLayout from "./layouts/AdminLayout";
 import MentorLayout from "./layouts/MentorLayout";
 import StudentLayout from "./layouts/StudentLayout";
 
-// Route protection
+// =====================================================
+// ROUTE PROTECTION
+// =====================================================
+
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 function AppContent() {
   const location = useLocation();
 
-  const showNavbar =
-    location.pathname === "/" || location.pathname.startsWith("/#");
+  const showNavbar = location.pathname === "/";
 
   return (
     <>
@@ -73,6 +94,8 @@ function AppContent() {
             {/* Dashboard */}
             <Route index element={<AdminDashboard />} />
 
+            <Route path="dashboard" element={<AdminDashboard />} />
+
             {/* Batch Management */}
             <Route path="batches" element={<BatchManagement />} />
 
@@ -85,14 +108,17 @@ function AppContent() {
             {/* Students */}
             <Route path="students" element={<ApplicantsPage />} />
 
+            {/* Users */}
+            <Route path="users" element={<UserManagement />} />
+
             {/* Attendance */}
             <Route path="attendance" element={<AdminAttendance />} />
 
+            {/* Progress */}
+            <Route path="progress" element={<AdminProgress />} />
+
             {/* Announcements */}
             <Route path="announcements" element={<AdminAnnouncements />} />
-
-            {/* Users */}
-            <Route path="users" element={<UserManagement />} />
 
             {/* Profile */}
             <Route path="profile" element={<AdminProfile />} />
@@ -108,11 +134,39 @@ function AppContent() {
             {/* Dashboard */}
             <Route index element={<MentorDashboard />} />
 
+            <Route path="dashboard" element={<MentorDashboard />} />
+
+            {/* My Students */}
+            <Route path="students" element={<MyStudents />} />
+
             {/* Attendance */}
             <Route path="attendance" element={<MentorAttendance />} />
 
+            {/* Progress */}
+            <Route path="progress" element={<MentorProgress />} />
+
+            {/* Assignments */}
+            <Route
+              path="assignments"
+              element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Mentor Assignments</h1>
+                </div>
+              }
+            />
+
             {/* Announcements */}
             <Route path="announcements" element={<MentorAnnouncements />} />
+
+            {/* Profile */}
+            <Route
+              path="profile"
+              element={
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Mentor Profile</h1>
+                </div>
+              }
+            />
           </Route>
         </Route>
 
@@ -124,6 +178,9 @@ function AppContent() {
           <Route path="/student" element={<StudentLayout />}>
             {/* Dashboard */}
             <Route index element={<StudentDashboard />} />
+
+            {/* Progress */}
+            <Route path="progress" element={<StudentProgress />} />
 
             {/* Attendance */}
             <Route path="attendance" element={<StudentAttendance />} />
