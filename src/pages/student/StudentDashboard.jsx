@@ -1,5 +1,7 @@
 import { ClipboardCheck, FileText, BarChart3, Megaphone } from "lucide-react";
 
+import StudentAtRiskNotification from "../../components/AtRiskNotification";
+
 function StudentDashboard() {
   const stats = [
     {
@@ -26,6 +28,10 @@ function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F6FAFD]">
+      {/* AT-RISK NOTIFICATION */}
+      <StudentAtRiskNotification />
+
+      {/* HEADER */}
       <header className="border-b border-[#D6D6D6] bg-white px-8 py-6">
         <p className="text-sm font-medium text-[#4A7FA7]">Student Dashboard</p>
 
@@ -38,7 +44,9 @@ function StudentDashboard() {
         </p>
       </header>
 
+      {/* CONTENT */}
       <div className="p-8">
+        {/* STATS */}
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {stats.map((stat) => {
             const Icon = stat.icon;
@@ -66,7 +74,9 @@ function StudentDashboard() {
           })}
         </div>
 
+        {/* PROGRESS + ANNOUNCEMENT */}
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          {/* PROGRESS */}
           <div className="rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
             <h2 className="text-lg font-bold text-[#0A1931]">Your Progress</h2>
 
@@ -89,6 +99,7 @@ function StudentDashboard() {
             </div>
           </div>
 
+          {/* ANNOUNCEMENT */}
           <div className="rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
             <div className="flex items-start gap-4">
               <div className="rounded-xl bg-[#B3CFE5]/40 p-3">
@@ -113,6 +124,7 @@ function StudentDashboard() {
           </div>
         </div>
 
+        {/* KEEP LEARNING */}
         <div className="mt-6 rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold text-[#0A1931]">Keep Learning</h2>
 
