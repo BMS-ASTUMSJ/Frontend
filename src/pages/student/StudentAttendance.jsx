@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import {
   ShieldCheck,
@@ -8,21 +8,25 @@ import {
   CheckCircle2,
   Clock3,
   XCircle,
+  CalendarDays,
+  BookOpen,
 } from "lucide-react";
 
 import api from "../../utils/api";
 
+const EMPTY_SUMMARY = {
+  totalSessions: 0,
+  totalChecks: 0,
+  attendedChecks: 0,
+  absentChecks: 0,
+  lateChecks: 0,
+  excusedChecks: 0,
+};
+
 const StudentAttendance = () => {
   const [records, setRecords] = useState([]);
 
-  const [summary, setSummary] = useState({
-    totalSessions: 0,
-    totalChecks: 0,
-    attendedChecks: 0,
-    absentChecks: 0,
-    lateChecks: 0,
-    excusedChecks: 0,
-  });
+  const [summary, setSummary] = useState(EMPTY_SUMMARY);
 
   const [rate, setRate] = useState(0);
 
@@ -34,6 +38,10 @@ const StudentAttendance = () => {
     fetchRecords();
   }, []);
 
+  // ============================================================
+  // FETCH MY ATTENDANCE
+  // ============================================================
+
   const fetchRecords = async () => {
     try {
       setLoading(true);
@@ -41,20 +49,16 @@ const StudentAttendance = () => {
 
       const res = await api.get("/attendance/my-records");
 
-      setRecords(Array.isArray(res.data?.records) ? res.data.records : []);
+      const data = res.data || {};
 
-      setSummary(
-        res.data?.summary || {
-          totalSessions: 0,
-          totalChecks: 0,
-          attendedChecks: 0,
-          absentChecks: 0,
-          lateChecks: 0,
-          excusedChecks: 0,
-        },
-      );
+      setRecords(Array.isArray(data.records) ? data.records : []);
 
-      setRate(Number(res.data?.percentage || 0));
+      setSummary({
+        ...EMPTY_SUMMARY,
+        ...(data.summary || {}),
+      });
+
+      setRate(Number(data.percentage || 0));
     } catch (err) {
       console.error("Failed to load student attendance:", err);
 
@@ -66,13 +70,19 @@ const StudentAttendance = () => {
     }
   };
 
+  // ============================================================
+  // LOADING
+  // ============================================================
+
   if (loading) {
     return (
-      <div className="flex min-h-125 items-center justify-center">
+      <div className="flex min-h-125 items-center justify-center bg-gray-50">
         <div className="text-center">
-          <Loader2 size={35} className="mx-auto animate-spin text-indigo-600" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
+            <Loader2 size={30} className="animate-spin text-indigo-600" />
+          </div>
 
-          <p className="mt-3 text-sm font-semibold text-gray-500">
+          <p className="mt-4 text-sm font-semibold text-gray-500">
             Loading your attendance...
           </p>
         </div>
@@ -80,24 +90,45 @@ const StudentAttendance = () => {
     );
   }
 
+  // ============================================================
+  // PAGE
+  // ============================================================
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
+        {/* ======================================================
+            ERROR
+        ====================================================== */}
+
         {error && (
           <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-5">
             <AlertCircle size={20} className="mt-0.5 shrink-0 text-red-500" />
 
-            <div>
+            <div className="flex-1">
               <p className="text-sm font-bold text-red-700">
                 Unable to load attendance
               </p>
 
               <p className="mt-1 text-xs text-red-500">{error}</p>
+
+              <button
+                onClick={fetchRecords}
+                className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-700"
+              >
+                Try Again
+              </button>
             </div>
           </div>
         )}
 
+        {/* ======================================================
+            TOP SECTION
+        ====================================================== */}
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Attendance percentage */}
+
           <div className="rounded-3xl bg-indigo-700 p-8 text-white shadow-xl">
             <div className="flex items-start justify-between">
               <div>
@@ -105,7 +136,7 @@ const StudentAttendance = () => {
                   My Attendance Percentage
                 </p>
 
-                <h2 className="mt-2 text-5xl font-black">{rate}%</h2>
+                <h2 className="mt-2 text-5xl font-black">{rate.toFixed(1)}%</h2>
               </div>
 
               <ShieldCheck size={40} className="text-indigo-200" />
@@ -115,7 +146,7 @@ const StudentAttendance = () => {
               <div
                 className="h-full rounded-full bg-white transition-all duration-500"
                 style={{
-                  width: `${Math.min(rate, 100)}%`,
+                  width: `${Math.min(Math.max(rate, 0), 100)}%`,
                 }}
               />
             </div>
@@ -125,18 +156,24 @@ const StudentAttendance = () => {
             </p>
           </div>
 
-          <div className="rounded-3xl border bg-white p-6 shadow-sm">
+          {/* Personal dashboard */}
+
+          <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="flex h-full items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-gray-800">
-                  Personal Dashboard
-                </h3>
+              <div className="w-full">
+                <div className="flex items-center gap-2">
+                  <User size={20} className="text-indigo-600" />
+
+                  <h3 className="text-lg font-bold text-gray-800">
+                    Personal Dashboard
+                  </h3>
+                </div>
 
                 <p className="mt-1 text-sm text-gray-500">
                   You can only see your own attendance records.
                 </p>
 
-                <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4 md:grid-cols-2">
+                <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
                   <SummaryItem label="Sessions" value={summary.totalSessions} />
 
                   <SummaryItem label="Checks" value={summary.totalChecks} />
@@ -150,16 +187,23 @@ const StudentAttendance = () => {
                 </div>
               </div>
 
-              <User size={60} className="hidden text-gray-100 sm:block" />
+              <User
+                size={60}
+                className="ml-5 hidden shrink-0 text-gray-100 sm:block"
+              />
             </div>
           </div>
         </div>
+
+        {/* ======================================================
+            STATUS SUMMARY
+        ====================================================== */}
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatusSummary
             icon={<CheckCircle2 size={18} />}
             label="Present"
-            value={summary.attendedChecks - summary.lateChecks}
+            value={Math.max(0, summary.attendedChecks - summary.lateChecks)}
             className="text-green-600"
           />
 
@@ -185,9 +229,17 @@ const StudentAttendance = () => {
           />
         </div>
 
-        <div className="overflow-hidden rounded-3xl border bg-white shadow-sm">
-          <div className="border-b p-6">
-            <h3 className="font-bold text-gray-700">Attendance History</h3>
+        {/* ======================================================
+            ATTENDANCE HISTORY
+        ====================================================== */}
+
+        <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+          <div className="border-b border-gray-100 p-6">
+            <div className="flex items-center gap-2">
+              <CalendarDays size={19} className="text-indigo-600" />
+
+              <h3 className="font-bold text-gray-700">Attendance History</h3>
+            </div>
 
             <p className="mt-1 text-xs text-gray-400">
               Your personal attendance records
@@ -201,36 +253,15 @@ const StudentAttendance = () => {
               <p className="mt-3 text-sm font-semibold text-gray-500">
                 No attendance records yet.
               </p>
+
+              <p className="mt-1 text-xs text-gray-400">
+                Your attendance will appear here after your mentor records it.
+              </p>
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-y divide-gray-100">
               {records.map((record) => (
-                <div
-                  key={record._id}
-                  className="flex flex-col gap-5 p-6 transition-colors hover:bg-gray-50 md:flex-row md:items-center md:justify-between"
-                >
-                  <div>
-                    <p className="font-bold text-gray-800">
-                      {new Date(record.date).toDateString()}
-                    </p>
-
-                    <p className="mt-1 text-xs font-bold uppercase text-indigo-600">
-                      {record.sessionType}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-6">
-                    <RecordStatus
-                      label="Start Check"
-                      status={record.firstCheck?.status || "Absent"}
-                    />
-
-                    <RecordStatus
-                      label="End Check"
-                      status={record.secondCheck?.status || "Absent"}
-                    />
-                  </div>
-                </div>
+                <AttendanceRecord key={record._id} record={record} />
               ))}
             </div>
           )}
@@ -239,6 +270,79 @@ const StudentAttendance = () => {
     </div>
   );
 };
+
+// ============================================================
+// ATTENDANCE RECORD
+// ============================================================
+
+const AttendanceRecord = ({ record }) => {
+  const date = record.date ? new Date(record.date) : null;
+
+  const firstStatus = record.firstCheck?.status || null;
+
+  const secondStatus = record.secondCheck?.status || null;
+
+  return (
+    <div className="p-6 transition-colors hover:bg-gray-50">
+      <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        {/* Session information */}
+
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+              <BookOpen size={19} />
+            </div>
+
+            <div>
+              <p className="font-bold text-gray-800">
+                {record.sessionName ||
+                  record.sessionType ||
+                  "Attendance Session"}
+              </p>
+
+              <p className="mt-1 text-xs font-medium text-gray-400">
+                {date
+                  ? date.toLocaleDateString(undefined, {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                  : "Unknown date"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {record.sessionType && (
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-indigo-600">
+                {record.sessionType}
+              </span>
+            )}
+
+            {record.gender && (
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-gray-500">
+                {record.gender}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Checks */}
+
+        <div className="flex gap-6">
+          <RecordStatus label="First Check" status={firstStatus} />
+
+          <RecordStatus label="Second Check" status={secondStatus} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================
+// SUMMARY ITEM
+// ============================================================
 
 const SummaryItem = ({ label, value }) => (
   <div>
@@ -250,8 +354,12 @@ const SummaryItem = ({ label, value }) => (
   </div>
 );
 
+// ============================================================
+// STATUS SUMMARY
+// ============================================================
+
 const StatusSummary = ({ icon, label, value, className }) => (
-  <div className="rounded-2xl border bg-white p-5 shadow-sm">
+  <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
     <div className={`mb-2 flex items-center gap-2 ${className}`}>
       {icon}
 
@@ -262,6 +370,10 @@ const StatusSummary = ({ icon, label, value, className }) => (
   </div>
 );
 
+// ============================================================
+// RECORD STATUS
+// ============================================================
+
 const RecordStatus = ({ label, status }) => {
   const styles = {
     Present: "bg-green-100 text-green-700",
@@ -270,18 +382,20 @@ const RecordStatus = ({ label, status }) => {
     Excused: "bg-blue-100 text-blue-700",
   };
 
+  const displayStatus = status || "Not Marked";
+
+  const statusStyle = styles[status] || "bg-gray-100 text-gray-500";
+
   return (
-    <div className="text-center">
-      <p className="mb-1 text-[10px] font-bold uppercase text-gray-400">
+    <div className="min-w-20 text-center">
+      <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-gray-400">
         {label}
       </p>
 
       <span
-        className={`rounded-full px-3 py-1 text-xs font-bold ${
-          styles[status] || styles.Absent
-        }`}
+        className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${statusStyle}`}
       >
-        {status}
+        {displayStatus}
       </span>
     </div>
   );

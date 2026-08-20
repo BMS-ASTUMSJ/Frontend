@@ -3,9 +3,6 @@ import axios from "axios";
 const api = axios.create({
   baseURL: "http://localhost:5000/api",
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 api.interceptors.request.use(
@@ -25,7 +22,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.warn("Authentication expired or invalid.");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("role");
     }
 
     return Promise.reject(error);

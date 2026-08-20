@@ -11,6 +11,8 @@ import {
   Clock3,
   FileText,
   AlertCircle,
+  CalendarDays,
+  MinusCircle,
 } from "lucide-react";
 import api from "../../utils/api";
 
@@ -27,6 +29,10 @@ const AdminAttendance = () => {
   useEffect(() => {
     fetchAttendanceStats();
   }, []);
+
+  // ============================================================
+  // FETCH ATTENDANCE STATISTICS
+  // ============================================================
 
   const fetchAttendanceStats = async () => {
     try {
@@ -46,6 +52,10 @@ const AdminAttendance = () => {
       setLoading(false);
     }
   };
+
+  // ============================================================
+  // VIEW FULL REPORT
+  // ============================================================
 
   const handleViewReport = async (batch) => {
     try {
@@ -69,11 +79,19 @@ const AdminAttendance = () => {
     }
   };
 
+  // ============================================================
+  // CLOSE REPORT
+  // ============================================================
+
   const closeReport = () => {
     setSelectedBatch(null);
     setReport(null);
     setReportError("");
   };
+
+  // ============================================================
+  // RENDER
+  // ============================================================
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
@@ -97,7 +115,7 @@ const AdminAttendance = () => {
             </h1>
 
             <p className="mt-1 text-sm font-medium text-gray-500">
-              Real-time attendance tracking for all batches
+              Weighted attendance tracking for all batches
             </p>
           </div>
 
@@ -105,6 +123,8 @@ const AdminAttendance = () => {
             <BarChart3 size={30} />
           </div>
         </header>
+
+        {/* ================= CALCULATION RULE ================= */}
 
         {/* ================= ERROR ================= */}
 
@@ -193,6 +213,8 @@ const AdminAttendance = () => {
 // ============================================================
 
 const BatchCard = ({ batch, onViewReport }) => {
+  const overallRate = Number(batch.overallAttendanceRate || 0);
+
   const femaleRate = Number(batch.femaleAttendanceRate || 0);
 
   const maleRate = Number(batch.maleAttendanceRate || 0);
@@ -203,18 +225,15 @@ const BatchCard = ({ batch, onViewReport }) => {
 
   const maleStudents = Number(batch.maleStudents || 0);
 
-  // Calculate overall attendance rate
-  const overallRate =
-    totalStudents > 0
-      ? (
-          (femaleRate * femaleStudents + maleRate * maleStudents) /
-          totalStudents
-        ).toFixed(1)
-      : "0.0";
+  const totalSessions = Number(batch.totalSessions || 0);
+
+  const totalApplicableChecks = Number(batch.totalApplicableChecks || 0);
+
+  const totalEarnedPoints = Number(batch.totalEarnedPoints || 0);
 
   return (
     <div className="group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-      {/* Card top */}
+      {/* ================= CARD TOP ================= */}
 
       <div className="border-b border-gray-100 p-6">
         <div className="mb-5 flex items-center justify-between">
@@ -240,7 +259,7 @@ const BatchCard = ({ batch, onViewReport }) => {
         </p>
       </div>
 
-      {/* Overall percentage */}
+      {/* ================= OVERALL PERCENTAGE ================= */}
 
       <div className="border-b border-gray-100 bg-linear-to-br from-indigo-50 to-white p-6">
         <div className="flex items-end justify-between">
@@ -250,7 +269,7 @@ const BatchCard = ({ batch, onViewReport }) => {
             </p>
 
             <p className="mt-1 text-4xl font-black text-indigo-700">
-              {overallRate}%
+              {overallRate.toFixed(1)}%
             </p>
           </div>
 
@@ -267,48 +286,68 @@ const BatchCard = ({ batch, onViewReport }) => {
           <div
             className="h-full rounded-full bg-indigo-600 transition-all"
             style={{
-              width: `${Math.min(Number(overallRate), 100)}%`,
+              width: `${Math.min(Math.max(overallRate, 0), 100)}%`,
             }}
           />
         </div>
       </div>
 
-      {/* Statistics */}
+      {/* ================= STATISTICS ================= */}
 
       <div className="space-y-4 p-6">
         <StatItem
           icon={<Users size={16} />}
           label="Total Students"
-          value={batch.totalStudents}
+          value={totalStudents}
         />
+
+        <StatItem
+          icon={<CalendarDays size={16} />}
+          label="Actual Sessions"
+          value={totalSessions}
+        />
+
+        <StatItem
+          icon={<CheckCircle2 size={16} />}
+          label="Applicable Checks"
+          value={totalApplicableChecks}
+        />
+
+        <StatItem
+          icon={<TrendingUp size={16} />}
+          label="Earned Points"
+          value={totalEarnedPoints.toFixed(1)}
+        />
+
+        <div className="my-2 border-t border-gray-100" />
 
         <StatItem
           icon={<UserRound size={16} />}
           label="Female Students"
-          value={batch.femaleStudents}
+          value={femaleStudents}
         />
 
         <StatItem
           icon={<CheckCircle2 size={16} />}
           label="Female Attendance"
-          value={`${femaleRate}%`}
+          value={`${femaleRate.toFixed(1)}%`}
           valueClass="text-pink-600"
         />
 
         <StatItem
           icon={<UserRound size={16} />}
           label="Male Students"
-          value={batch.maleStudents}
+          value={maleStudents}
         />
 
         <StatItem
           icon={<CheckCircle2 size={16} />}
           label="Male Attendance"
-          value={`${maleRate}%`}
+          value={`${maleRate.toFixed(1)}%`}
           valueClass="text-blue-600"
         />
 
-        {/* Button */}
+        {/* ================= BUTTON ================= */}
 
         <div className="pt-3">
           <button
@@ -357,7 +396,7 @@ const ReportModal = ({ batch, report, loading, error, onClose }) => {
       }}
     >
       <div className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
-        {/* Modal header */}
+        {/* ================= MODAL HEADER ================= */}
 
         <div className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-5 sm:px-8">
           <div>
@@ -370,7 +409,7 @@ const ReportModal = ({ batch, report, loading, error, onClose }) => {
             </div>
 
             <p className="mt-1 text-xs font-medium text-gray-400">
-              Detailed attendance report
+              Detailed weighted attendance report
             </p>
           </div>
 
@@ -382,7 +421,7 @@ const ReportModal = ({ batch, report, loading, error, onClose }) => {
           </button>
         </div>
 
-        {/* Modal content */}
+        {/* ================= MODAL CONTENT ================= */}
 
         <div className="overflow-y-auto p-6 sm:p-8">
           {loading ? (
@@ -424,7 +463,7 @@ const FullReport = ({ report }) => {
 
   return (
     <div className="space-y-6">
-      {/* Summary cards */}
+      {/* ================= SUMMARY ================= */}
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <ReportStat
@@ -434,25 +473,55 @@ const FullReport = ({ report }) => {
         />
 
         <ReportStat
-          label="Present"
-          value={summary.totalPresent ?? 0}
+          label="Sessions"
+          value={summary.totalSessions ?? 0}
+          icon={<CalendarDays size={18} />}
+        />
+
+        <ReportStat
+          label="Applicable Checks"
+          value={summary.totalApplicableChecks ?? 0}
           icon={<CheckCircle2 size={18} />}
         />
 
         <ReportStat
-          label="Late"
-          value={summary.totalLate ?? 0}
-          icon={<Clock3 size={18} />}
-        />
-
-        <ReportStat
           label="Attendance"
-          value={`${summary.overallAttendanceRate ?? 0}%`}
+          value={`${Number(summary.overallAttendanceRate || 0).toFixed(1)}%`}
           icon={<TrendingUp size={18} />}
         />
       </div>
 
-      {/* Table */}
+      {/* ================= CALCULATION SUMMARY ================= */}
+
+      <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <MiniStat
+            label="Present"
+            value={summary.totalPresent}
+            className="text-green-600"
+          />
+
+          <MiniStat
+            label="Late"
+            value={summary.totalLate}
+            className="text-amber-600"
+          />
+
+          <MiniStat
+            label="Absent"
+            value={summary.totalAbsent}
+            className="text-red-600"
+          />
+
+          <MiniStat
+            label="Excused"
+            value={summary.totalExcused}
+            className="text-blue-600"
+          />
+        </div>
+      </div>
+
+      {/* ================= TABLE ================= */}
 
       <div className="overflow-hidden rounded-2xl border border-gray-100">
         <div className="overflow-x-auto">
@@ -520,10 +589,12 @@ const FullReport = ({ report }) => {
 // ============================================================
 
 const StudentReportRow = ({ student }) => {
-  const attendance = Number(student.attendanceRate ?? student.percentage ?? 0);
+  const attendance = Number(student.percentage ?? student.attendanceRate ?? 0);
 
   return (
     <tr className="transition hover:bg-gray-50">
+      {/* STUDENT */}
+
       <td className="px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-xs font-black text-indigo-600">
@@ -547,11 +618,15 @@ const StudentReportRow = ({ student }) => {
         </div>
       </td>
 
+      {/* GENDER */}
+
       <td className="px-5 py-4">
         <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-black uppercase text-gray-500">
           {student.gender || "-"}
         </span>
       </td>
+
+      {/* PRESENT */}
 
       <td className="px-5 py-4 text-center">
         <span className="font-black text-green-600">
@@ -559,11 +634,15 @@ const StudentReportRow = ({ student }) => {
         </span>
       </td>
 
+      {/* LATE */}
+
       <td className="px-5 py-4 text-center">
         <span className="font-black text-amber-600">
           {student.lateChecks ?? 0}
         </span>
       </td>
+
+      {/* ABSENT */}
 
       <td className="px-5 py-4 text-center">
         <span className="font-black text-red-600">
@@ -571,11 +650,15 @@ const StudentReportRow = ({ student }) => {
         </span>
       </td>
 
+      {/* EXCUSED */}
+
       <td className="px-5 py-4 text-center">
         <span className="font-black text-blue-600">
           {student.excusedChecks ?? 0}
         </span>
       </td>
+
+      {/* ATTENDANCE */}
 
       <td className="px-5 py-4 text-center">
         <span
@@ -587,7 +670,7 @@ const StudentReportRow = ({ student }) => {
                 : "bg-red-100 text-red-700"
           }`}
         >
-          {attendance}%
+          {attendance.toFixed(1)}%
         </span>
       </td>
     </tr>
@@ -609,6 +692,20 @@ const ReportStat = ({ label, value, icon }) => (
     </p>
 
     <p className="mt-1 text-2xl font-black text-gray-900">{value}</p>
+  </div>
+);
+
+// ============================================================
+// MINI STAT
+// ============================================================
+
+const MiniStat = ({ label, value, className }) => (
+  <div>
+    <p className="text-[10px] font-black uppercase tracking-wider text-indigo-400">
+      {label}
+    </p>
+
+    <p className={`mt-1 text-xl font-black ${className}`}>{value ?? 0}</p>
   </div>
 );
 

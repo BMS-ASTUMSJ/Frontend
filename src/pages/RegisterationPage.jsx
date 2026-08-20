@@ -59,7 +59,7 @@ function RegisterationPage() {
 
         toast.error(
           err.response?.data?.message ||
-            "Could not check registration status. Please try again."
+            "Could not check registration status. Please try again.",
         );
       } finally {
         setCheckingRegistration(false);
@@ -178,8 +178,7 @@ function RegisterationPage() {
       console.error("Registration error:", err);
 
       const message =
-        err.response?.data?.message ||
-        "Registration failed. Please try again.";
+        err.response?.data?.message || "Registration failed. Please try again.";
 
       toast.error(message);
     } finally {
@@ -367,8 +366,6 @@ function RegisterationPage() {
                     <option value="1st Year">1st Year</option>
                     <option value="2nd Year">2nd Year</option>
                     <option value="3rd Year">3rd Year</option>
-                    <option value="4th Year">4th Year</option>
-                    <option value="5th Year">5th Year</option>
                   </select>
                 </div>
 
@@ -490,8 +487,8 @@ function RegisterationPage() {
 
                 <span className="text-sm leading-6 text-[#7A7F85]">
                   I agree to follow the bootcamp rules, attend sessions
-                  regularly, and participate actively in contests, projects,
-                  and teamwork.
+                  regularly, and participate actively in contests, projects, and
+                  teamwork.
                   <span className="ml-1 text-red-500">*</span>
                 </span>
               </label>
@@ -502,9 +499,7 @@ function RegisterationPage() {
                 disabled={loading}
                 className="w-full rounded-xl bg-[#1A3D63] py-3.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading
-                  ? "Submitting Application..."
-                  : "Submit Application"}
+                {loading ? "Submitting Application..." : "Submit Application"}
               </button>
             </form>
 

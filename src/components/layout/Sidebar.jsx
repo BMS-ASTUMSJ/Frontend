@@ -10,6 +10,7 @@ import {
   Megaphone,
   UserCircle,
   Archive,
+  Layers,
   LogOut,
 } from "lucide-react";
 
@@ -76,6 +77,11 @@ function Sidebar({ role }) {
       name: "Attendance",
       path: "/admin/attendance",
       icon: ClipboardCheck,
+    },
+    {
+      name: "Weekly Sessions",
+      path: "/admin/sessions",
+      icon: Layers,
     },
     {
       name: "Progress",
