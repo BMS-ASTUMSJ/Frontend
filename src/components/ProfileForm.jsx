@@ -4,7 +4,8 @@ import api from "../utils/api";
 const ProfileForm = ({ role }) => {
   const [user, setUser] = useState(null);
 
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [bio, setBio] = useState("");
 
@@ -37,17 +38,11 @@ const ProfileForm = ({ role }) => {
 
       setUser(currentUser);
 
-      // Build full name from your actual schema
-      const fullName = [currentUser.firstName, currentUser.lastName]
-        .filter(Boolean)
-        .join(" ");
-
-      setName(fullName);
+      setFirstName(currentUser.firstName || "");
+      setLastName(currentUser.lastName || "");
       setPhone(currentUser.phone || "");
       setBio(currentUser.bio || "");
 
-      // IMPORTANT:
-      // profileImage is now an object
       setPreview(currentUser.profileImage?.url || "");
     } catch (err) {
       console.error("LOAD PROFILE ERROR:", err);
@@ -109,7 +104,8 @@ const ProfileForm = ({ role }) => {
 
       const formData = new FormData();
 
-      formData.append("name", name);
+      formData.append("firstName", firstName);
+      formData.append("lastName", lastName);
       formData.append("phone", phone);
       formData.append("bio", bio);
 
@@ -117,8 +113,6 @@ const ProfileForm = ({ role }) => {
         formData.append("profileImage", profileImage);
       }
 
-      // IMPORTANT:
-      // Backend route is PATCH /profile/me
       const response = await api.patch("/profile/me", formData);
 
       const updatedUser = response.data?.user;
@@ -128,20 +122,12 @@ const ProfileForm = ({ role }) => {
       }
 
       setUser(updatedUser);
-
-      const fullName = [updatedUser.firstName, updatedUser.lastName]
-        .filter(Boolean)
-        .join(" ");
-
-      setName(fullName);
+      setFirstName(updatedUser.firstName || "");
+      setLastName(updatedUser.lastName || "");
       setPhone(updatedUser.phone || "");
       setBio(updatedUser.bio || "");
-
-      // IMPORTANT:
-      // Save the Cloudinary URL returned by backend
       setPreview(updatedUser.profileImage?.url || "");
 
-      // Clear selected file
       setProfileImage(null);
 
       setSuccess(response.data?.message || "Profile updated successfully.");
@@ -202,7 +188,6 @@ const ProfileForm = ({ role }) => {
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-
           <p className="text-gray-600">Loading profile...</p>
         </div>
       </div>
@@ -218,7 +203,6 @@ const ProfileForm = ({ role }) => {
       <div className="mx-auto max-w-5xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">{role} Profile</h1>
-
           <p className="mt-2 text-gray-500">
             Manage your personal information and profile photo.
           </p>
@@ -238,7 +222,6 @@ const ProfileForm = ({ role }) => {
 
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
           {/* PROFILE IMAGE */}
-
           <div className="border-b border-gray-200 px-6 py-8 sm:px-8">
             <div className="flex flex-col items-center gap-6 sm:flex-row">
               <div>
@@ -250,7 +233,7 @@ const ProfileForm = ({ role }) => {
                   />
                 ) : (
                   <div className="flex h-36 w-36 items-center justify-center rounded-full bg-blue-100 text-5xl font-bold text-blue-600 ring-4 ring-gray-100">
-                    {name ? name.charAt(0).toUpperCase() : "U"}
+                    {firstName ? firstName.charAt(0).toUpperCase() : "U"}
                   </div>
                 )}
               </div>
@@ -300,7 +283,6 @@ const ProfileForm = ({ role }) => {
           </div>
 
           {/* FORM */}
-
           <form onSubmit={handleSubmit}>
             <div className="px-6 py-8 sm:px-8">
               <h2 className="text-xl font-semibold text-gray-900">
@@ -312,29 +294,36 @@ const ProfileForm = ({ role }) => {
               </p>
 
               <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                {/* NAME */}
-
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
-                    Full Name
+                    First Name
                   </label>
-
                   <input
                     type="text"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
+                    value={firstName}
+                    onChange={(event) => setFirstName(event.target.value)}
                     required
                     className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
 
-                {/* EMAIL */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(event) => setLastName(event.target.value)}
+                    required
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
                     Email
                   </label>
-
                   <input
                     type="email"
                     value={user?.email || ""}
@@ -343,13 +332,10 @@ const ProfileForm = ({ role }) => {
                   />
                 </div>
 
-                {/* PHONE */}
-
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
                     Phone Number
                   </label>
-
                   <input
                     type="text"
                     value={phone}
@@ -358,13 +344,10 @@ const ProfileForm = ({ role }) => {
                   />
                 </div>
 
-                {/* ROLE */}
-
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-gray-700">
                     Role
                   </label>
-
                   <input
                     type="text"
                     value={user?.role || role}
@@ -374,23 +357,22 @@ const ProfileForm = ({ role }) => {
                 </div>
               </div>
 
-              {/* BIO */}
-
               <div className="mt-6">
                 <label className="mb-2 block text-sm font-semibold text-gray-700">
                   Bio
                 </label>
-
                 <textarea
                   value={bio}
                   onChange={(event) => setBio(event.target.value)}
                   rows={5}
+                  maxLength={300}
                   className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
+                <p className="mt-1 text-right text-xs text-gray-400">
+                  {bio.length}/300
+                </p>
               </div>
             </div>
-
-            {/* FOOTER */}
 
             <div className="flex flex-col-reverse gap-3 border-t border-gray-200 bg-gray-50 px-6 py-5 sm:flex-row sm:justify-end sm:px-8">
               <button
