@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
 import {
@@ -26,7 +25,10 @@ const MentorAssignment = () => {
 
   const [gradeData, setGradeData] = useState({});
 
-  
+  // ============================================================
+  // FETCH ASSIGNMENTS
+  // ============================================================
+
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
@@ -36,11 +38,10 @@ const MentorAssignment = () => {
 
         setAssignments(res.data.assignments || []);
       } catch (err) {
-        console.error("Failed to load assignments:", err);
+        console.error("FAILED TO LOAD ASSIGNMENTS:", err);
 
         toast.error(
-          err.response?.data?.message ||
-            "Failed to load assignments"
+          err.response?.data?.message || "Failed to load assignments",
         );
       } finally {
         setLoading(false);
@@ -50,7 +51,27 @@ const MentorAssignment = () => {
     fetchAssignments();
   }, []);
 
- 
+  // ============================================================
+  // AUTOMATIC SUBMISSION STATUS
+  // ============================================================
+
+  const getSubmissionStatus = (submission) => {
+    if (submission?.status === "Graded") {
+      return "Graded";
+    }
+
+    if (submission?.status === "Resubmission Required") {
+      return "Resubmission Required";
+    }
+
+    // If submitted but not graded yet
+    return "Pending";
+  };
+
+  // ============================================================
+  // LOAD SUBMISSIONS
+  // ============================================================
+
   const loadSubmissions = async (assignmentId) => {
     if (!assignmentId) {
       setSelectedAsm("");
@@ -63,43 +84,29 @@ const MentorAssignment = () => {
     setFetchingSubs(true);
 
     try {
-      const res = await api.get(
-        `/submissions/assignment/${assignmentId}`
-      );
+      const res = await api.get(`/submissions/assignment/${assignmentId}`);
 
-      const fetchedSubmissions =
-        res.data.submissions || [];
+      const fetchedSubmissions = res.data.submissions || [];
 
       setSubmissions(fetchedSubmissions);
 
       const initialGrades = {};
 
       fetchedSubmissions.forEach((sub) => {
-        
-
-        const gradingStatus =
-          sub.status === "Resubmission Required"
-            ? "Resubmission Required"
-            : "Graded";
+        const automaticStatus = getSubmissionStatus(sub);
 
         initialGrades[sub._id] = {
           score: sub.score ?? "",
           feedback: sub.feedback ?? "",
-          status: gradingStatus,
+          status: automaticStatus,
         };
       });
 
       setGradeData(initialGrades);
     } catch (err) {
-      console.error(
-        "Error loading submissions:",
-        err
-      );
+      console.error("ERROR LOADING SUBMISSIONS:", err);
 
-      toast.error(
-        err.response?.data?.message ||
-          "Error loading submissions"
-      );
+      toast.error(err.response?.data?.message || "Error loading submissions");
 
       setSubmissions([]);
       setGradeData({});
@@ -108,12 +115,11 @@ const MentorAssignment = () => {
     }
   };
 
+  // ============================================================
+  // HANDLE INPUT CHANGE
+  // ============================================================
 
-  const handleInputChange = (
-    subId,
-    field,
-    value
-  ) => {
+  const handleInputChange = (subId, field, value) => {
     setGradeData((prev) => ({
       ...prev,
       [subId]: {
@@ -123,6 +129,50 @@ const MentorAssignment = () => {
     }));
   };
 
+  // ============================================================
+  // REQUEST RESUBMISSION
+  // ============================================================
+
+  const requestResubmission = async (subId) => {
+    const confirmed = window.confirm(
+      "Do you want to request a resubmission from this student?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const currentGrade = gradeData[subId];
+
+    try {
+      await api.put(`/submissions/grade/${subId}`, {
+        score:
+          currentGrade?.score === "" ||
+          currentGrade?.score === null ||
+          currentGrade?.score === undefined
+            ? null
+            : Number(currentGrade.score),
+
+        feedback: currentGrade?.feedback?.trim() || "",
+
+        status: "Resubmission Required",
+      });
+
+      toast.success("Resubmission request sent successfully.");
+
+      await loadSubmissions(selectedAsm);
+    } catch (err) {
+      console.error("RESUBMISSION REQUEST FAILED:", err);
+
+      toast.error(
+        err.response?.data?.message || "Failed to request resubmission",
+      );
+    }
+  };
+
+  // ============================================================
+  // SUBMIT GRADE
+  // ============================================================
 
   const submitGrade = async (subId) => {
     const currentGrade = gradeData[subId];
@@ -132,7 +182,10 @@ const MentorAssignment = () => {
       return;
     }
 
-   
+    // ----------------------------------------------------------
+    // SCORE REQUIRED
+    // ----------------------------------------------------------
+
     if (
       currentGrade.score === "" ||
       currentGrade.score === null ||
@@ -154,92 +207,59 @@ const MentorAssignment = () => {
       return;
     }
 
-  
-    const assignment = assignments.find(
-      (asm) => asm._id === selectedAsm
-    );
+    // ----------------------------------------------------------
+    // GET ASSIGNMENT
+    // ----------------------------------------------------------
+
+    const assignment = assignments.find((asm) => asm._id === selectedAsm);
 
     if (!assignment) {
       toast.error("Assignment information not found.");
       return;
     }
 
-    const maxScore = Number(
-      assignment.maxScore ?? 100
-    );
+    const maxScore = Number(assignment.maxScore ?? 100);
 
     if (score > maxScore) {
-      toast.error(
-        `Score cannot exceed ${maxScore}.`
-      );
+      toast.error(`Score cannot exceed ${maxScore}.`);
       return;
     }
 
-   
-
-    let status = currentGrade.status;
-
-    if (
-      status !== "Graded" &&
-      status !== "Resubmission Required"
-    ) {
-      status = "Graded";
-    }
+    // ----------------------------------------------------------
+    // GRADING ALWAYS MEANS GRADED
+    // ----------------------------------------------------------
 
     try {
       console.log("========== SENDING GRADE ==========");
       console.log("Submission ID:", subId);
       console.log("Score:", score);
-      console.log(
-        "Feedback:",
-        currentGrade.feedback || ""
-      );
-      console.log("Status:", status);
+      console.log("Feedback:", currentGrade.feedback || "");
+      console.log("Status:", "Graded");
       console.log("===================================");
 
-      await api.put(
-        `/submissions/grade/${subId}`,
-        {
-          score,
-          feedback:
-            currentGrade.feedback?.trim() || "",
-          status,
-        }
-      );
+      await api.put(`/submissions/grade/${subId}`, {
+        score,
+        feedback: currentGrade.feedback?.trim() || "",
+        status: "Graded",
+      });
 
-      if (
-        status === "Resubmission Required"
-      ) {
-        toast.success(
-          "Resubmission requested successfully."
-        );
-      } else {
-        toast.success(
-          "Evaluation saved successfully."
-        );
-      }
+      toast.success("Evaluation saved successfully.");
 
+      // Reload so status becomes Graded automatically
       await loadSubmissions(selectedAsm);
     } catch (err) {
-      console.error(
-        "Grading failed:",
-        err
-      );
+      console.error("GRADING FAILED:", err);
 
-      console.error(
-        "Backend response:",
-        err.response?.data
-      );
+      console.error("BACKEND RESPONSE:", err.response?.data);
 
-      toast.error(
-        err.response?.data?.message ||
-          "Grading failed"
-      );
+      toast.error(err.response?.data?.message || "Grading failed");
     }
   };
 
-  
- 
+  // ============================================================
+  // LOADING PAGE
+  // ============================================================
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F6FAFD]">
@@ -248,78 +268,57 @@ const MentorAssignment = () => {
     );
   }
 
-  
   return (
     <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-8">
       <div className="mx-auto max-w-6xl space-y-8">
+        {/* ======================================================
+            HEADER
+        ====================================================== */}
 
-        
         <div className="flex flex-col justify-between gap-5 rounded-3xl bg-[#0A1931] p-8 text-white shadow-lg md:flex-row md:items-center">
-
           <div className="flex items-center gap-5">
-
             <div className="rounded-2xl bg-[#1A3D63] p-4">
-              <GraduationCap
-                size={32}
-                className="text-[#B3CFE5]"
-              />
+              <GraduationCap size={32} className="text-[#B3CFE5]" />
             </div>
 
             <div>
-              <h1 className="text-3xl font-bold">
-                Grading Dashboard
-              </h1>
+              <h1 className="text-3xl font-bold">Grading Dashboard</h1>
 
               <p className="mt-1 text-sm text-[#B3CFE5]">
-                Review projects from your assigned
-                team members.
+                Review projects from your assigned team members.
               </p>
             </div>
-
           </div>
 
           <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-6 py-3">
-
-            <Users
-              size={20}
-              className="text-[#4A7FA7]"
-            />
+            <Users size={20} className="text-[#4A7FA7]" />
 
             <span className="text-lg font-semibold">
               {submissions.length} Submission
-              {submissions.length !== 1
-                ? "s"
-                : ""}
+              {submissions.length !== 1 ? "s" : ""}
             </span>
-
           </div>
         </div>
 
-        
-        <div className="rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm">
+        {/* ======================================================
+            ASSIGNMENT SELECTOR
+        ====================================================== */}
 
+        <div className="rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm">
           <label className="mb-3 block text-sm font-bold text-[#0A1931]">
             Select Assignment to Grade
           </label>
 
           <div className="relative">
-
             <select
               value={selectedAsm}
-              onChange={(e) =>
-                loadSubmissions(e.target.value)
-              }
+              onChange={(e) => loadSubmissions(e.target.value)}
               className="w-full appearance-none rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD] p-4 font-semibold text-[#0A1931] outline-none transition focus:ring-2 focus:ring-[#1A3D63]"
             >
-              <option value="">
-                -- Choose a project --
-              </option>
+              <option value="">Choose a project</option>
 
               {assignments.map((assignment) => (
-                <option
-                  key={assignment._id}
-                  value={assignment._id}
-                >
+                <option key={assignment._id} value={assignment._id}>
                   {assignment.title}
                 </option>
               ))}
@@ -328,125 +327,91 @@ const MentorAssignment = () => {
             <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4A7FA7]">
               <Search size={20} />
             </div>
-
           </div>
         </div>
 
-       
-        <div className="space-y-6">
+        {/* ======================================================
+            SUBMISSIONS
+        ====================================================== */}
 
+        <div className="space-y-6">
           {fetchingSubs ? (
             <div className="flex h-64 items-center justify-center">
               <Loader2 className="h-10 w-10 animate-spin text-[#1A3D63]" />
             </div>
           ) : !selectedAsm ? (
-
             <div className="rounded-3xl border border-dashed border-[#B3CFE5] bg-white p-16 text-center">
-
-              <Inbox
-                size={48}
-                className="mx-auto mb-4 text-[#B3CFE5]"
-              />
+              <Inbox size={48} className="mx-auto mb-4 text-[#B3CFE5]" />
 
               <p className="text-lg font-semibold text-[#0A1931]">
                 No Selection
               </p>
 
               <p className="text-sm text-[#7A7F85]">
-                Please select an assignment from
-                the dropdown above to view submissions.
+                Please select an assignment from the dropdown above to view
+                submissions.
               </p>
-
             </div>
-
           ) : submissions.length === 0 ? (
-
             <div className="rounded-3xl border border-dashed border-[#B3CFE5] bg-white p-16 text-center">
-
-              <CheckCircle
-                size={48}
-                className="mx-auto mb-4 text-green-300"
-              />
+              <CheckCircle size={48} className="mx-auto mb-4 text-green-300" />
 
               <p className="text-lg font-semibold text-[#0A1931]">
                 No Submissions
               </p>
 
               <p className="text-sm text-[#7A7F85]">
-                No students in your assigned teams
-                have submitted this assignment yet.
+                No students in your assigned teams have submitted this
+                assignment yet.
               </p>
-
             </div>
-
           ) : (
-
             <div className="grid gap-6">
-
               {submissions.map((sub) => {
+                const currentGrade = gradeData[sub._id] || {
+                  score: sub.score ?? "",
+                  feedback: sub.feedback ?? "",
+                  status: getSubmissionStatus(sub),
+                };
 
-                const currentGrade =
-                  gradeData[sub._id] || {
-                    score: sub.score ?? "",
-                    feedback:
-                      sub.feedback ?? "",
-                    status:
-                      sub.status ===
-                      "Resubmission Required"
-                        ? "Resubmission Required"
-                        : "Graded",
-                  };
+                // AUTOMATIC STATUS
+                const status = currentGrade.status || getSubmissionStatus(sub);
 
-               
-                const status =
-                  currentGrade.status ===
-                    "Resubmission Required"
-                    ? "Resubmission Required"
-                    : "Graded";
+                const isPending = status === "Pending";
 
-                const isGraded =
-                  status === "Graded";
-
-                const needsResubmission =
-                  status ===
-                  "Resubmission Required";
+                const isGraded = status === "Graded";
 
                 return (
                   <div
                     key={sub._id}
                     className="overflow-hidden rounded-3xl border border-[#B3CFE5] bg-white shadow-sm transition hover:shadow-md"
                   >
-
                     <div className="flex flex-col lg:flex-row">
+                      {/* ==================================================
+                          STUDENT INFORMATION
+                      ================================================== */}
 
-                    
                       <div className="border-b border-[#B3CFE5] bg-[#F6FAFD] p-6 lg:w-1/3 lg:border-b-0 lg:border-r">
-
                         <div className="mb-4 flex items-center gap-4">
-
                           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1A3D63] text-xl font-bold text-white">
-                            {sub.student?.firstName?.[0] ||
-                              "S"}
+                            {sub.student?.firstName?.[0] || "S"}
                           </div>
 
                           <div>
                             <h4 className="text-lg font-black text-[#0A1931]">
-                              {sub.student?.firstName ||
-                                ""}{" "}
-                              {sub.student?.lastName ||
-                                ""}
+                              {sub.student?.firstName || ""}{" "}
+                              {sub.student?.lastName || ""}
                             </h4>
 
                             <span className="text-[10px] font-bold uppercase text-[#4A7FA7]">
                               Assigned Student
                             </span>
                           </div>
-
                         </div>
 
                         <div className="space-y-4">
-
                           {/* GITHUB */}
+
                           {sub.githubUrl ? (
                             <a
                               href={sub.githubUrl}
@@ -455,13 +420,8 @@ const MentorAssignment = () => {
                               className="flex items-center gap-2 rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm font-bold text-indigo-600 transition hover:bg-indigo-50"
                             >
                               <GitBranch size={18} />
-
                               Open Repository
-
-                              <ExternalLink
-                                size={14}
-                                className="ml-auto"
-                              />
+                              <ExternalLink size={14} className="ml-auto" />
                             </a>
                           ) : (
                             <div className="flex items-center gap-2 rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm font-bold text-[#7A7F85]">
@@ -471,6 +431,7 @@ const MentorAssignment = () => {
                           )}
 
                           {/* LIVE DEMO */}
+
                           {sub.liveDemoUrl && (
                             <a
                               href={sub.liveDemoUrl}
@@ -484,57 +445,53 @@ const MentorAssignment = () => {
                           )}
 
                           {/* NOTES */}
-                          <div className="rounded-xl border border-[#B3CFE5] bg-white p-3">
 
+                          <div className="rounded-xl border border-[#B3CFE5] bg-white p-3">
                             <p className="mb-1 text-xs font-bold text-[#7A7F85]">
                               Student Notes:
                             </p>
 
                             <p className="text-xs italic leading-relaxed text-[#0A1931]">
-                              {sub.notes ||
-                                "No notes provided by student."}
+                              {sub.notes || "No notes provided by student."}
                             </p>
-
                           </div>
-
                         </div>
                       </div>
 
+                      {/* ==================================================
+                          EVALUATION
+                      ================================================== */}
+
                       <div className="flex-1 p-6 lg:p-8">
-
                         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-
                           <div className="flex items-center gap-2 text-[#1A3D63]">
-
                             <Award size={20} />
 
-                            <h5 className="font-bold">
-                              Mentor Evaluation
-                            </h5>
-
+                            <h5 className="font-bold">Mentor Evaluation</h5>
                           </div>
 
-                       
+                          {/* AUTOMATIC STATUS */}
+
                           <span
                             className={`rounded-full px-3 py-1 text-[10px] font-black uppercase ${
-                              isGraded
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
+                              isPending
+                                ? "bg-yellow-100 text-yellow-700"
+                                : isGraded
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-orange-100 text-orange-700"
                             }`}
                           >
                             {status}
                           </span>
-
                         </div>
 
                         <div className="grid gap-6">
-
                           {/* SCORE + FEEDBACK */}
+
                           <div className="flex flex-col gap-4 md:flex-row">
-
                             {/* SCORE */}
-                            <div className="md:w-32">
 
+                            <div className="md:w-32">
                               <label className="mb-2 block text-xs font-bold text-[#7A7F85]">
                                 Score
                               </label>
@@ -543,48 +500,39 @@ const MentorAssignment = () => {
                                 type="number"
                                 min="0"
                                 max={
-                                  assignments.find(
-                                    (a) =>
-                                      a._id ===
-                                      selectedAsm
-                                  )?.maxScore || 100
+                                  assignments.find((a) => a._id === selectedAsm)
+                                    ?.maxScore || 100
                                 }
                                 placeholder="0"
                                 className="w-full rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD] p-4 text-center text-xl font-black text-[#1A3D63] outline-none focus:ring-2 focus:ring-[#1A3D63]"
-                                value={
-                                  currentGrade.score
-                                }
+                                value={currentGrade.score}
                                 onChange={(e) =>
                                   handleInputChange(
                                     sub._id,
                                     "score",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                               />
-
                             </div>
 
                             {/* FEEDBACK */}
-                            <div className="flex-1">
 
+                            <div className="flex-1">
                               <label className="mb-2 block text-xs font-bold text-[#7A7F85]">
                                 Feedback & Comments
                               </label>
 
                               <div className="relative">
-
                                 <textarea
                                   placeholder="Give constructive feedback..."
-                                  className="h-[100px] w-full resize-none rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD] p-4 pr-12 text-sm outline-none focus:ring-2 focus:ring-[#1A3D63]"
-                                  value={
-                                    currentGrade.feedback
-                                  }
+                                  className="h-25 w-full resize-none rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD] p-4 pr-12 text-sm outline-none focus:ring-2 focus:ring-[#1A3D63]"
+                                  value={currentGrade.feedback}
                                   onChange={(e) =>
                                     handleInputChange(
                                       sub._id,
                                       "feedback",
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                 />
@@ -593,84 +541,44 @@ const MentorAssignment = () => {
                                   size={18}
                                   className="absolute right-4 top-4 text-[#B3CFE5]"
                                 />
-
                               </div>
                             </div>
-
                           </div>
 
-                          {/* STATUS */}
-                          <div>
+                          {/* ==================================================
+                              SMALL ACTION BUTTONS
+                          ================================================== */}
 
-                            <label className="mb-2 block text-xs font-bold text-[#7A7F85]">
-                              Evaluation Result
-                            </label>
+                          <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+                            {/* REQUEST RESUBMISSION */}
 
-                            <select
-                              value={status}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  sub._id,
-                                  "status",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD] p-4 font-semibold text-[#0A1931] outline-none focus:ring-2 focus:ring-[#1A3D63]"
+                            <button
+                              type="button"
+                              onClick={() => requestResubmission(sub._id)}
+                              className="flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-orange-700"
                             >
-                              <option value="Graded">
-                                ✓ Graded
-                              </option>
+                              <RotateCcw size={15} />
+                              Request Resubmission
+                            </button>
 
-                              <option value="Resubmission Required">
-                                ↻ Resubmission Required
-                              </option>
-                            </select>
+                            {/* SUBMIT / UPDATE GRADE */}
 
+                            <button
+                              type="button"
+                              onClick={() => submitGrade(sub._id)}
+                              className="flex items-center gap-2 rounded-xl bg-[#1A3D63] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#0A1931]"
+                            >
+                              <CheckCircle size={15} />
+
+                              {isGraded ? "Update Grade" : "Submit Grade"}
+                            </button>
                           </div>
-
-                          {/* BUTTON */}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              submitGrade(sub._id)
-                            }
-                            className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-bold text-white shadow-lg transition ${
-                              needsResubmission
-                                ? "bg-orange-600 hover:bg-orange-700"
-                                : "bg-[#1A3D63] hover:bg-[#0A1931]"
-                            }`}
-                          >
-
-                            {needsResubmission ? (
-                              <>
-                                <RotateCcw
-                                  size={18}
-                                />
-
-                                Request Resubmission
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle
-                                  size={18}
-                                />
-
-                                {isGraded
-                                  ? "Update Evaluation"
-                                  : "Submit Grade"}
-                              </>
-                            )}
-
-                          </button>
-
                         </div>
                       </div>
-
                     </div>
                   </div>
                 );
               })}
-
             </div>
           )}
         </div>

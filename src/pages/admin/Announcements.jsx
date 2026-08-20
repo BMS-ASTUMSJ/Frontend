@@ -29,13 +29,23 @@ function Announcements() {
   const role = user?.role || "student";
   const isAdmin = role === "admin";
 
+  const [currentBatch, setCurrentBatch] = useState(null);
+  const [loadingBatch, setLoadingBatch] = useState(true);
+
   const currentBatchId =
-    user?.batch?._id || user?.batch?.id || user?.batch || null;
+    currentBatch?._id ||
+    currentBatch?.id ||
+    user?.batch?._id ||
+    user?.batch?.id ||
+    user?.batch ||
+    null;
 
   const currentBatchName =
-    typeof user?.batch === "object"
-      ? user?.batch?.name || user?.batch?.title || "Current Batch"
-      : "Current Batch";
+    currentBatch?.name ||
+    (typeof user?.batch === "object"
+      ? user?.batch?.name || user?.batch?.title
+      : null) ||
+    "Current Batch";
 
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +62,79 @@ function Announcements() {
   const [editAudience, setEditAudience] = useState("all");
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const loadCurrentBatch = async () => {
+    try {
+      setLoadingBatch(true);
+
+      const response = await api.get("/batches/my-batches");
+
+      const batchResults = Array.isArray(response.data?.batches)
+        ? response.data.batches
+        : [];
+
+      if (isAdmin) {
+        const activeResult = batchResults.find(
+          (item) => item?.batch?.status === "active",
+        );
+
+        if (activeResult?.batch) {
+          setCurrentBatch(activeResult.batch);
+          return;
+        }
+
+        if (batchResults[0]?.batch) {
+          setCurrentBatch(batchResults[0].batch);
+          return;
+        }
+      } else {
+        const currentResult =
+          batchResults.find(
+            (item) =>
+              item?.batch?._id &&
+              String(item.batch._id) ===
+                String(user?.batch?._id || user?.batch?.id || user?.batch),
+          ) || batchResults[0];
+
+        if (currentResult?.batch) {
+          setCurrentBatch(currentResult.batch);
+          return;
+        }
+      }
+
+      if (user?.batch) {
+        if (typeof user.batch === "object") {
+          setCurrentBatch(user.batch);
+        } else {
+          const batchResponse = await api.get(`/batches/${user.batch}`);
+
+          if (batchResponse.data?.batch) {
+            setCurrentBatch(batchResponse.data.batch);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load current batch:", err);
+
+      try {
+        if (user?.batch) {
+          if (typeof user.batch === "object") {
+            setCurrentBatch(user.batch);
+          } else {
+            const response = await api.get(`/batches/${user.batch}`);
+
+            if (response.data?.batch) {
+              setCurrentBatch(response.data.batch);
+            }
+          }
+        }
+      } catch (fallbackError) {
+        console.error("Failed to load fallback batch:", fallbackError);
+      }
+    } finally {
+      setLoadingBatch(false);
+    }
+  };
+
   const loadAnnouncements = async () => {
     try {
       setLoading(true);
@@ -63,7 +146,6 @@ function Announcements() {
         setAnnouncements(response.data.announcements || []);
       } else {
         setAnnouncements([]);
-
         setError(response.data?.message || "Failed to load announcements.");
       }
     } catch (err) {
@@ -81,6 +163,7 @@ function Announcements() {
   };
 
   useEffect(() => {
+    loadCurrentBatch();
     loadAnnouncements();
   }, []);
 
@@ -98,7 +181,9 @@ function Announcements() {
     }
 
     if (!currentBatchId) {
-      toast.error("No current batch is assigned to your account.");
+      toast.error(
+        "No batch is available. Please create or activate a batch first.",
+      );
       return;
     }
 
@@ -233,7 +318,7 @@ function Announcements() {
     }
 
     if (!currentBatchId) {
-      toast.error("No current batch is assigned to your account.");
+      toast.error("No current batch is assigned.");
       return;
     }
 
@@ -322,7 +407,6 @@ function Announcements() {
         {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-700">
             <AlertCircle size={20} />
-
             <span className="text-sm font-bold">{error}</span>
           </div>
         )}
@@ -342,9 +426,26 @@ function Announcements() {
 
               <div className="flex items-center gap-2 rounded-xl bg-[#F6FAFD] px-3 py-2 text-xs font-bold text-[#1A3D63]">
                 <Layers size={15} />
-                {currentBatchName}
+
+                {loadingBatch ? (
+                  <span>Loading batch...</span>
+                ) : (
+                  currentBatchName
+                )}
               </div>
             </div>
+
+            {!loadingBatch && !currentBatchId && (
+              <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs font-bold text-amber-700">
+                  No batch is currently available for this announcement.
+                </p>
+
+                <p className="mt-1 text-[11px] text-amber-600">
+                  Make sure you have an active batch.
+                </p>
+              </div>
+            )}
 
             <form onSubmit={handlePublish} className="space-y-5">
               <input
@@ -394,7 +495,7 @@ function Announcements() {
 
                 <button
                   type="submit"
-                  disabled={isPublishing || !currentBatchId}
+                  disabled={isPublishing || loadingBatch}
                   className="flex items-center justify-center gap-2 rounded-2xl bg-[#4A7FA7] px-10 py-3 text-sm font-bold text-white transition-all hover:bg-[#1A3D63] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isPublishing ? (
@@ -402,7 +503,8 @@ function Announcements() {
                   ) : (
                     <Send className="h-4 w-4" />
                   )}
-                  Publish
+
+                  {isPublishing ? "Publishing..." : "Publish"}
                 </button>
               </div>
             </form>
