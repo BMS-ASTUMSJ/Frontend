@@ -104,7 +104,8 @@ function Announcements() {
 
   return (
     <div className="min-h-full bg-[#F6FAFD] p-4 md:p-6 lg:p-8">
-      <div className="mx-auto max-w-5xl space-y-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+        {/* Header */}
         <div className="rounded-3xl bg-[#0A1931] p-6 shadow-xl md:p-8">
           <div className="flex items-center gap-5">
             <div className="rounded-2xl border border-white/5 bg-[#1A3D63] p-4 shadow-inner">
@@ -123,6 +124,7 @@ function Announcements() {
           </div>
         </div>
 
+        {/* Error */}
         {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-700">
             <AlertCircle size={20} />
@@ -131,7 +133,9 @@ function Announcements() {
           </div>
         )}
 
+        {/* Content */}
         <div className="space-y-4 pb-10">
+          {/* Feed Header */}
           <div className="flex items-center justify-between px-2">
             <h2 className="text-xl font-black text-[#0A1931]">Recent Feed</h2>
 
@@ -140,6 +144,7 @@ function Announcements() {
             </span>
           </div>
 
+          {/* Loading */}
           {loading ? (
             <div className="rounded-3xl border border-[#B3CFE5]/30 bg-white py-20 text-center">
               <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#1A3D63]" />
@@ -149,6 +154,7 @@ function Announcements() {
               </p>
             </div>
           ) : announcements.length === 0 ? (
+            /* Empty */
             <div className="rounded-3xl border-2 border-dashed border-[#B3CFE5] bg-white p-16 text-center">
               <Megaphone className="mx-auto mb-4 h-12 w-12 text-[#B3CFE5] opacity-50" />
 
@@ -159,71 +165,131 @@ function Announcements() {
               </p>
             </div>
           ) : (
-            announcements.map((item) => (
-              <div
-                key={item._id}
-                className="group rounded-3xl border border-[#B3CFE5]/30 bg-white p-6 shadow-sm transition-all hover:border-[#4A7FA7] hover:shadow-md"
-              >
-                <div className="flex items-start gap-5">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-[#B3CFE5]/40 bg-[#F6FAFD] text-[#1A3D63] transition-all group-hover:bg-[#1A3D63] group-hover:text-white">
-                    <Megaphone size={22} />
-                  </div>
+            /* Table */
+            <div className="overflow-hidden rounded-3xl border border-[#B3CFE5]/40 bg-white shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[950px] border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#B3CFE5]/40 bg-[#F6FAFD]">
+                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[#64748B]">
+                        Announcement
+                      </th>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-lg font-extrabold text-[#0A1931]">
-                        {item.title}
-                      </h3>
+                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[#64748B]">
+                        Audience
+                      </th>
 
-                      <span
-                        className={`rounded border px-2 py-0.5 text-[9px] font-black uppercase ${
-                          item.audience === "assigned_students"
-                            ? "border-green-200 bg-green-50 text-green-700"
-                            : "border-[#B3CFE5] bg-[#EAF3F9] text-[#1A3D63]"
-                        }`}
+                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[#64748B]">
+                        Posted By
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[#64748B]">
+                        Date
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[#64748B]">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {announcements.map((item) => (
+                      <tr
+                        key={item._id}
+                        className="group border-b border-[#E2E8F0] last:border-b-0 transition-colors hover:bg-[#F8FBFD]"
                       >
-                        {getAudienceLabel(item.audience)}
-                      </span>
+                        {/* Announcement */}
+                        <td className="max-w-md px-6 py-5 align-top">
+                          <div className="flex items-start gap-4">
+                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-[#B3CFE5]/40 bg-[#F6FAFD] text-[#1A3D63] transition-all group-hover:border-[#1A3D63] group-hover:bg-[#1A3D63] group-hover:text-white">
+                              <Megaphone size={20} />
+                            </div>
 
-                      {item.edited && (
-                        <span className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-black uppercase text-amber-600">
-                          Edited
-                        </span>
-                      )}
-                    </div>
+                            <div className="min-w-0">
+                              <h3 className="text-sm font-extrabold text-[#0A1931]">
+                                {item.title}
+                              </h3>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-tighter text-gray-400">
-                      <div className="flex items-center gap-1.5">
-                        <CalendarDays size={12} />
+                              <p className="mt-2 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-600">
+                                {item.body}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
 
-                        {formatDate(item.createdAt)}
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <User size={12} />
-
-                        <span>
-                          Posted by{" "}
-                          <span className="text-[#1A3D63]">
-                            {getCreatorName(item)}
+                        {/* Audience */}
+                        <td className="px-6 py-5 align-top">
+                          <span
+                            className={`inline-flex rounded border px-2.5 py-1 text-[9px] font-black uppercase ${
+                              item.audience === "assigned_students"
+                                ? "border-green-200 bg-green-50 text-green-700"
+                                : "border-[#B3CFE5] bg-[#EAF3F9] text-[#1A3D63]"
+                            }`}
+                          >
+                            {getAudienceLabel(item.audience)}
                           </span>
-                        </span>
-                      </div>
-                    </div>
+                        </td>
 
-                    <p className="mt-4 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-600">
-                      {item.body}
-                    </p>
+                        {/* Posted By */}
+                        <td className="px-6 py-5 align-top">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EAF3F9] text-[#1A3D63]">
+                              <User size={14} />
+                            </div>
 
-                    {item.edited && item.updatedAt && (
-                      <p className="mt-2 text-[10px] font-semibold text-amber-500">
-                        Edited on {formatDate(item.updatedAt)}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                            <div>
+                              <p className="text-xs font-bold text-[#1A3D63]">
+                                {getCreatorName(item)}
+                              </p>
+
+                              <p className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-gray-400">
+                                Posted by
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Date */}
+                        <td className="px-6 py-5 align-top">
+                          <div className="flex items-start gap-2">
+                            <CalendarDays
+                              size={14}
+                              className="mt-0.5 flex-shrink-0 text-[#1A3D63]"
+                            />
+
+                            <span className="whitespace-nowrap text-xs font-semibold text-[#64748B]">
+                              {formatDate(item.createdAt)}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-6 py-5 align-top">
+                          {item.edited ? (
+                            <div>
+                              <span className="inline-flex rounded border border-amber-200 bg-amber-50 px-2.5 py-1 text-[9px] font-black uppercase text-amber-600">
+                                Edited
+                              </span>
+
+                              {item.updatedAt && (
+                                <p className="mt-2 whitespace-nowrap text-[9px] font-semibold text-amber-500">
+                                  {formatDate(item.updatedAt)}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="inline-flex rounded border border-green-200 bg-green-50 px-2.5 py-1 text-[9px] font-black uppercase text-green-700">
+                              Published
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))
+            </div>
           )}
         </div>
       </div>

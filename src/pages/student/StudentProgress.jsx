@@ -3,12 +3,10 @@ import api from "../../utils/api";
 import {
   AlertCircle,
   CheckCircle2,
-  Clock,
   Code2,
   ExternalLink,
   Loader2,
   Monitor,
-  Play,
   Send,
   TrendingUp,
   X,
@@ -26,11 +24,18 @@ function StudentProgress() {
 
   const [selectedCpContent, setSelectedCpContent] = useState(null);
   const [submittingCp, setSubmittingCp] = useState(false);
+
+  const [devStatuses, setDevStatuses] = useState({});
+
   const [cpForm, setCpForm] = useState({
     submissionLink: "",
     attempts: 1,
     timeSpent: 30,
   });
+
+  // ============================================================
+  // LOAD PROGRESS DATA
+  // ============================================================
 
   const loadProgressData = async () => {
     try {
@@ -56,7 +61,26 @@ function StudentProgress() {
           progressResponse.value.data ||
           [];
 
-        setProgressList(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data) ? data : [];
+
+        setProgressList(list);
+
+        // Initialize Dev status dropdowns
+        const statuses = {};
+
+        list.forEach((item) => {
+          const content = item?.content || item;
+
+          if (content?.type === "dev") {
+            const contentId = content?._id;
+
+            if (contentId) {
+              statuses[contentId] = item?.progress?.status || "not_started";
+            }
+          }
+        });
+
+        setDevStatuses(statuses);
       } else {
         setError(
           progressResponse.reason?.response?.data?.message ||
@@ -77,6 +101,10 @@ function StudentProgress() {
     loadProgressData();
   }, []);
 
+  // ============================================================
+  // UPDATE PROGRESS
+  // ============================================================
+
   const updateProgress = async (contentId, data) => {
     try {
       setUpdatingId(contentId);
@@ -86,6 +114,7 @@ function StudentProgress() {
       await api.patch(`/progress/student/progress/${contentId}`, data);
 
       setSuccess("Progress updated successfully.");
+
       await loadProgressData();
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to update progress.");
@@ -93,6 +122,28 @@ function StudentProgress() {
       setUpdatingId(null);
     }
   };
+
+  // ============================================================
+  // UPDATE DEV STATUS
+  // ============================================================
+
+  const handleDevStatusUpdate = async (contentId) => {
+    const selectedStatus = devStatuses[contentId];
+
+    if (!selectedStatus || selectedStatus === "not_started") {
+      setError("Please select a progress status.");
+      return;
+    }
+
+    await updateProgress(contentId, {
+      status: selectedStatus,
+      ...(selectedStatus === "done" ? { watched: true } : {}),
+    });
+  };
+
+  // ============================================================
+  // CP SUBMISSION
+  // ============================================================
 
   const submitCpSolution = async (event) => {
     event.preventDefault();
@@ -117,7 +168,9 @@ function StudentProgress() {
       });
 
       setSuccess("Solution submitted successfully.");
+
       setSelectedCpContent(null);
+
       setCpForm({
         submissionLink: "",
         attempts: 1,
@@ -132,6 +185,10 @@ function StudentProgress() {
     }
   };
 
+  // ============================================================
+  // FILTER
+  // ============================================================
+
   const filteredList = progressList.filter((item) => {
     const content = item?.content || item;
 
@@ -143,6 +200,10 @@ function StudentProgress() {
 
     return typeMatches && weekMatches;
   });
+
+  // ============================================================
+  // STATS
+  // ============================================================
 
   const cpStats = dashboard?.cp || {
     total: 0,
@@ -157,6 +218,7 @@ function StudentProgress() {
   };
 
   const totalItems = cpStats.total + devStats.total;
+
   const totalCompleted = cpStats.completed + devStats.completed;
 
   const completion =
@@ -170,6 +232,10 @@ function StudentProgress() {
         .filter(Boolean),
     ),
   ).sort((a, b) => a - b);
+
+  // ============================================================
+  // STATUS LABELS
+  // ============================================================
 
   const statusLabel = {
     not_started: "Not Started",
@@ -185,25 +251,39 @@ function StudentProgress() {
     done: "bg-green-100 text-green-700",
   };
 
+  // ============================================================
+  // LOADING
+  // ============================================================
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F6FAFD]">
         <div className="flex items-center gap-3 text-[#1A3D63]">
           <Loader2 className="h-7 w-7 animate-spin" />
+
           <span className="font-semibold">Loading your progress...</span>
         </div>
       </div>
     );
   }
 
+  // ============================================================
+  // PAGE
+  // ============================================================
+
   return (
-    <div className="min-h-screen space-y-6 bg-[#F6FAFD] p-4 sm:p-8">
+    <div className="min-h-screen bg-[#F6FAFD] p-4 sm:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
+        {/* ======================================================
+            HEADER
+        ====================================================== */}
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-[#0A1931]">
               My Progress Tracker
             </h1>
+
             <p className="mt-1 text-sm text-[#7A7F85]">
               Submit CP solutions and update your Dev learning progress.
             </p>
@@ -214,6 +294,7 @@ function StudentProgress() {
               <p className="font-bold text-[#0A1931]">
                 {dashboard.student.name}
               </p>
+
               <p className="text-[#7A7F85]">
                 {dashboard.student.gender} Student
               </p>
@@ -221,19 +302,33 @@ function StudentProgress() {
           )}
         </div>
 
+        {/* ======================================================
+            ERROR
+        ====================================================== */}
+
         {error && (
           <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <AlertCircle className="h-5 w-5 shrink-0" />
+
             {error}
           </div>
         )}
 
+        {/* ======================================================
+            SUCCESS
+        ====================================================== */}
+
         {success && (
           <div className="flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
             <CheckCircle2 className="h-5 w-5 shrink-0" />
+
             {success}
           </div>
         )}
+
+        {/* ======================================================
+            STAT CARDS
+        ====================================================== */}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-3xl bg-white p-6 shadow-sm">
@@ -241,6 +336,7 @@ function StudentProgress() {
               Overall Completion
               <TrendingUp className="h-5 w-5 text-[#1A3D63]" />
             </div>
+
             <h2 className="mt-3 text-3xl font-bold text-[#0A1931]">
               {completion}%
             </h2>
@@ -251,6 +347,7 @@ function StudentProgress() {
               CP Progress
               <Code2 className="h-5 w-5 text-blue-600" />
             </div>
+
             <h2 className="mt-3 text-3xl font-bold text-[#0A1931]">
               {cpStats.completed}/{cpStats.total}
             </h2>
@@ -261,6 +358,7 @@ function StudentProgress() {
               Dev Progress
               <Monitor className="h-5 w-5 text-purple-600" />
             </div>
+
             <h2 className="mt-3 text-3xl font-bold text-[#0A1931]">
               {devStats.completed}/{devStats.total}
             </h2>
@@ -271,8 +369,10 @@ function StudentProgress() {
               Total Tasks Done
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             </div>
+
             <h2 className="mt-3 text-3xl font-bold text-[#0A1931]">
               {totalCompleted}
+
               <span className="text-sm font-normal text-gray-400">
                 {" "}
                 / {totalItems}
@@ -281,18 +381,25 @@ function StudentProgress() {
           </div>
         </div>
 
+        {/* ======================================================
+            LEARNING TASKS
+        ====================================================== */}
+
         <div className="rounded-3xl bg-white p-6 shadow-sm">
           <div className="mb-6 flex flex-col gap-4 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-bold text-[#0A1931]">
                 Learning Tasks
               </h2>
+
               <p className="text-xs text-[#7A7F85]">
                 Submit CP work and update your Dev lecture status.
               </p>
             </div>
 
-            <div className="flex gap-3">
+            {/* FILTERS */}
+
+            <div className="flex flex-wrap gap-3">
               <div className="flex rounded-xl bg-gray-100 p-1">
                 {["all", "cp", "dev"].map((type) => (
                   <button
@@ -316,6 +423,7 @@ function StudentProgress() {
                 className="rounded-xl border border-gray-200 px-3 text-xs font-bold"
               >
                 <option value="all">All Weeks</option>
+
                 {uniqueWeeks.map((week) => (
                   <option key={week} value={week}>
                     Week {week}
@@ -325,6 +433,10 @@ function StudentProgress() {
             </div>
           </div>
 
+          {/* ====================================================
+              EMPTY
+          ==================================================== */}
+
           {filteredList.length === 0 ? (
             <p className="py-12 text-center text-sm text-[#7A7F85]">
               No learning content is available.
@@ -333,10 +445,15 @@ function StudentProgress() {
             <div className="space-y-4">
               {filteredList.map((item, index) => {
                 const content = item?.content || item;
+
                 const progress = item?.progress || {};
+
                 const contentId = content?._id || index;
+
                 const isCp = content?.type === "cp";
+
                 const status = progress.status || "not_started";
+
                 const isUpdating = updatingId === contentId;
 
                 return (
@@ -345,7 +462,11 @@ function StudentProgress() {
                     className="rounded-2xl border border-gray-100 p-5"
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div>
+                      {/* ==================================================
+                          CONTENT INFO
+                      ================================================== */}
+
+                      <div className="flex-1">
                         <div className="mb-2 flex flex-wrap items-center gap-2">
                           <span
                             className={`rounded-md px-2 py-1 text-xs font-bold ${
@@ -378,20 +499,34 @@ function StudentProgress() {
                           {content.title}
                         </h3>
 
-                        <a
-                          href={content.link}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#1A3D63] hover:underline"
-                        >
-                          {isCp ? "Open CP problem" : "Open Dev lecture"}
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
+                        {content.link && (
+                          <a
+                            href={content.link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#1A3D63] hover:underline"
+                          >
+                            {isCp ? "Open CP problem" : "Open Dev lecture"}
+
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+
+                        {progress.submissionLink && (
+                          <a
+                            href={progress.submissionLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2 block text-xs font-semibold text-green-700 hover:underline"
+                          >
+                            View Submitted Solution
+                          </a>
+                        )}
 
                         {progress.submissionLink && (
                           <p className="mt-2 text-xs text-green-700">
-                            Submitted: {progress.attempts} attempts,{" "}
-                            {progress.timeSpent} minutes
+                            {progress.attempts || 1} attempts,{" "}
+                            {progress.timeSpent || 0} minutes
                           </p>
                         )}
 
@@ -402,69 +537,77 @@ function StudentProgress() {
                         )}
                       </div>
 
+                      {/* ==================================================
+                          ACTION AREA
+                      ================================================== */}
+
                       {isCp ? (
                         <button
                           type="button"
                           onClick={() => {
                             setSelectedCpContent(content);
+
                             setCpForm({
                               submissionLink: progress.submissionLink || "",
+
                               attempts: progress.attempts || 1,
+
                               timeSpent: progress.timeSpent || 30,
                             });
                           }}
                           className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
                         >
                           <Send className="h-4 w-4" />
+
                           {progress.submissionLink
                             ? "Update Solution"
                             : "Submit Solution"}
                         </button>
                       ) : (
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            disabled={isUpdating}
-                            onClick={() =>
-                              updateProgress(contentId, {
-                                status: "in_progress",
-                              })
+                        /* ==================================================
+                           DEV STATUS SELECTOR
+                        ================================================== */
+
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <select
+                            value={devStatuses[contentId] || status}
+                            onChange={(event) =>
+                              setDevStatuses((prev) => ({
+                                ...prev,
+                                [contentId]: event.target.value,
+                              }))
                             }
-                            className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700"
+                            disabled={isUpdating}
+                            className={`rounded-xl border px-4 py-2 text-xs font-bold outline-none ${
+                              status === "done"
+                                ? "border-green-200 bg-green-50 text-green-700"
+                                : status === "needs_help"
+                                  ? "border-red-200 bg-red-50 text-red-700"
+                                  : status === "in_progress"
+                                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                                    : "border-gray-200 bg-gray-50 text-gray-600"
+                            }`}
                           >
-                            In Progress
-                          </button>
+                            <option value="not_started">Not Started</option>
+
+                            <option value="in_progress">In Progress</option>
+
+                            <option value="needs_help">Needs Help</option>
+
+                            <option value="done">Completed</option>
+                          </select>
 
                           <button
                             type="button"
                             disabled={isUpdating}
-                            onClick={() =>
-                              updateProgress(contentId, {
-                                status: "needs_help",
-                              })
-                            }
-                            className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700"
+                            onClick={() => handleDevStatusUpdate(contentId)}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1A3D63] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#0A1931] disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            Needs Help
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={isUpdating}
-                            onClick={() =>
-                              updateProgress(contentId, {
-                                status: "done",
-                                watched: true,
-                              })
-                            }
-                            className="inline-flex items-center gap-1 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white hover:bg-purple-700"
-                          >
-                            {isUpdating ? (
+                            {isUpdating && (
                               <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Play className="h-4 w-4" />
                             )}
-                            Completed
+
+                            {isUpdating ? "Updating..." : "Update Status"}
                           </button>
                         </div>
                       )}
@@ -477,6 +620,10 @@ function StudentProgress() {
         </div>
       </div>
 
+      {/* ========================================================
+          CP SUBMISSION MODAL
+      ======================================================== */}
+
       {selectedCpContent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
@@ -485,6 +632,7 @@ function StudentProgress() {
                 <h3 className="text-lg font-bold text-[#0A1931]">
                   Submit CP Solution
                 </h3>
+
                 <p className="text-xs text-[#7A7F85]">
                   {selectedCpContent.title}
                 </p>
@@ -500,10 +648,13 @@ function StudentProgress() {
             </div>
 
             <form onSubmit={submitCpSolution} className="space-y-4">
+              {/* SOLUTION LINK */}
+
               <div>
                 <label className="mb-1 block text-xs font-bold text-[#0A1931]">
                   Solution / Repository Link
                 </label>
+
                 <input
                   type="url"
                   required
@@ -519,11 +670,14 @@ function StudentProgress() {
                 />
               </div>
 
+              {/* ATTEMPTS + TIME */}
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-bold text-[#0A1931]">
                     Number of Attempts
                   </label>
+
                   <input
                     type="number"
                     min="1"
@@ -542,6 +696,7 @@ function StudentProgress() {
                   <label className="mb-1 block text-xs font-bold text-[#0A1931]">
                     Time Spent (Minutes)
                   </label>
+
                   <input
                     type="number"
                     min="1"
@@ -556,6 +711,8 @@ function StudentProgress() {
                   />
                 </div>
               </div>
+
+              {/* BUTTONS */}
 
               <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
                 <button

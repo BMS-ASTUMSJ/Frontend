@@ -18,16 +18,26 @@ function Announcements() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Create form
+  // =====================================================
+  // CREATE FORM
+  // =====================================================
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
-  // Edit form
+  // =====================================================
+  // EDIT FORM
+  // =====================================================
+
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editBody, setEditBody] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // =====================================================
+  // LOAD ANNOUNCEMENTS
+  // =====================================================
 
   const loadAnnouncements = async () => {
     try {
@@ -64,6 +74,10 @@ function Announcements() {
   useEffect(() => {
     loadAnnouncements();
   }, []);
+
+  // =====================================================
+  // PUBLISH ANNOUNCEMENT
+  // =====================================================
 
   const handlePublish = async (e) => {
     e.preventDefault();
@@ -113,6 +127,10 @@ function Announcements() {
     }
   };
 
+  // =====================================================
+  // START EDIT
+  // =====================================================
+
   const startEdit = (item) => {
     setEditingId(item._id);
     setEditTitle(item.title || "");
@@ -120,11 +138,19 @@ function Announcements() {
     setError("");
   };
 
+  // =====================================================
+  // CANCEL EDIT
+  // =====================================================
+
   const cancelEdit = () => {
     setEditingId(null);
     setEditTitle("");
     setEditBody("");
   };
+
+  // =====================================================
+  // UPDATE ANNOUNCEMENT
+  // =====================================================
 
   const handleUpdate = async (id) => {
     if (!editTitle.trim()) {
@@ -173,73 +199,40 @@ function Announcements() {
 
   // =====================================================
   // DELETE ANNOUNCEMENT
+  // NO CONFIRMATION POPUP
   // =====================================================
-  const handleDelete = (id) => {
+
+  const handleDelete = async (id) => {
     if (!id) return;
 
-    toast(
-      (t) => (
-        <div className="w-[320px]">
-          <p className="mb-2 text-sm font-bold text-[#0A1931]">
-            Delete this announcement?
-          </p>
+    try {
+      setError("");
 
-          <p className="mb-4 text-xs text-gray-500">
-            This action cannot be undone.
-          </p>
+      const response = await api.delete(`/announcements/${id}`);
 
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => toast.dismiss(t.id)}
-              className="rounded-lg px-4 py-2 text-xs font-bold text-gray-500 transition hover:bg-gray-100"
-            >
-              Cancel
-            </button>
+      if (!response.data?.success) {
+        throw new Error(
+          response.data?.message || "Failed to delete announcement.",
+        );
+      }
 
-            <button
-              type="button"
-              onClick={async () => {
-                toast.dismiss(t.id);
+      toast.success("Announcement deleted successfully.");
 
-                try {
-                  setError("");
+      await loadAnnouncements();
+    } catch (err) {
+      console.error("Delete mentor announcement error:", err);
 
-                  const response = await api.delete(`/announcements/${id}`);
-
-                  if (!response.data?.success) {
-                    throw new Error(
-                      response.data?.message ||
-                        "Failed to delete announcement.",
-                    );
-                  }
-
-                  toast.success("Announcement deleted successfully.");
-
-                  await loadAnnouncements();
-                } catch (err) {
-                  console.error("Delete mentor announcement error:", err);
-
-                  toast.error(
-                    err.response?.data?.message ||
-                      err.message ||
-                      "Failed to delete announcement.",
-                  );
-                }
-              }}
-              className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ),
-      {
-        duration: Infinity,
-        position: "top-center",
-      },
-    );
+      toast.error(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to delete announcement.",
+      );
+    }
   };
+
+  // =====================================================
+  // FORMAT DATE
+  // =====================================================
 
   const formatDate = (date) => {
     if (!date) return "";
@@ -255,6 +248,10 @@ function Announcements() {
       timeStyle: "short",
     });
   };
+
+  // =====================================================
+  // AUDIENCE LABEL
+  // =====================================================
 
   const getAudienceLabel = (audience) => {
     if (audience === "all") {
@@ -272,6 +269,10 @@ function Announcements() {
     return audience;
   };
 
+  // =====================================================
+  // CREATOR NAME
+  // =====================================================
+
   const getCreatorName = (item) => {
     if (!item?.createdBy) {
       return "Unknown";
@@ -284,6 +285,10 @@ function Announcements() {
 
     return fullName || "Unknown";
   };
+
+  // =====================================================
+  // CHECK ANNOUNCEMENT OWNER
+  // =====================================================
 
   const isOwnAnnouncement = (item) => {
     const storedUser = localStorage.getItem("user");
@@ -314,9 +319,17 @@ function Announcements() {
     }
   };
 
+  // =====================================================
+  // UI
+  // =====================================================
+
   return (
     <div className="min-h-full bg-[#F6FAFD] p-4 md:p-6 lg:p-8">
-      <div className="mx-auto max-w-5xl space-y-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+        {/* =====================================================
+            HEADER
+        ===================================================== */}
+
         <div className="rounded-3xl bg-[#0A1931] p-6 shadow-xl md:p-8">
           <div className="flex items-center gap-5">
             <div className="rounded-2xl border border-white/5 bg-[#1A3D63] p-4 shadow-inner">
@@ -335,6 +348,10 @@ function Announcements() {
           </div>
         </div>
 
+        {/* =====================================================
+            ERROR
+        ===================================================== */}
+
         {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-700">
             <AlertCircle size={20} />
@@ -343,7 +360,15 @@ function Announcements() {
           </div>
         )}
 
-        <div className="rounded-3xl border border-[#B3CFE5]/40 bg-white p-6 shadow-sm md:p-8">
+        {/* =====================================================
+            CREATE ANNOUNCEMENT
+        ===================================================== */}
+
+        {/* =====================================================
+    CREATE ANNOUNCEMENT
+===================================================== */}
+
+        <div className="px-2">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-[#EAF3F9] p-2.5">
@@ -373,7 +398,7 @@ function Announcements() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Subject Title"
-              className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm font-semibold outline-none transition-all focus:border-[#4A7FA7] focus:ring-4 focus:ring-[#B3CFE5]/20"
+              className="w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm font-semibold outline-none transition-all focus:border-[#4A7FA7] focus:ring-4 focus:ring-[#B3CFE5]/20"
             />
 
             <textarea
@@ -382,7 +407,7 @@ function Announcements() {
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Type your message here..."
-              className="w-full resize-none rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none transition-all focus:border-[#4A7FA7]"
+              className="w-full resize-none rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm outline-none transition-all focus:border-[#4A7FA7]"
             />
 
             <div className="flex justify-end">
@@ -403,16 +428,26 @@ function Announcements() {
           </form>
         </div>
 
+        {/* =====================================================
+            RECENT ANNOUNCEMENTS HEADER
+        ===================================================== */}
+
         <div className="flex items-center justify-between px-2">
-          <h2 className="text-xl font-black text-[#0A1931]">Recent Feed</h2>
+          <h2 className="text-xl font-black text-[#0A1931]">
+            Recent Announcements
+          </h2>
 
           <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
             Total: {announcements.length}
           </span>
         </div>
 
+        {/* =====================================================
+            LOADING
+        ===================================================== */}
+
         {loading ? (
-          <div className="rounded-3xl border border-[#B3CFE5]/30 bg-white py-20 text-center">
+          <div className="rounded-2xl border border-[#B3CFE5]/30 bg-white py-20 text-center">
             <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#1A3D63]" />
 
             <p className="mt-4 text-xs font-bold text-gray-400">
@@ -420,8 +455,12 @@ function Announcements() {
             </p>
           </div>
         ) : announcements.length === 0 ? (
-          <div className="rounded-3xl border-2 border-dashed border-[#B3CFE5] bg-white p-16 text-center">
-            <Megaphone className="mx-auto mb-4 h-12 w-12 text-[#B3CFE5] opacity-50" />
+          /* =====================================================
+             EMPTY STATE
+          ===================================================== */
+
+          <div className="rounded-2xl border-2 border-dashed border-[#B3CFE5] bg-white p-16 text-center">
+            <Megaphone className="mx-auto mb-4 h-12 w-12 text-[#B3CFE5]" />
 
             <p className="font-bold text-[#0A1931]">No announcements yet.</p>
 
@@ -430,68 +469,118 @@ function Announcements() {
             </p>
           </div>
         ) : (
-          announcements.map((item) => {
-            const ownAnnouncement = isOwnAnnouncement(item);
+          /* =====================================================
+             ANNOUNCEMENTS TABLE
+          ===================================================== */
 
-            return (
-              <div
-                key={item._id}
-                className="group rounded-3xl border border-[#B3CFE5]/30 bg-white p-6 shadow-sm transition-all hover:border-[#4A7FA7] hover:shadow-md"
-              >
-                {editingId === item._id ? (
-                  <div className="space-y-4">
-                    <input
-                      type="text"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      className="w-full rounded-xl border p-3 font-bold outline-none focus:border-[#4A7FA7]"
-                    />
+          <div className="overflow-hidden rounded-2xl border border-[#B3CFE5]/40 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1000px] border-collapse">
+                {/* TABLE HEADER */}
 
-                    <textarea
-                      rows={3}
-                      value={editBody}
-                      onChange={(e) => setEditBody(e.target.value)}
-                      className="w-full rounded-xl border p-3 outline-none focus:border-[#4A7FA7]"
-                    />
+                <thead>
+                  <tr className="border-b border-[#DCE8F0] bg-[#F6FAFD]">
+                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
+                      Announcement
+                    </th>
 
-                    <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={cancelEdit}
-                        disabled={isUpdating}
-                        className="px-4 text-xs font-bold text-gray-400"
+                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
+                      Audience
+                    </th>
+
+                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
+                      Posted By
+                    </th>
+
+                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
+                      Date
+                    </th>
+
+                    <th className="px-5 py-4 text-center text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
+                      Status
+                    </th>
+
+                    <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+
+                {/* TABLE BODY */}
+
+                <tbody>
+                  {announcements.map((item) => {
+                    const ownAnnouncement = isOwnAnnouncement(item);
+
+                    return (
+                      <tr
+                        key={item._id}
+                        className="border-b border-[#EDF2F5] transition last:border-b-0 hover:bg-[#FAFCFE]"
                       >
-                        Cancel
-                      </button>
+                        {/* ANNOUNCEMENT */}
 
-                      <button
-                        type="button"
-                        onClick={() => handleUpdate(item._id)}
-                        disabled={isUpdating}
-                        className="flex items-center gap-2 rounded-xl bg-[#0A1931] px-6 py-2 text-xs font-bold text-white disabled:opacity-50"
-                      >
-                        {isUpdating && (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        )}
-                        Save Changes
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col justify-between gap-6 md:flex-row">
-                    <div className="flex items-start gap-5">
-                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-[#B3CFE5]/40 bg-[#F6FAFD] text-[#1A3D63] transition-all group-hover:bg-[#1A3D63] group-hover:text-white">
-                        <Megaphone size={22} />
-                      </div>
+                        <td className="px-5 py-4">
+                          {editingId === item._id ? (
+                            <div className="min-w-[350px] space-y-3">
+                              <input
+                                type="text"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                className="w-full rounded-lg border border-[#B3CFE5] px-3 py-2 text-sm font-bold outline-none focus:border-[#4A7FA7]"
+                              />
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <h3 className="text-lg font-extrabold text-[#0A1931]">
-                            {item.title}
-                          </h3>
+                              <textarea
+                                rows={3}
+                                value={editBody}
+                                onChange={(e) => setEditBody(e.target.value)}
+                                className="w-full resize-none rounded-lg border border-[#B3CFE5] px-3 py-2 text-sm outline-none focus:border-[#4A7FA7]"
+                              />
 
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={cancelEdit}
+                                  disabled={isUpdating}
+                                  className="rounded-lg px-3 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100"
+                                >
+                                  Cancel
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdate(item._id)}
+                                  disabled={isUpdating}
+                                  className="flex items-center gap-2 rounded-lg bg-[#0A1931] px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
+                                >
+                                  {isUpdating && (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  )}
+                                  Save
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="max-w-[400px]">
+                              <div className="flex items-center gap-2">
+                                <Megaphone className="h-4 w-4 shrink-0 text-[#1A3D63]" />
+
+                                <p className="truncate text-sm font-bold text-[#0A1931]">
+                                  {item.title}
+                                </p>
+                              </div>
+
+                              <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                                {item.body}
+                              </p>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* AUDIENCE */}
+
+                        <td className="px-5 py-4">
                           <span
-                            className={`rounded border px-2 py-0.5 text-[9px] font-black uppercase ${
+                            className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold ${
                               item.audience === "mentor"
                                 ? "border-blue-200 bg-blue-50 text-blue-700"
                                 : item.audience === "assigned_students"
@@ -501,73 +590,90 @@ function Announcements() {
                           >
                             {getAudienceLabel(item.audience)}
                           </span>
+                        </td>
 
-                          {item.edited && (
-                            <span className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-black uppercase text-amber-600">
-                              Edited
+                        {/* POSTED BY */}
+
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-[#7A7F85]" />
+
+                            <span className="text-xs font-semibold text-[#1A3D63]">
+                              {getCreatorName(item)}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* DATE */}
+
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-4 w-4 text-[#7A7F85]" />
+
+                            <span className="whitespace-nowrap text-xs text-slate-500">
+                              {formatDate(item.createdAt)}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* STATUS */}
+
+                        <td className="px-5 py-4 text-center">
+                          {item.edited ? (
+                            <>
+                              <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-bold text-amber-600">
+                                Edited
+                              </span>
+
+                              {item.updatedAt && (
+                                <p className="mt-1 text-[9px] text-amber-500">
+                                  {formatDate(item.updatedAt)}
+                                </p>
+                              )}
+                            </>
+                          ) : (
+                            <span className="inline-flex rounded-full bg-green-50 px-3 py-1 text-[10px] font-bold text-green-700">
+                              Published
                             </span>
                           )}
-                        </div>
+                        </td>
 
-                        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-tighter text-gray-400">
-                          <div className="flex items-center gap-1.5">
-                            <CalendarDays size={12} />
+                        {/* ACTIONS */}
 
-                            {formatDate(item.createdAt)}
-                          </div>
+                        <td className="px-5 py-4">
+                          {ownAnnouncement && editingId !== item._id ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => startEdit(item)}
+                                className="rounded-lg p-2 text-blue-500 transition hover:bg-blue-50"
+                                title="Edit announcement"
+                              >
+                                <Pencil size={17} />
+                              </button>
 
-                          {item.createdBy && (
-                            <div className="flex items-center gap-1.5">
-                              <User size={12} />
-
-                              <span>
-                                Posted by{" "}
-                                <span className="text-[#1A3D63]">
-                                  {getCreatorName(item)}
-                                </span>
-                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(item._id)}
+                                className="rounded-lg p-2 text-red-500 transition hover:bg-red-50"
+                                title="Delete announcement"
+                              >
+                                <Trash2 size={17} />
+                              </button>
                             </div>
-                          )}
-                        </div>
-
-                        <p className="mt-4 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-600">
-                          {item.body}
-                        </p>
-
-                        {item.edited && item.updatedAt && (
-                          <p className="mt-2 text-[10px] font-semibold text-amber-500">
-                            Edited on {formatDate(item.updatedAt)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {ownAnnouncement && (
-                      <div className="flex gap-2 border-t border-gray-100 pt-4 md:flex-col md:border-l md:border-t-0 md:pl-4 md:pt-0">
-                        <button
-                          type="button"
-                          onClick={() => startEdit(item)}
-                          className="rounded-xl p-2 text-blue-500 transition-colors hover:bg-blue-50"
-                          title="Edit announcement"
-                        >
-                          <Pencil size={18} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(item._id)}
-                          className="rounded-xl p-2 text-red-400 transition-colors hover:bg-red-50"
-                          title="Delete announcement"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })
+                          ) : editingId !== item._id ? (
+                            <span className="block text-right text-xs text-gray-300">
+                              —
+                            </span>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </div>
     </div>

@@ -118,9 +118,11 @@ const MentorProgress = () => {
 
   const getOverallCompletion = (student) => {
     const cpCompletion = getCpCompletion(student);
+
     const devCompletion = getDevCompletion(student);
 
     const cpTotal = getCpTotal(student);
+
     const devTotal = getDevTotal(student);
 
     if (cpTotal > 0 && devTotal > 0) {
@@ -154,10 +156,6 @@ const MentorProgress = () => {
 
   const getStudentEmail = (student) => {
     return student?.student?.email || student?.email || "";
-  };
-
-  const getStudentGender = (student) => {
-    return student?.student?.gender || student?.gender || "";
   };
 
   // ============================================================
@@ -224,7 +222,7 @@ const MentorProgress = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6 dark:bg-gray-950">
-        <div className="mx-auto max-w-7xl space-y-6">
+        <div className="mx-auto max-w-7xl">
           <div className="flex items-center justify-center py-32">
             <div className="flex items-center gap-3 text-blue-600">
               <Loader2 className="h-7 w-7 animate-spin" />
@@ -244,9 +242,7 @@ const MentorProgress = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-950 sm:p-6">
       <div className="mx-auto max-w-7xl space-y-6">
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
+        {/* HEADER */}
 
         <div>
           <div className="flex items-center gap-3">
@@ -262,9 +258,7 @@ const MentorProgress = () => {
           </p>
         </div>
 
-        {/* ======================================================
-            ERROR
-        ====================================================== */}
+        {/* ERROR */}
 
         {error && (
           <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
@@ -274,16 +268,14 @@ const MentorProgress = () => {
           </div>
         )}
 
-        {/* ======================================================
-            STAT CARDS
-        ====================================================== */}
+        {/* STATISTICS */}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {/* COMPLETED */}
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Completed
               </p>
 
@@ -303,7 +295,7 @@ const MentorProgress = () => {
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 In Progress
               </p>
 
@@ -323,7 +315,7 @@ const MentorProgress = () => {
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Need Help
               </p>
 
@@ -340,9 +332,7 @@ const MentorProgress = () => {
           </div>
         </div>
 
-        {/* ======================================================
-            OVERALL SUMMARY
-        ====================================================== */}
+        {/* OVERALL SUMMARY */}
 
         <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -367,6 +357,8 @@ const MentorProgress = () => {
             </div>
           </div>
 
+          {/* PROGRESS BAR */}
+
           <div className="mt-5 h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
             <div
               className="h-full rounded-full bg-blue-600 transition-all"
@@ -375,6 +367,8 @@ const MentorProgress = () => {
               }}
             />
           </div>
+
+          {/* SUMMARY */}
 
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
@@ -425,23 +419,21 @@ const MentorProgress = () => {
           </div>
         </div>
 
-        {/* ======================================================
-            STUDENTS
-        ====================================================== */}
+        {/* ASSIGNED STUDENTS */}
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="mb-6">
+        <div>
+          <div className="mb-5">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Assigned Students Progress
             </h2>
 
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Only students assigned to you are displayed.
             </p>
           </div>
 
           {progress.length === 0 ? (
-            <div className="flex min-h-64 flex-col items-center justify-center text-center">
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white text-center dark:border-gray-800 dark:bg-gray-900">
               <TrendingUp size={40} className="text-gray-400" />
 
               <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">
@@ -453,179 +445,214 @@ const MentorProgress = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {progress.map((student, index) => {
-                const studentName = getStudentName(student);
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px] text-left">
+                  {/* TABLE HEADER */}
 
-                const email = getStudentEmail(student);
+                  <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/60">
+                    <tr>
+                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Student
+                      </th>
 
-                const gender = getStudentGender(student);
+                      <th className="px-5 py-4 text-center text-xs font-bold uppercase tracking-wide text-blue-600">
+                        CP
+                      </th>
 
-                const cpCompleted = getCpCompleted(student);
+                      <th className="px-5 py-4 text-center text-xs font-bold uppercase tracking-wide text-purple-600">
+                        Development
+                      </th>
 
-                const cpTotal = getCpTotal(student);
+                      <th className="px-5 py-4 text-center text-xs font-bold uppercase tracking-wide text-gray-500">
+                        Overall
+                      </th>
 
-                const cpCompletion = getCpCompletion(student);
+                      <th className="px-5 py-4 text-center text-xs font-bold uppercase tracking-wide text-gray-500">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
 
-                const devCompleted = getDevCompleted(student);
+                  {/* TABLE BODY */}
 
-                const devTotal = getDevTotal(student);
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {progress.map((student, index) => {
+                      const studentName = getStudentName(student);
 
-                const devCompletion = getDevCompletion(student);
+                      const email = getStudentEmail(student);
 
-                const overall = getOverallCompletion(student);
+                      const cpCompleted = getCpCompleted(student);
 
-                const status =
-                  student?.status ||
-                  student?.progressStatus ||
-                  student?.overallStatus;
+                      const cpTotal = getCpTotal(student);
 
-                return (
-                  <div
-                    key={
-                      student?._id ||
-                      student?.student?._id ||
-                      student?.student?.id ||
-                      index
-                    }
-                    className="rounded-xl border border-gray-200 p-5 dark:border-gray-800"
-                  >
-                    {/* STUDENT HEADER */}
+                      const cpCompletion = getCpCompletion(student);
 
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                          {studentName}
-                        </h3>
+                      const devCompleted = getDevCompleted(student);
 
-                        {email && (
-                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            {email}
-                          </p>
-                        )}
+                      const devTotal = getDevTotal(student);
 
-                        {gender && (
-                          <p className="mt-1 text-xs text-gray-400">{gender}</p>
-                        )}
-                      </div>
+                      const devCompletion = getDevCompletion(student);
 
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                          {overall}%
-                        </span>
+                      const overall = getOverallCompletion(student);
 
-                        {overall >= 100 ? (
-                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-950/40 dark:text-green-400">
-                            Completed
-                          </span>
-                        ) : status === "need_help" ||
-                          status === "needs_help" ? (
-                          <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400">
-                            Need Help
-                          </span>
-                        ) : overall > 0 ? (
-                          <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400">
-                            In Progress
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                            Not Started
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                      const status =
+                        student?.status ||
+                        student?.progressStatus ||
+                        student?.overallStatus;
 
-                    {/* OVERALL BAR */}
+                      const initials = studentName
+                        .split(" ")
+                        .filter(Boolean)
+                        .map((name) => name[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase();
 
-                    <div className="mt-5">
-                      <div className="mb-2 flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">
-                          Overall Progress
-                        </span>
+                      return (
+                        <tr
+                          key={
+                            student?._id ||
+                            student?.student?._id ||
+                            student?.student?.id ||
+                            index
+                          }
+                          className="transition hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                        >
+                          {/* STUDENT */}
 
-                        <span className="font-semibold text-gray-900 dark:text-white">
-                          {overall}%
-                        </span>
-                      </div>
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-sm font-bold text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                                {initials}
+                              </div>
 
-                      <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
-                        <div
-                          className="h-full rounded-full bg-blue-600 transition-all"
-                          style={{
-                            width: `${overall}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-gray-900 dark:text-white">
+                                  {studentName}
+                                </p>
 
-                    {/* CP + DEV */}
+                                {email && (
+                                  <p className="mt-0.5 max-w-[220px] truncate text-xs text-gray-500 dark:text-gray-400">
+                                    {email}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
 
-                    <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-                      {/* CP */}
+                          {/* CP */}
 
-                      <div className="rounded-xl bg-blue-50 p-4 dark:bg-blue-950/20">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Code2 size={18} className="text-blue-600" />
+                          <td className="px-5 py-5">
+                            <div className="mx-auto w-32">
+                              <div className="mb-1.5 flex items-center justify-between">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {cpCompleted}/{cpTotal}
+                                </span>
 
-                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                              CP Track
-                            </span>
-                          </div>
+                                <span className="text-xs font-bold text-blue-600">
+                                  {cpCompletion}%
+                                </span>
+                              </div>
 
-                          <span className="text-sm font-bold text-blue-600">
-                            {cpCompletion}%
-                          </span>
-                        </div>
+                              <div className="h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-950/50">
+                                <div
+                                  className="h-full rounded-full bg-blue-600 transition-all"
+                                  style={{
+                                    width: `${cpCompletion}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
 
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-950/60">
-                          <div
-                            className="h-full rounded-full bg-blue-600 transition-all"
-                            style={{
-                              width: `${cpCompletion}%`,
-                            }}
-                          />
-                        </div>
+                          {/* DEVELOPMENT */}
 
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                          {cpCompleted} / {cpTotal} questions solved
-                        </p>
-                      </div>
+                          <td className="px-5 py-5">
+                            <div className="mx-auto w-32">
+                              <div className="mb-1.5 flex items-center justify-between">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {devCompleted}/{devTotal}
+                                </span>
 
-                      {/* DEV */}
+                                <span className="text-xs font-bold text-purple-600">
+                                  {devCompletion}%
+                                </span>
+                              </div>
 
-                      <div className="rounded-xl bg-purple-50 p-4 dark:bg-purple-950/20">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Monitor size={18} className="text-purple-600" />
+                              <div className="h-2 overflow-hidden rounded-full bg-purple-100 dark:bg-purple-950/50">
+                                <div
+                                  className="h-full rounded-full bg-purple-600 transition-all"
+                                  style={{
+                                    width: `${devCompletion}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
 
-                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                              Dev Track
-                            </span>
-                          </div>
+                          {/* OVERALL */}
 
-                          <span className="text-sm font-bold text-purple-600">
-                            {devCompletion}%
-                          </span>
-                        </div>
+                          <td className="px-5 py-5 text-center">
+                            <div className="flex flex-col items-center gap-2">
+                              <span className="text-lg font-bold text-gray-900 dark:text-white">
+                                {overall}%
+                              </span>
 
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-purple-100 dark:bg-purple-950/60">
-                          <div
-                            className="h-full rounded-full bg-purple-600 transition-all"
-                            style={{
-                              width: `${devCompletion}%`,
-                            }}
-                          />
-                        </div>
+                              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+                                <div
+                                  className={`h-full rounded-full transition-all ${
+                                    overall >= 80
+                                      ? "bg-green-500"
+                                      : overall >= 50
+                                        ? "bg-yellow-500"
+                                        : "bg-red-500"
+                                  }`}
+                                  style={{
+                                    width: `${overall}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
 
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                          {devCompleted} / {devTotal} videos completed
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                          {/* STATUS */}
+
+                          <td className="px-5 py-5 text-center">
+                            {overall >= 100 ? (
+                              <span className="inline-flex rounded-full bg-green-100 px-3 py-1.5 text-xs font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-400">
+                                Completed
+                              </span>
+                            ) : status === "need_help" ||
+                              status === "needs_help" ? (
+                              <span className="inline-flex rounded-full bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-400">
+                                Need Help
+                              </span>
+                            ) : overall > 0 ? (
+                              <span className="inline-flex rounded-full bg-yellow-100 px-3 py-1.5 text-xs font-semibold text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400">
+                                In Progress
+                              </span>
+                            ) : (
+                              <span className="inline-flex rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                Not Started
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* FOOTER */}
+
+              <div className="border-t border-gray-100 bg-gray-50 px-6 py-3 dark:border-gray-800 dark:bg-gray-800/40">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  CP shows solved questions, Development shows completed videos,
+                  and Overall combines both tracks.
+                </p>
+              </div>
             </div>
           )}
         </div>

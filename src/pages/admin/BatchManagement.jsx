@@ -102,11 +102,7 @@ function BatchManagement() {
   const handleStatusChange = async (batchId, newStatus) => {
     const batch = batches.find((item) => item._id === batchId);
 
-    if (!batch) return;
-
-    if (batch.status === newStatus) {
-      return;
-    }
+    if (!batch || batch.status === newStatus) return;
 
     setError("");
     setSuccess("");
@@ -162,19 +158,15 @@ function BatchManagement() {
         `/batches/${batchId}/toggle-registration`,
       );
 
-      if (response.data?.batch) {
+      if (response.data?.batches) {
+        setBatches(response.data.batches);
+      } else if (response.data?.batch) {
         setBatches((previousBatches) =>
           previousBatches.map((batch) =>
             batch._id === batchId ? response.data.batch : batch,
           ),
         );
-      }
-
-      if (response.data?.batches) {
-        setBatches(response.data.batches);
-      }
-
-      if (!response.data?.batch && !response.data?.batches) {
+      } else {
         await fetchBatches();
       }
 
@@ -210,6 +202,9 @@ function BatchManagement() {
       case "upcoming":
         return "border-blue-200 bg-blue-100 text-blue-700";
 
+      case "completed":
+        return "border-gray-200 bg-gray-100 text-gray-700";
+
       default:
         return "border-gray-200 bg-gray-100 text-gray-700";
     }
@@ -221,7 +216,8 @@ function BatchManagement() {
 
   return (
     <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-8">
-      <div className="mx-auto max-w-7xl space-y-8">
+      <div className="mx-auto max-w-7xl space-y-10">
+        {/* HEADER */}
         <div className="rounded-3xl bg-[#0A1931] p-6 shadow-sm md:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4 text-white">
@@ -258,9 +254,11 @@ function BatchManagement() {
           </div>
         </div>
 
+        {/* ALERTS */}
         {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">
             <AlertCircle className="h-5 w-5 shrink-0" />
+
             <p className="text-sm font-medium">{error}</p>
           </div>
         )}
@@ -268,17 +266,34 @@ function BatchManagement() {
         {success && (
           <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 text-green-700">
             <CheckCircle2 className="h-5 w-5 shrink-0" />
+
             <p className="text-sm font-medium">{success}</p>
           </div>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="h-fit rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm">
-            <h2 className="mb-5 text-lg font-bold text-[#0A1931]">
-              Create New Batch
-            </h2>
+        {/* =====================================================
+            CREATE NEW BATCH
+        ====================================================== */}
+        <section>
+          <div className="mb-5 flex items-center gap-3">
+            <div className="rounded-xl bg-[#EAF3F9] p-3 text-[#1A3D63]">
+              <Plus className="h-5 w-5" />
+            </div>
 
-            <form onSubmit={handleCreateBatch} className="space-y-5">
+            <div>
+              <h2 className="text-xl font-bold text-[#0A1931]">
+                Create New Batch
+              </h2>
+
+              <p className="text-sm text-[#7A7F85]">
+                Add a new bootcamp batch to the system.
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleCreateBatch}>
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+              {/* BATCH NAME */}
               <div>
                 <label className="text-sm font-semibold text-[#0A1931]">
                   Batch Name
@@ -295,70 +310,52 @@ function BatchManagement() {
                     })
                   }
                   placeholder="e.g. Batch 1 (2026)"
-                  className="mt-2 w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
+                  className="mt-2 w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-sm font-semibold text-[#0A1931]">
-                    Start Date
-                  </label>
-
-                  <input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        startDate: e.target.value,
-                      })
-                    }
-                    className="mt-2 w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-3 py-3 text-sm outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-semibold text-[#0A1931]">
-                    End Date
-                  </label>
-
-                  <input
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        endDate: e.target.value,
-                      })
-                    }
-                    className="mt-2 w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-3 py-3 text-sm outline-none"
-                  />
-                </div>
-              </div>
-
+              {/* START DATE */}
               <div>
                 <label className="text-sm font-semibold text-[#0A1931]">
-                  Description
+                  Start Date
                 </label>
 
-                <textarea
-                  rows={4}
-                  value={formData.description}
+                <input
+                  type="date"
+                  value={formData.startDate}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      description: e.target.value,
+                      startDate: e.target.value,
                     })
                   }
-                  placeholder="Describe this bootcamp batch..."
-                  className="mt-2 w-full resize-none rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#1A3D63]"
+                  className="mt-2 w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm outline-none focus:border-[#1A3D63]"
                 />
               </div>
 
+              {/* END DATE */}
               <div>
                 <label className="text-sm font-semibold text-[#0A1931]">
-                  Initial Batch Status
+                  End Date
+                </label>
+
+                <input
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      endDate: e.target.value,
+                    })
+                  }
+                  className="mt-2 w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm outline-none focus:border-[#1A3D63]"
+                />
+              </div>
+
+              {/* STATUS */}
+              <div>
+                <label className="text-sm font-semibold text-[#0A1931]">
+                  Initial Status
                 </label>
 
                 <select
@@ -369,17 +366,40 @@ function BatchManagement() {
                       status: e.target.value,
                     })
                   }
-                  className="mt-2 w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none"
+                  className="mt-2 w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm outline-none focus:border-[#1A3D63]"
                 >
                   <option value="upcoming">Upcoming</option>
                   <option value="active">Active</option>
                 </select>
               </div>
+            </div>
 
+            <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+              {/* DESCRIPTION */}
+              <div>
+                <label className="text-sm font-semibold text-[#0A1931]">
+                  Description
+                </label>
+
+                <textarea
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Describe this bootcamp batch..."
+                  className="mt-2 w-full resize-none rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm outline-none focus:border-[#1A3D63]"
+                />
+              </div>
+
+              {/* CREATE BUTTON */}
               <button
                 type="submit"
                 disabled={actionId === "creating"}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1A3D63] py-3 font-semibold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-w-[190px] items-center justify-center gap-2 rounded-xl bg-[#1A3D63] px-6 py-3 font-semibold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {actionId === "creating" ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -388,142 +408,196 @@ function BatchManagement() {
                 )}
                 Create Batch
               </button>
-            </form>
+            </div>
+          </form>
+        </section>
+
+        {/* DIVIDER */}
+        <div className="h-px bg-[#B3CFE5]" />
+
+        {/* =====================================================
+            EXISTING BATCHES
+        ====================================================== */}
+        <section>
+          <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-[#0A1931]">
+                Existing Batches
+              </h2>
+
+              <p className="mt-1 text-sm text-[#7A7F85]">
+                {batches.length} batch
+                {batches.length !== 1 ? "es" : ""} found
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-4 lg:col-span-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-[#0A1931]">
-                  Existing Batches
-                </h2>
-
-                <p className="mt-1 text-xs text-[#7A7F85]">
-                  {batches.length} batch
-                  {batches.length !== 1 ? "es" : ""} found
-                </p>
-              </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-7 w-7 animate-spin text-[#1A3D63]" />
             </div>
+          ) : batches.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#B3CFE5] py-16 text-center">
+              <ClipboardList className="mx-auto h-10 w-10 text-[#B3CFE5]" />
 
-            {loading ? (
-              <div className="flex justify-center rounded-3xl bg-white p-12">
-                <Loader2 className="h-7 w-7 animate-spin text-[#1A3D63]" />
-              </div>
-            ) : batches.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-[#B3CFE5] bg-white p-12 text-center">
-                <ClipboardList className="mx-auto h-10 w-10 text-[#B3CFE5]" />
+              <p className="mt-3 font-semibold text-[#0A1931]">
+                No batches found
+              </p>
 
-                <p className="mt-3 font-semibold text-[#0A1931]">
-                  No batches found
-                </p>
+              <p className="mt-1 text-sm text-[#7A7F85]">
+                Create your first bootcamp batch above.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-[#B3CFE5] bg-white">
+              <table className="w-full min-w-[900px] text-left">
+                <thead>
+                  <tr className="border-b border-[#B3CFE5] bg-[#F6FAFD]">
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
+                      Batch
+                    </th>
 
-                <p className="mt-1 text-sm text-[#7A7F85]">
-                  Create your first bootcamp batch.
-                </p>
-              </div>
-            ) : (
-              batches.map((batch) => (
-                <div
-                  key={batch._id}
-                  className="rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm transition hover:shadow-md"
-                >
-                  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F6FAFD] text-[#1A3D63]">
-                        <ClipboardList className="h-5 w-5" />
-                      </div>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
+                      Duration
+                    </th>
 
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-bold text-[#0A1931]">
-                            {batch.name}
-                          </h3>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
+                      Status
+                    </th>
 
-                          <span
-                            className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusStyle(
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
+                      Registration
+                    </th>
+
+                    <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {batches.map((batch) => (
+                    <tr
+                      key={batch._id}
+                      className="border-b border-gray-100 transition last:border-0 hover:bg-[#F6FAFD]"
+                    >
+                      {/* BATCH */}
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAF3F9] text-[#1A3D63]">
+                            <ClipboardList className="h-5 w-5" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="font-bold text-[#0A1931]">
+                              {batch.name}
+                            </p>
+
+                            {batch.description && (
+                              <p className="mt-1 max-w-xs truncate text-xs text-[#7A7F85]">
+                                {batch.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* DURATION */}
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 shrink-0 text-[#4A7FA7]" />
+
+                          <div>
+                            <p className="font-medium text-[#0A1931]">
+                              {formatDate(batch.startDate)}
+                            </p>
+
+                            <p className="text-xs text-[#7A7F85]">
+                              to {formatDate(batch.endDate)}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* STATUS */}
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={batch.status || "upcoming"}
+                            onChange={(e) =>
+                              handleStatusChange(batch._id, e.target.value)
+                            }
+                            disabled={actionId === batch._id}
+                            className={`rounded-xl border px-3 py-2 text-xs font-bold outline-none ${getStatusStyle(
                               batch.status,
-                            )}`}
+                            )} ${
+                              actionId === batch._id
+                                ? "cursor-not-allowed opacity-50"
+                                : "cursor-pointer"
+                            }`}
                           >
-                            {batch.status || "unknown"}
-                          </span>
+                            <option value="upcoming">Upcoming</option>
+
+                            <option value="active">Active</option>
+
+                            <option value="completed">Completed</option>
+                          </select>
+
+                          {actionId === batch._id && (
+                            <Loader2 className="h-4 w-4 animate-spin text-[#1A3D63]" />
+                          )}
                         </div>
+                      </td>
 
-                        <div className="mt-2 flex items-center gap-1.5 text-xs text-[#7A7F85]">
-                          <Calendar className="h-3.5 w-3.5" />
-
-                          <span>
-                            {formatDate(batch.startDate)}
-                            {" - "}
-                            {formatDate(batch.endDate)}
-                          </span>
-                        </div>
-
-                        {batch.description && (
-                          <p className="mt-2 max-w-xl text-xs text-[#7A7F85]">
-                            {batch.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={batch.status || "upcoming"}
-                          onChange={(e) =>
-                            handleStatusChange(batch._id, e.target.value)
-                          }
-                          disabled={actionId === batch._id}
-                          className={`rounded-xl border px-3 py-2 text-xs font-bold outline-none transition ${getStatusStyle(
-                            batch.status,
-                          )} ${
-                            actionId === batch._id
-                              ? "cursor-not-allowed opacity-50"
-                              : "cursor-pointer"
+                      {/* REGISTRATION */}
+                      <td className="px-6 py-5">
+                        <div
+                          className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold ${
+                            batch.isRegistrationOpen
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
                           }`}
                         >
-                          <option value="upcoming">Upcoming</option>
-                          <option value="active">Active</option>
-                        </select>
-
-                        {actionId === batch._id && (
-                          <Loader2 className="h-4 w-4 animate-spin text-[#1A3D63]" />
-                        )}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleToggleRegistration(batch._id)}
-                        disabled={actionId === `registration-${batch._id}`}
-                        className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                          batch.isRegistrationOpen
-                            ? "bg-green-100 text-green-700 hover:bg-green-200"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        }`}
-                      >
-                        {actionId === `registration-${batch._id}` ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
                           <span
-                            className={`h-2.5 w-2.5 rounded-full ${
+                            className={`h-2 w-2 rounded-full ${
                               batch.isRegistrationOpen
                                 ? "bg-green-500"
                                 : "bg-gray-400"
                             }`}
                           />
-                        )}
 
-                        {batch.isRegistrationOpen
-                          ? "Registration Open"
-                          : "Registration Closed"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+                          {batch.isRegistrationOpen ? "Open" : "Closed"}
+                        </div>
+                      </td>
+
+                      {/* ACTION */}
+                      <td className="px-6 py-5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleRegistration(batch._id)}
+                          disabled={actionId === `registration-${batch._id}`}
+                          className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                            batch.isRegistrationOpen
+                              ? "bg-red-50 text-red-600 hover:bg-red-100"
+                              : "bg-[#EAF3F9] text-[#1A3D63] hover:bg-[#B3CFE5]"
+                          }`}
+                        >
+                          {actionId === `registration-${batch._id}` ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : batch.isRegistrationOpen ? (
+                            "Close Registration"
+                          ) : (
+                            "Open Registration"
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

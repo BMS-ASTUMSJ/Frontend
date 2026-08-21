@@ -35,6 +35,10 @@ function TeamManagement() {
 
   const [selectedStudents, setSelectedStudents] = useState([]);
 
+  // ============================================================
+  // FETCH DATA
+  // ============================================================
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -68,10 +72,12 @@ function TeamManagement() {
     fetchData();
   }, []);
 
+  // ============================================================
+  // HELPERS
+  // ============================================================
+
   const getBatchId = (studentBatch) => {
-    if (!studentBatch) {
-      return "";
-    }
+    if (!studentBatch) return "";
 
     if (typeof studentBatch === "string") {
       return studentBatch;
@@ -115,6 +121,10 @@ function TeamManagement() {
     );
   });
 
+  // ============================================================
+  // RESET FORM
+  // ============================================================
+
   const resetForm = () => {
     setName("");
     setGender("");
@@ -126,6 +136,10 @@ function TeamManagement() {
     setIsEditing(false);
     setEditingTeamId(null);
   };
+
+  // ============================================================
+  // FORM CHANGES
+  // ============================================================
 
   const handleGenderChange = (value) => {
     setGender(value);
@@ -148,6 +162,10 @@ function TeamManagement() {
       return [...previous, studentId];
     });
   };
+
+  // ============================================================
+  // CREATE / UPDATE TEAM
+  // ============================================================
 
   const handleSaveTeam = async (event) => {
     event.preventDefault();
@@ -226,6 +244,10 @@ function TeamManagement() {
     }
   };
 
+  // ============================================================
+  // EDIT
+  // ============================================================
+
   const handleEditTeam = (team) => {
     setIsEditing(true);
     setEditingTeamId(team._id);
@@ -238,7 +260,6 @@ function TeamManagement() {
     );
 
     setMentor1(team.mentors?.[0]?._id || "");
-
     setMentor2(team.mentors?.[1]?._id || "");
 
     setSelectedStudents(team.students?.map((student) => student._id) || []);
@@ -248,6 +269,10 @@ function TeamManagement() {
       behavior: "smooth",
     });
   };
+
+  // ============================================================
+  // DELETE
+  // ============================================================
 
   const handleDeleteTeam = (team) => {
     setDeleteTeam(team);
@@ -281,6 +306,10 @@ function TeamManagement() {
     }
   };
 
+  // ============================================================
+  // LOADING
+  // ============================================================
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F6FAFD]">
@@ -289,52 +318,59 @@ function TeamManagement() {
     );
   }
 
+  // ============================================================
+  // UI
+  // ============================================================
+
   return (
-    <div className="relative min-h-screen bg-[#F6FAFD] p-4 md:p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex flex-col justify-between gap-5 rounded-3xl bg-[#0A1931] p-6 text-white shadow-sm md:flex-row md:items-center md:p-8">
-          <div className="flex items-center gap-4">
-            <div className="rounded-2xl bg-[#1A3D63] p-3">
-              <Users size={28} />
+    <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+        {/* ======================================================
+            HEADER
+        ====================================================== */}
+
+        <div className="rounded-3xl bg-[#0A1931] p-6 text-white md:p-8">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="rounded-2xl bg-[#1A3D63] p-3">
+                <Users className="h-7 w-7" />
+              </div>
+
+              <div>
+                <h1 className="text-2xl font-bold md:text-3xl">
+                  Team Management
+                </h1>
+
+                <p className="mt-1 text-sm text-[#B3CFE5]">
+                  Create and manage teams with mentors and students.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <h1 className="text-2xl font-bold md:text-3xl">
-                Team Management
-              </h1>
+            <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-3">
+              <Users className="h-5 w-5" />
 
-              <p className="mt-1 text-sm text-[#B3CFE5]">
-                Create and manage teams with two mentors and multiple students.
-              </p>
+              <span className="text-sm font-semibold">
+                {teams.length} Team
+                {teams.length !== 1 ? "s" : ""}
+              </span>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-3">
-            <Users size={18} />
-
-            <span className="text-sm font-semibold">
-              {teams.length} Team
-              {teams.length !== 1 ? "s" : ""}
-            </span>
           </div>
         </div>
 
-        {/* CONTENT */}
+        {/* ======================================================
+            CREATE / UPDATE TEAM
+        ====================================================== */}
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* FORM */}
-
-          <form
-            onSubmit={handleSaveTeam}
-            className="h-fit space-y-5 rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm"
-          >
+        <div className="rounded-3xl border border-[#B3CFE5] bg-white">
+          <div className="border-b border-[#EAF3F9] px-6 py-5 md:px-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-[#EAF3F9] p-2">
+                <div className="rounded-xl bg-[#EAF3F9] p-2.5">
                   {isEditing ? (
-                    <Pencil size={20} className="text-[#1A3D63]" />
+                    <Pencil className="h-5 w-5 text-[#1A3D63]" />
                   ) : (
-                    <UserPlus size={20} className="text-[#1A3D63]" />
+                    <UserPlus className="h-5 w-5 text-[#1A3D63]" />
                   )}
                 </div>
 
@@ -344,7 +380,7 @@ function TeamManagement() {
                   </h2>
 
                   <p className="text-xs text-[#7A7F85]">
-                    Select a batch, 2 mentors and students
+                    Select a batch, two mentors and students.
                   </p>
                 </div>
               </div>
@@ -353,178 +389,163 @@ function TeamManagement() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="rounded-xl p-2 text-gray-500 hover:bg-gray-100"
+                  disabled={saving}
+                  className="rounded-xl p-2 text-gray-500 transition hover:bg-gray-100"
                 >
-                  <X size={18} />
+                  <X className="h-5 w-5" />
                 </button>
               )}
             </div>
+          </div>
 
-            {/* TEAM NAME */}
+          <form onSubmit={handleSaveTeam} className="space-y-6 p-6 md:p-8">
+            {/* FIRST ROW */}
 
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                Team Name
-              </label>
+            <div className="grid gap-5 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+                  Team Name
+                </label>
 
-              <input
-                type="text"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Enter team name"
-                disabled={saving}
-                className="w-full rounded-xl border border-[#B3CFE5] p-3 text-sm outline-none focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-              />
-            </div>
-
-            {/* GENDER */}
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                Team Gender
-              </label>
-
-              <select
-                value={gender}
-                onChange={(event) => handleGenderChange(event.target.value)}
-                disabled={saving}
-                className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-              >
-                <option value="">Select team gender</option>
-
-                <option value="Male">Male</option>
-
-                <option value="Female">Female</option>
-              </select>
-            </div>
-
-            {/* BATCH */}
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                Batch
-              </label>
-
-              <select
-                value={batch}
-                onChange={(event) => handleBatchChange(event.target.value)}
-                disabled={saving}
-                className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-              >
-                <option value="">Select batch</option>
-
-                {batches.map((currentBatch) => (
-                  <option key={currentBatch._id} value={currentBatch._id}>
-                    {currentBatch.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* MENTOR 1 */}
-
-            <div className="rounded-2xl border border-[#B3CFE5] bg-[#FAFCFE] p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-bold text-[#0A1931]">First Mentor</p>
-
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1A3D63] text-xs font-bold text-white">
-                  1
-                </span>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Enter team name"
+                  disabled={saving}
+                  className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
+                />
               </div>
 
-              <select
-                value={mentor1}
-                onChange={(event) => setMentor1(event.target.value)}
-                disabled={!gender || saving}
-                className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none disabled:bg-gray-100"
-              >
-                <option value="">
-                  {gender ? "Select first mentor" : "Select gender first"}
-                </option>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+                  Team Gender
+                </label>
 
-                {filteredMentors.map((mentor) => (
-                  <option
-                    key={mentor._id}
-                    value={mentor._id}
-                    disabled={mentor._id === mentor2}
-                  >
-                    {mentor.firstName} {mentor.lastName}
-                  </option>
-                ))}
-              </select>
+                <select
+                  value={gender}
+                  onChange={(event) => handleGenderChange(event.target.value)}
+                  disabled={saving}
+                  className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
+                >
+                  <option value="">Select team gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+                  Batch
+                </label>
+
+                <select
+                  value={batch}
+                  onChange={(event) => handleBatchChange(event.target.value)}
+                  disabled={saving}
+                  className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
+                >
+                  <option value="">Select batch</option>
+
+                  {batches.map((currentBatch) => (
+                    <option key={currentBatch._id} value={currentBatch._id}>
+                      {currentBatch.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* MENTOR 2 */}
+            {/* MENTORS */}
 
-            <div className="rounded-2xl border border-[#B3CFE5] bg-[#FAFCFE] p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-bold text-[#0A1931]">
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
+                  First Mentor
+                </label>
+
+                <select
+                  value={mentor1}
+                  onChange={(event) => setMentor1(event.target.value)}
+                  disabled={!gender || saving}
+                  className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none disabled:bg-gray-100"
+                >
+                  <option value="">
+                    {gender ? "Select first mentor" : "Select gender first"}
+                  </option>
+
+                  {filteredMentors.map((mentor) => (
+                    <option
+                      key={mentor._id}
+                      value={mentor._id}
+                      disabled={mentor._id === mentor2}
+                    >
+                      {mentor.firstName} {mentor.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
                   Second Mentor
-                </p>
+                </label>
 
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#4A7FA7] text-xs font-bold text-white">
-                  2
-                </span>
-              </div>
-
-              <select
-                value={mentor2}
-                onChange={(event) => setMentor2(event.target.value)}
-                disabled={!gender || saving}
-                className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none disabled:bg-gray-100"
-              >
-                <option value="">
-                  {gender ? "Select second mentor" : "Select gender first"}
-                </option>
-
-                {filteredMentors.map((mentor) => (
-                  <option
-                    key={mentor._id}
-                    value={mentor._id}
-                    disabled={mentor._id === mentor1}
-                  >
-                    {mentor.firstName} {mentor.lastName}
+                <select
+                  value={mentor2}
+                  onChange={(event) => setMentor2(event.target.value)}
+                  disabled={!gender || saving}
+                  className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none disabled:bg-gray-100"
+                >
+                  <option value="">
+                    {gender ? "Select second mentor" : "Select gender first"}
                   </option>
-                ))}
-              </select>
+
+                  {filteredMentors.map((mentor) => (
+                    <option
+                      key={mentor._id}
+                      value={mentor._id}
+                      disabled={mentor._id === mentor1}
+                    >
+                      {mentor.firstName} {mentor.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* STUDENTS */}
 
-            <div className="rounded-2xl border border-[#B3CFE5] bg-[#EAF3F9] p-4">
+            <div>
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-bold text-[#0A1931]">Students</p>
+                <label className="text-sm font-semibold text-[#0A1931]">
+                  Students
+                </label>
 
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[#1A3D63]">
+                <span className="rounded-full bg-[#EAF3F9] px-3 py-1 text-xs font-bold text-[#1A3D63]">
                   {selectedStudents.length} selected
                 </span>
               </div>
 
               {!gender ? (
-                <div className="rounded-xl bg-white p-4 text-center">
-                  <p className="text-sm text-[#7A7F85]">
-                    Select a team gender first.
-                  </p>
+                <div className="rounded-xl border border-dashed border-[#B3CFE5] bg-[#F6FAFD] p-5 text-center text-sm text-[#7A7F85]">
+                  Select a team gender first.
                 </div>
               ) : !batch ? (
-                <div className="rounded-xl bg-white p-4 text-center">
-                  <p className="text-sm text-[#7A7F85]">
-                    Select a batch first.
-                  </p>
+                <div className="rounded-xl border border-dashed border-[#B3CFE5] bg-[#F6FAFD] p-5 text-center text-sm text-[#7A7F85]">
+                  Select a batch first.
                 </div>
               ) : filteredStudents.length === 0 ? (
-                <div className="rounded-xl bg-white p-4 text-center">
-                  <p className="text-sm text-[#7A7F85]">
-                    No approved {gender.toLowerCase()} students are available in
-                    this batch.
-                  </p>
+                <div className="rounded-xl border border-dashed border-[#B3CFE5] bg-[#F6FAFD] p-5 text-center text-sm text-[#7A7F85]">
+                  No approved {gender.toLowerCase()} students are available in
+                  this batch.
                 </div>
               ) : (
-                <div className="max-h-56 space-y-1 overflow-y-auto">
+                <div className="grid max-h-64 gap-2 overflow-y-auto rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] p-3 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredStudents.map((student) => (
                     <label
                       key={student._id}
-                      className="flex cursor-pointer items-center gap-3 rounded-xl bg-white p-3 hover:bg-[#F6FAFD]"
+                      className="flex cursor-pointer items-center gap-3 rounded-xl bg-white p-3 transition hover:bg-[#EAF3F9]"
                     >
                       <input
                         type="checkbox"
@@ -534,11 +555,11 @@ function TeamManagement() {
                         className="h-4 w-4"
                       />
 
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#4A7FA7] text-white">
-                        <UserRound size={15} />
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4A7FA7] text-white">
+                        <UserRound className="h-4 w-4" />
                       </div>
 
-                      <span className="text-sm font-medium text-[#0A1931]">
+                      <span className="truncate text-sm font-medium text-[#0A1931]">
                         {student.firstName} {student.lastName}
                       </span>
                     </label>
@@ -547,97 +568,193 @@ function TeamManagement() {
               )}
             </div>
 
-            {/* SAVE BUTTON */}
+            {/* BUTTONS */}
 
-            <button
-              type="submit"
-              disabled={
-                saving ||
-                !name.trim() ||
-                !gender ||
-                !batch ||
-                !mentor1 ||
-                !mentor2 ||
-                mentor1 === mentor2 ||
-                selectedStudents.length === 0
-              }
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1A3D63] py-3 font-bold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:bg-gray-400"
-            >
-              {saving ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-
-                  {isEditing ? "Updating Team..." : "Creating Team..."}
-                </>
-              ) : (
-                <>
-                  {isEditing ? <Pencil size={18} /> : <Users size={18} />}
-
-                  {isEditing ? "Update Team" : "Create Team"}
-                </>
-              )}
-            </button>
-
-            {isEditing && (
-              <button
-                type="button"
-                onClick={resetForm}
-                disabled={saving}
-                className="w-full rounded-xl bg-gray-100 py-3 font-semibold text-gray-700 hover:bg-gray-200"
-              >
-                Cancel Update
-              </button>
-            )}
-          </form>
-
-          {/* TEAM LIST */}
-
-          <div className="grid gap-4 lg:col-span-2">
-            {teams.length === 0 ? (
-              <div className="rounded-3xl border border-[#B3CFE5] bg-white p-10 text-center shadow-sm">
-                <Users size={40} className="mx-auto mb-3 text-[#B3CFE5]" />
-
-                <p className="font-semibold text-[#0A1931]">
-                  No teams created yet.
-                </p>
-
-                <p className="mt-1 text-sm text-[#7A7F85]">
-                  Create your first team using the form.
-                </p>
-              </div>
-            ) : (
-              teams.map((team) => (
-                <div
-                  key={team._id}
-                  className="rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm"
+            <div className="flex flex-col gap-3 border-t border-[#EAF3F9] pt-5 sm:flex-row sm:justify-end">
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  disabled={saving}
+                  className="rounded-xl bg-gray-100 px-6 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-200"
                 >
-                  {/* HEADER */}
+                  Cancel
+                </button>
+              )}
 
-                  <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <button
+                type="submit"
+                disabled={
+                  saving ||
+                  !name.trim() ||
+                  !gender ||
+                  !batch ||
+                  !mentor1 ||
+                  !mentor2 ||
+                  mentor1 === mentor2 ||
+                  selectedStudents.length === 0
+                }
+                className="flex items-center justify-center gap-2 rounded-xl bg-[#1A3D63] px-8 py-3 text-sm font-bold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:bg-gray-400"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {isEditing ? "Updating Team..." : "Creating Team..."}
+                  </>
+                ) : (
+                  <>
+                    {isEditing ? (
+                      <Pencil className="h-4 w-4" />
+                    ) : (
+                      <Users className="h-4 w-4" />
+                    )}
+
+                    {isEditing ? "Update Team" : "Create Team"}
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* ======================================================
+            EXISTING TEAMS
+        ====================================================== */}
+
+        <div>
+          <div className="mb-4 flex items-end justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-[#0A1931]">
+                Existing Teams
+              </h2>
+
+              <p className="mt-1 text-sm text-[#7A7F85]">
+                {teams.length} team
+                {teams.length !== 1 ? "s" : ""} found
+              </p>
+            </div>
+          </div>
+
+          {teams.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#B3CFE5] bg-white p-10 text-center">
+              <Users className="mx-auto h-10 w-10 text-[#B3CFE5]" />
+
+              <p className="mt-3 font-semibold text-[#0A1931]">
+                No teams created yet.
+              </p>
+
+              <p className="mt-1 text-sm text-[#7A7F85]">
+                Create your first team using the form above.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-[#B3CFE5] bg-white">
+              {/* TABLE HEADER */}
+
+              <div className="hidden grid-cols-[1.3fr_0.8fr_1fr_1.8fr_2fr_100px] gap-4 border-b border-[#EAF3F9] bg-[#F6FAFD] px-5 py-4 text-xs font-bold uppercase tracking-wide text-[#4A7FA7] md:grid">
+                <span>Team</span>
+
+                <span>Gender</span>
+
+                <span>Batch</span>
+
+                <span>Mentors</span>
+
+                <span>Students</span>
+
+                <span className="text-right">Actions</span>
+              </div>
+
+              {/* TABLE ROWS */}
+
+              <div className="divide-y divide-[#EAF3F9]">
+                {teams.map((team) => (
+                  <div
+                    key={team._id}
+                    className="grid gap-4 px-5 py-5 transition hover:bg-[#FAFCFE] md:grid-cols-[1.3fr_0.8fr_1fr_1.8fr_2fr_100px] md:items-center"
+                  >
+                    {/* TEAM */}
+
+                    <div className="min-w-0">
+                      <p className="font-bold text-[#0A1931]">{team.name}</p>
+
+                      <p className="mt-1 text-xs text-[#7A7F85]">
+                        {team.students?.length || 0} students
+                      </p>
+                    </div>
+
+                    {/* GENDER */}
+
                     <div>
-                      <h3 className="text-xl font-bold text-[#0A1931]">
-                        {team.name}
-                      </h3>
+                      <span className="inline-flex rounded-full bg-[#EAF3F9] px-3 py-1 text-xs font-bold text-[#1A3D63]">
+                        {team.gender || "—"}
+                      </span>
+                    </div>
 
-                      {team.batch && (
-                        <p className="mt-1 text-sm font-semibold text-[#4A7FA7]">
-                          Batch: {team.batch.name || "Unknown batch"}
-                        </p>
+                    {/* BATCH */}
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-[#0A1931]">
+                        {team.batch?.name || "Unknown"}
+                      </p>
+                    </div>
+
+                    {/* MENTORS */}
+
+                    <div className="min-w-0 space-y-1">
+                      {team.mentors?.length ? (
+                        team.mentors.map((mentor) => (
+                          <div
+                            key={mentor._id}
+                            className="flex items-center gap-2"
+                          >
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1A3D63] text-white">
+                              <UserRound className="h-3.5 w-3.5" />
+                            </div>
+
+                            <span className="truncate text-xs font-semibold text-[#0A1931]">
+                              {mentor.firstName} {mentor.lastName}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-xs text-[#7A7F85]">
+                          No mentors
+                        </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-[#EAF3F9] px-3 py-1 text-xs font-bold text-[#1A3D63]">
-                        {team.gender}
-                      </span>
+                    {/* STUDENTS */}
 
+                    <div className="min-w-0">
+                      {team.students?.length ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {team.students.map((student) => (
+                            <span
+                              key={student._id}
+                              className="rounded-lg bg-[#F6FAFD] px-2 py-1 text-[11px] font-medium text-[#1A3D63]"
+                            >
+                              {student.firstName} {student.lastName}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-[#7A7F85]">
+                          No students
+                        </span>
+                      )}
+                    </div>
+
+                    {/* ACTIONS */}
+
+                    <div className="flex items-center justify-start gap-1 md:justify-end">
                       <button
                         type="button"
                         onClick={() => handleEditTeam(team)}
                         className="rounded-xl p-2 text-[#1A3D63] transition hover:bg-[#EAF3F9]"
                         title="Edit team"
                       >
-                        <Pencil size={18} />
+                        <Pencil className="h-4 w-4" />
                       </button>
 
                       <button
@@ -648,100 +765,22 @@ function TeamManagement() {
                         title="Delete team"
                       >
                         {deleting === team._id ? (
-                          <Loader2 size={18} className="animate-spin" />
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <Trash2 size={18} />
+                          <Trash2 className="h-4 w-4" />
                         )}
                       </button>
                     </div>
                   </div>
-
-                  {/* MENTORS */}
-
-                  <div className="mb-5">
-                    <p className="mb-3 text-xs font-bold text-[#4A7FA7]">
-                      MENTORS
-                    </p>
-
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {team.mentors?.map((mentor, index) => (
-                        <div
-                          key={mentor._id}
-                          className="flex items-center gap-3 rounded-xl bg-[#F6FAFD] p-3"
-                        >
-                          <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white ${
-                              index === 0 ? "bg-[#1A3D63]" : "bg-[#4A7FA7]"
-                            }`}
-                          >
-                            <UserRound size={17} />
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="text-xs text-[#7A7F85]">
-                              Mentor {index + 1}
-                            </p>
-
-                            <p className="truncate text-sm font-bold text-[#0A1931]">
-                              {mentor.firstName} {mentor.lastName}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* STUDENTS */}
-
-                  <div className="mb-5">
-                    <div className="mb-3 flex items-center justify-between">
-                      <p className="text-xs font-bold text-[#4A7FA7]">
-                        STUDENTS
-                      </p>
-
-                      <span className="text-xs font-bold text-[#1A3D63]">
-                        {team.students?.length || 0} students
-                      </span>
-                    </div>
-
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {team.students?.map((student) => (
-                        <div
-                          key={student._id}
-                          className="flex items-center gap-3 rounded-xl bg-[#F6FAFD] p-3"
-                        >
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4A7FA7] text-white">
-                            <UserRound size={16} />
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-[#0A1931]">
-                              {student.firstName} {student.lastName}
-                            </p>
-
-                            <p className="text-xs text-[#7A7F85]">Student</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* FOOTER */}
-
-                  <div className="flex items-center justify-between border-t border-[#EAF3F9] pt-4 text-xs font-semibold text-[#4A7FA7]">
-                    <span>Mentors: {team.mentors?.length || 0}/2</span>
-
-                    <span>Students: {team.students?.length || 0}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* ========================================================
-          DELETE CONFIRMATION OVERLAY
+          DELETE MODAL
       ======================================================== */}
 
       {deleteTeam && (
@@ -750,7 +789,7 @@ function TeamManagement() {
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDECEC]">
-                  <Trash2 size={19} className="text-red-500" />
+                  <Trash2 className="h-5 w-5 text-red-500" />
                 </div>
 
                 <div>
@@ -766,9 +805,9 @@ function TeamManagement() {
                 type="button"
                 onClick={() => setDeleteTeam(null)}
                 disabled={deleting === deleteTeam._id}
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
               >
-                <X size={18} />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
@@ -785,7 +824,7 @@ function TeamManagement() {
                 type="button"
                 onClick={() => setDeleteTeam(null)}
                 disabled={deleting === deleteTeam._id}
-                className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-200"
+                className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200"
               >
                 Cancel
               </button>
@@ -794,11 +833,11 @@ function TeamManagement() {
                 type="button"
                 onClick={confirmDeleteTeam}
                 disabled={deleting === deleteTeam._id}
-                className="flex-1 rounded-xl bg-[#D9534F] py-2.5 text-sm font-semibold text-white transition hover:bg-[#C64541] disabled:opacity-60"
+                className="flex-1 rounded-xl bg-[#D9534F] py-2.5 text-sm font-semibold text-white hover:bg-[#C64541] disabled:opacity-60"
               >
                 {deleting === deleteTeam._id ? (
                   <span className="flex items-center justify-center gap-2">
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Deleting...
                   </span>
                 ) : (

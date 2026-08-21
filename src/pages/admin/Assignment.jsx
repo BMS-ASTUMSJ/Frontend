@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
+
 import {
   ClipboardList,
   PlusCircle,
@@ -45,15 +46,17 @@ const AdminAssignment = () => {
   });
 
   const [selectedFiles, setSelectedFiles] = useState([]);
-
   const [assignments, setAssignments] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const [editingAssignment, setEditingAssignment] = useState(null);
-
   const [replaceFiles, setReplaceFiles] = useState(false);
+
+  // ============================================================
+  // FETCH ASSIGNMENTS
+  // ============================================================
 
   const fetchAssignments = async () => {
     try {
@@ -61,7 +64,7 @@ const AdminAssignment = () => {
 
       const res = await api.get("/assignments");
 
-      setAssignments(res.data.assignments || []);
+      setAssignments(res.data?.assignments || []);
     } catch (err) {
       console.error("FETCH ASSIGNMENTS ERROR:", err);
 
@@ -75,6 +78,10 @@ const AdminAssignment = () => {
     fetchAssignments();
   }, []);
 
+  // ============================================================
+  // HANDLE FORM CHANGE
+  // ============================================================
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -83,6 +90,10 @@ const AdminAssignment = () => {
       [name]: value,
     }));
   };
+
+  // ============================================================
+  // RESET FORM
+  // ============================================================
 
   const resetForm = () => {
     setFormData({
@@ -98,6 +109,10 @@ const AdminAssignment = () => {
     setEditingAssignment(null);
     setReplaceFiles(false);
   };
+
+  // ============================================================
+  // FILE VALIDATION
+  // ============================================================
 
   const validateFile = (file) => {
     const extension = "." + file.name.split(".").pop().toLowerCase();
@@ -118,6 +133,10 @@ const AdminAssignment = () => {
 
     return true;
   };
+
+  // ============================================================
+  // FILE CHANGE
+  // ============================================================
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
@@ -141,9 +160,17 @@ const AdminAssignment = () => {
     e.target.value = "";
   };
 
+  // ============================================================
+  // REMOVE SELECTED FILE
+  // ============================================================
+
   const removeSelectedFile = (index) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
+
+  // ============================================================
+  // FORMAT DATE FOR INPUT
+  // ============================================================
 
   const formatDateForInput = (date) => {
     if (!date) return "";
@@ -160,6 +187,10 @@ const AdminAssignment = () => {
 
     return `${year}-${month}-${day}`;
   };
+
+  // ============================================================
+  // SUBMIT
+  // ============================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -237,6 +268,10 @@ const AdminAssignment = () => {
     }
   };
 
+  // ============================================================
+  // EDIT
+  // ============================================================
+
   const handleEdit = (assignment) => {
     setEditingAssignment(assignment);
 
@@ -257,6 +292,10 @@ const AdminAssignment = () => {
       behavior: "smooth",
     });
   };
+
+  // ============================================================
+  // DELETE
+  // ============================================================
 
   const handleDelete = async (id) => {
     if (!id) return;
@@ -284,6 +323,10 @@ const AdminAssignment = () => {
     }
   };
 
+  // ============================================================
+  // BATCH NAME
+  // ============================================================
+
   const getBatchName = (assignment) => {
     if (!assignment?.batch) {
       return "No batch";
@@ -296,11 +339,19 @@ const AdminAssignment = () => {
     return "Unknown batch";
   };
 
+  // ============================================================
+  // EXPIRED
+  // ============================================================
+
   const isExpired = (deadline) => {
     if (!deadline) return false;
 
     return new Date(deadline) < new Date();
   };
+
+  // ============================================================
+  // FILE SIZE
+  // ============================================================
 
   const formatFileSize = (bytes) => {
     if (!bytes) return "0 KB";
@@ -315,6 +366,10 @@ const AdminAssignment = () => {
 
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
+
+  // ============================================================
+  // FILE URL
+  // ============================================================
 
   const getFileUrl = (fileUrl) => {
     if (!fileUrl) return "#";
@@ -332,264 +387,281 @@ const AdminAssignment = () => {
 
   return (
     <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-8">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <div className="flex flex-col justify-between gap-5 rounded-3xl bg-[#0A1931] p-8 text-white shadow-lg md:flex-row md:items-center">
-          <div className="flex items-center gap-5">
-            <div className="rounded-2xl bg-[#1A3D63] p-4">
-              <ClipboardList size={32} className="text-[#B3CFE5]" />
+      <div className="mx-auto max-w-7xl space-y-6">
+        {/* ======================================================
+            HEADER
+        ====================================================== */}
+
+        <div className="rounded-3xl bg-[#0A1931] p-6 text-white shadow-sm md:p-7">
+          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
+            <div className="flex items-center gap-4">
+              <div className="rounded-2xl bg-[#1A3D63] p-3">
+                <ClipboardList size={28} className="text-[#B3CFE5]" />
+              </div>
+
+              <div>
+                <h1 className="text-2xl font-bold md:text-3xl">
+                  Assignment Management
+                </h1>
+
+                <p className="mt-1 text-sm text-[#B3CFE5]">
+                  Create and manage student assignments.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <h1 className="text-3xl font-bold">Assignment Management</h1>
-
-              <p className="mt-1 text-sm text-[#B3CFE5]">
-                Create and track student projects and deadlines.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-6 py-3">
-            <Trophy size={20} className="text-yellow-400" />
-
-            <span className="text-lg font-semibold">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Trophy size={18} className="text-yellow-400" />
               {assignments.length} Assignment
               {assignments.length !== 1 ? "s" : ""}
-            </span>
+            </div>
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-5">
-          <div className="lg:col-span-2">
-            <form
-              onSubmit={handleSubmit}
-              className="sticky top-8 space-y-5 rounded-3xl border border-[#B3CFE5] bg-white p-8 shadow-sm"
-            >
-              {/* FORM HEADER */}
+        {/* ======================================================
+            CREATE / EDIT FORM
+        ====================================================== */}
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-[#EAF3F9] p-2">
-                    {editingAssignment ? (
-                      <Pencil size={20} className="text-[#1A3D63]" />
-                    ) : (
-                      <PlusCircle size={20} className="text-[#1A3D63]" />
-                    )}
-                  </div>
-
-                  <h2 className="text-xl font-bold text-[#0A1931]">
-                    {editingAssignment ? "Edit Assignment" : "New Assignment"}
-                  </h2>
-                </div>
-
-                {editingAssignment && (
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
-                    title="Cancel editing"
-                  >
-                    <X size={20} />
-                  </button>
+        <div className="border-b border-[#B3CFE5] pb-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-[#EAF3F9] p-2">
+                {editingAssignment ? (
+                  <Pencil size={20} className="text-[#1A3D63]" />
+                ) : (
+                  <PlusCircle size={20} className="text-[#1A3D63]" />
                 )}
               </div>
 
-              <div className="space-y-4">
-                {/* TITLE */}
+              <div>
+                <h2 className="text-xl font-bold text-[#0A1931]">
+                  {editingAssignment ? "Edit Assignment" : "New Assignment"}
+                </h2>
 
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-[#0A1931]">
-                    Project Title
-                  </label>
+                <p className="text-xs text-gray-500">
+                  {editingAssignment
+                    ? "Update the assignment details below."
+                    : "Publish a new assignment to the current batch."}
+                </p>
+              </div>
+            </div>
 
-                  <input
-                    type="text"
-                    name="title"
-                    placeholder="e.g. React & Tailwind Portfolio"
-                    value={formData.title}
-                    onChange={handleChange}
-                    required
-                    className="w-full rounded-xl border border-[#B3CFE5] p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-                  />
-                </div>
+            {editingAssignment && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                title="Cancel editing"
+              >
+                <X size={20} />
+              </button>
+            )}
+          </div>
 
-                {/* DESCRIPTION */}
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* TITLE */}
 
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-[#0A1931]">
-                    Descriptions
-                  </label>
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Project Title
+                </label>
 
-                  <textarea
-                    name="description"
-                    placeholder="Provide detailed project requirements..."
-                    value={formData.description}
-                    onChange={handleChange}
-                    required
-                    className="h-32 w-full rounded-xl border border-[#B3CFE5] p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="title"
+                  placeholder="e.g. React & Tailwind Portfolio"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
+                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
+                />
+              </div>
 
-                {/* INSTRUCTOR */}
+              {/* INSTRUCTOR */}
 
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-[#0A1931]">
-                    Instructor Name
-                  </label>
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Instructor Name
+                </label>
 
-                  <input
-                    type="text"
-                    name="instructorName"
-                    placeholder="e.g. Abebe Kebede"
-                    value={formData.instructorName}
-                    onChange={handleChange}
-                    required
-                    className="w-full rounded-xl border border-[#B3CFE5] p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="instructorName"
+                  placeholder="e.g. Abebe Kebede"
+                  value={formData.instructorName}
+                  onChange={handleChange}
+                  required
+                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
+                />
+              </div>
 
-                {/* LINK */}
+              {/* DESCRIPTION */}
 
-                <div>
-                  <label className="mb-2 flex items-center gap-2 text-sm font-bold text-[#0A1931]">
-                    <LinkIcon size={15} />
-                    Link
-                    <span className="font-normal text-gray-400">
-                      (optional)
-                    </span>
-                  </label>
+              <div className="md:col-span-2">
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Description
+                </label>
 
-                  <input
-                    type="url"
-                    name="link"
-                    placeholder="https://example.com/resource"
-                    value={formData.link}
-                    onChange={handleChange}
-                    className="w-full rounded-xl border border-[#B3CFE5] p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-                  />
-                </div>
+                <textarea
+                  name="description"
+                  placeholder="Provide detailed project requirements..."
+                  value={formData.description}
+                  onChange={handleChange}
+                  required
+                  className="h-24 w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
+                />
+              </div>
 
-                <div>
-                  <label className="mb-2 flex items-center gap-2 text-sm font-bold text-[#0A1931]">
-                    <Upload size={16} />
-                    Assignment Files
-                    <span className="font-normal text-gray-400">
-                      (optional)
-                    </span>
-                  </label>
+              {/* LINK */}
 
-                  <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#B3CFE5] bg-[#F6FAFD] p-6 text-center transition hover:border-[#1A3D63] hover:bg-[#EAF3F9]">
-                    <Upload size={28} className="mb-2 text-[#4A7FA7]" />
+              <div className="md:col-span-2">
+                <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500">
+                  <LinkIcon size={14} />
+                  External Link
+                  <span className="font-normal normal-case tracking-normal text-gray-400">
+                    optional
+                  </span>
+                </label>
 
-                    <span className="text-sm font-bold text-[#0A1931]">
+                <input
+                  type="url"
+                  name="link"
+                  placeholder="https://example.com/resource"
+                  value={formData.link}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
+                />
+              </div>
+
+              {/* FILE UPLOAD */}
+
+              <div className="md:col-span-2">
+                <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500">
+                  <Upload size={14} />
+                  Assignment Files
+                  <span className="font-normal normal-case tracking-normal text-gray-400">
+                    optional
+                  </span>
+                </label>
+
+                <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-[#B3CFE5] bg-white p-4 transition hover:border-[#1A3D63] hover:bg-[#F6FAFD]">
+                  <div className="rounded-xl bg-[#EAF3F9] p-3">
+                    <Upload size={22} className="text-[#4A7FA7]" />
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-bold text-[#0A1931]">
                       Click to select files
-                    </span>
+                    </p>
 
-                    <span className="mt-1 text-xs text-[#7A7F85]">
-                      PDF, Word, PowerPoint, Excel, TXT, ZIP, RAR
-                    </span>
+                    <p className="mt-1 text-xs text-gray-500">
+                      PDF, Word, PowerPoint, Excel, TXT, ZIP, RAR • Max 20 MB
+                      per file
+                    </p>
+                  </div>
 
-                    <span className="mt-1 text-xs text-[#7A7F85]">
-                      Maximum 20 MB per file
-                    </span>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar"
+                  />
+                </label>
 
-                    <input
-                      type="file"
-                      multiple
-                      onChange={handleFileChange}
-                      className="hidden"
-                      accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar"
-                    />
-                  </label>
+                {/* SELECTED FILES */}
 
-                  {/* SELECTED FILES */}
+                {selectedFiles.length > 0 && (
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {selectedFiles.map((file, index) => (
+                      <div
+                        key={`${file.name}-${index}`}
+                        className="flex items-center justify-between rounded-xl border border-[#B3CFE5] bg-white p-3"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <FileText
+                            size={18}
+                            className="shrink-0 text-[#1A3D63]"
+                          />
 
-                  {selectedFiles.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {selectedFiles.map((file, index) => (
-                        <div
-                          key={`${file.name}-${index}`}
-                          className="flex items-center justify-between rounded-xl border border-[#B3CFE5] bg-white p-3"
-                        >
-                          <div className="flex min-w-0 items-center gap-3">
-                            <FileText
-                              size={18}
-                              className="shrink-0 text-[#1A3D63]"
-                            />
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-bold text-[#0A1931]">
+                              {file.name}
+                            </p>
 
-                            <div className="min-w-0">
-                              <p className="truncate text-xs font-bold text-[#0A1931]">
-                                {file.name}
-                              </p>
-
-                              <p className="text-[10px] text-gray-500">
-                                {formatFileSize(file.size)}
-                              </p>
-                            </div>
+                            <p className="text-[10px] text-gray-500">
+                              {formatFileSize(file.size)}
+                            </p>
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={() => removeSelectedFile(index)}
-                            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                          >
-                            <X size={16} />
-                          </button>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-bold text-[#0A1931]">
-                      Deadline
-                    </label>
-
-                    <input
-                      type="date"
-                      name="deadline"
-                      value={formData.deadline}
-                      onChange={handleChange}
-                      required
-                      className="w-full rounded-xl border border-[#B3CFE5] p-3 text-sm outline-none transition focus:border-[#1A3D63]"
-                    />
+                        <button
+                          type="button"
+                          onClick={() => removeSelectedFile(index)}
+                          className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
+                )}
+              </div>
 
-                  <div>
-                    <label className="mb-2 block text-sm font-bold text-[#0A1931]">
-                      Points
-                    </label>
+              {/* DEADLINE */}
 
-                    <input
-                      type="number"
-                      name="maxScore"
-                      min="1"
-                      value={formData.maxScore}
-                      onChange={handleChange}
-                      required
-                      className="w-full rounded-xl border border-[#B3CFE5] p-3 text-sm outline-none transition focus:border-[#1A3D63]"
-                    />
-                  </div>
-                </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Deadline
+                </label>
 
-                {/* EDIT FILE OPTIONS */}
+                <input
+                  type="date"
+                  name="deadline"
+                  value={formData.deadline}
+                  onChange={handleChange}
+                  required
+                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63]"
+                />
+              </div>
 
-                {editingAssignment &&
-                  (editingAssignment.files || []).length > 0 && (
-                    <div className="rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] p-4">
-                      <p className="mb-3 text-sm font-bold text-[#0A1931]">
+              {/* POINTS */}
+
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Maximum Points
+                </label>
+
+                <input
+                  type="number"
+                  name="maxScore"
+                  min="1"
+                  value={formData.maxScore}
+                  onChange={handleChange}
+                  required
+                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63]"
+                />
+              </div>
+
+              {/* EXISTING FILES */}
+
+              {editingAssignment &&
+                (editingAssignment.files || []).length > 0 && (
+                  <div className="md:col-span-2">
+                    <div className="rounded-xl border border-[#B3CFE5] bg-white p-4">
+                      <p className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-500">
                         Existing Files
                       </p>
 
-                      <div className="space-y-2">
+                      <div className="grid gap-2 md:grid-cols-2">
                         {editingAssignment.files.map((file, index) => (
                           <a
                             key={`${file.fileName}-${index}`}
                             href={getFileUrl(file.fileUrl)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-3 rounded-xl bg-white p-3 transition hover:bg-[#EAF3F9]"
+                            className="flex items-center gap-3 rounded-xl border border-gray-100 p-3 transition hover:bg-[#F6FAFD]"
                           >
                             <FileText
                               size={18}
@@ -614,7 +686,7 @@ const AdminAssignment = () => {
                         ))}
                       </div>
 
-                      <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
+                      <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
                         <input
                           type="checkbox"
                           checked={replaceFiles}
@@ -628,131 +700,175 @@ const AdminAssignment = () => {
                           </p>
 
                           <p className="mt-1 text-[10px] text-red-600">
-                            The existing files will be deleted and replaced with
-                            the newly selected files.
+                            Existing files will be deleted and replaced with the
+                            newly selected files.
                           </p>
                         </div>
                       </label>
                     </div>
-                  )}
+                  </div>
+                )}
+            </div>
 
-                {/* SUBMIT */}
+            {/* SUBMIT */}
 
+            <div className="mt-5 flex gap-3">
+              {editingAssignment && (
                 <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1A3D63] py-4 font-bold text-white shadow-lg shadow-blue-900/20 transition hover:bg-[#0A1931] disabled:cursor-not-allowed disabled:bg-gray-400"
+                  type="button"
+                  onClick={resetForm}
+                  className="rounded-xl border border-[#B3CFE5] px-5 py-3 text-sm font-bold text-[#0A1931] transition hover:bg-[#F6FAFD]"
                 >
-                  {submitting ? (
-                    <>
-                      <Loader2 size={20} className="animate-spin" />
-
-                      {editingAssignment ? "Updating..." : "Publishing..."}
-                    </>
-                  ) : (
-                    <>
-                      {editingAssignment ? (
-                        <>
-                          <Pencil size={18} />
-                          Update Assignment
-                        </>
-                      ) : (
-                        <>
-                          <FileText size={18} />
-                          Publish Assignment
-                        </>
-                      )}
-                    </>
-                  )}
+                  Cancel
                 </button>
-              </div>
-            </form>
+              )}
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1A3D63] py-3 text-sm font-bold text-white transition hover:bg-[#0A1931] disabled:cursor-not-allowed disabled:bg-gray-400"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+
+                    {editingAssignment ? "Updating..." : "Publishing..."}
+                  </>
+                ) : (
+                  <>
+                    {editingAssignment ? (
+                      <>
+                        <Pencil size={17} />
+                        Update Assignment
+                      </>
+                    ) : (
+                      <>
+                        <FileText size={17} />
+                        Publish Assignment
+                      </>
+                    )}
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* ======================================================
+            ASSIGNMENT LIST
+        ====================================================== */}
+
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 text-xl font-bold text-[#0A1931]">
+                <Clock size={20} className="text-[#4A7FA7]" />
+                Recent Assignments
+              </h2>
+
+              <p className="mt-1 text-xs text-gray-500">
+                {assignments.length} assignment
+                {assignments.length !== 1 ? "s" : ""}
+              </p>
+            </div>
           </div>
 
-          {/* ====================================================
-              ASSIGNMENT LIST
-          ==================================================== */}
+          {loading ? (
+            <div className="flex h-40 items-center justify-center">
+              <Loader2 className="h-7 w-7 animate-spin text-[#1A3D63]" />
+            </div>
+          ) : assignments.length === 0 ? (
+            <div className="border-y border-dashed border-[#B3CFE5] py-12 text-center">
+              <FileText size={42} className="mx-auto mb-3 text-[#B3CFE5]" />
 
-          <div className="space-y-4 lg:col-span-3">
-            <h2 className="flex items-center gap-2 px-2 text-xl font-bold text-[#0A1931]">
-              <Clock size={20} className="text-[#4A7FA7]" />
-              Recent Assignments
-            </h2>
+              <p className="font-semibold text-[#0A1931]">
+                No assignments yet.
+              </p>
 
-            {loading ? (
-              <div className="flex h-64 items-center justify-center rounded-3xl border border-[#B3CFE5] bg-white">
-                <Loader2 className="h-8 w-8 animate-spin text-[#1A3D63]" />
-              </div>
-            ) : assignments.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-[#B3CFE5] bg-white p-12 text-center">
-                <FileText size={48} className="mx-auto mb-4 text-[#B3CFE5]" />
+              <p className="mt-1 text-sm text-gray-500">
+                Create your first assignment above.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto border-y border-[#B3CFE5]">
+              <table className="w-full min-w-262.5">
+                <thead>
+                  <tr className="border-b border-[#B3CFE5] bg-[#F6FAFD] text-left text-xs uppercase tracking-wide text-gray-500">
+                    <th className="px-4 py-3">Assignment</th>
 
-                <p className="font-semibold text-[#0A1931]">
-                  No assignments yet.
-                </p>
+                    <th className="px-4 py-3">Batch</th>
 
-                <p className="text-sm text-[#7A7F85]">
-                  Start by filling out the form on the left.
-                </p>
-              </div>
-            ) : (
-              assignments.map((assignment) => {
-                const expired = isExpired(assignment.deadline);
+                    <th className="px-4 py-3">Instructor</th>
 
-                return (
-                  <div
-                    key={assignment._id}
-                    className="group relative rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm transition hover:shadow-md"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0 space-y-3">
-                        {/* TITLE */}
+                    <th className="px-4 py-3">Deadline</th>
 
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className={`rounded-lg px-2 py-1 text-[10px] font-black uppercase ${
-                              expired
-                                ? "bg-red-100 text-red-700"
-                                : "bg-green-100 text-green-700"
-                            }`}
-                          >
-                            {expired ? "Expired" : "Live"}
-                          </span>
+                    <th className="px-4 py-3">Points</th>
 
-                          <h3 className="text-lg font-bold text-[#0A1931]">
-                            {assignment.title}
-                          </h3>
-                        </div>
+                    <th className="px-4 py-3">Files</th>
 
-                        {/* DESCRIPTION */}
+                    <th className="px-4 py-3">Status</th>
 
-                        <p className="line-clamp-2 max-w-md text-sm text-[#7A7F85]">
-                          {assignment.description}
-                        </p>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {assignments.map((assignment) => {
+                    const expired = isExpired(assignment.deadline);
+
+                    return (
+                      <tr
+                        key={assignment._id}
+                        className="border-b border-gray-100 transition last:border-0 hover:bg-[#F6FAFD]"
+                      >
+                        {/* ASSIGNMENT */}
+
+                        <td className="px-4 py-4">
+                          <div className="max-w-xs">
+                            <p className="font-semibold text-[#0A1931]">
+                              {assignment.title}
+                            </p>
+
+                            <p className="mt-1 line-clamp-1 text-xs text-gray-500">
+                              {assignment.description}
+                            </p>
+
+                            {assignment.link && (
+                              <a
+                                href={assignment.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-2 flex w-fit items-center gap-1 text-xs font-semibold text-[#1A3D63] hover:underline"
+                              >
+                                <LinkIcon size={12} />
+                                External Link
+                                <ExternalLink size={11} />
+                              </a>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* BATCH */}
+
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-[#1A3D63]">
+                            <Users size={15} />
+                            {getBatchName(assignment)}
+                          </div>
+                        </td>
 
                         {/* INSTRUCTOR */}
 
-                        {assignment.instructorName && (
-                          <p className="text-xs font-semibold text-[#4A7FA7]">
-                            Instructor: {assignment.instructorName}
-                          </p>
-                        )}
+                        <td className="px-4 py-4 text-sm text-gray-600">
+                          {assignment.instructorName || "-"}
+                        </td>
 
-                        {/* DETAILS */}
+                        {/* DEADLINE */}
 
-                        <div className="flex flex-wrap gap-3 pt-2">
-                          {/* BATCH */}
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Calendar size={15} />
 
-                          <div className="flex items-center gap-2 rounded-full bg-[#F6FAFD] px-3 py-1.5 text-xs font-semibold text-[#1A3D63]">
-                            <Users size={14} />
-                            {getBatchName(assignment)}
-                          </div>
-
-                          {/* DEADLINE */}
-
-                          <div className="flex items-center gap-2 rounded-full bg-[#F6FAFD] px-3 py-1.5 text-xs font-semibold text-[#1A3D63]">
-                            <Calendar size={14} />
-                            Due:{" "}
                             {new Date(assignment.deadline).toLocaleDateString(
                               undefined,
                               {
@@ -762,108 +878,88 @@ const AdminAssignment = () => {
                               },
                             )}
                           </div>
+                        </td>
 
-                          {/* SCORE */}
+                        {/* POINTS */}
 
-                          <div className="flex items-center gap-2 rounded-full bg-[#F6FAFD] px-3 py-1.5 text-xs font-semibold text-[#4A7FA7]">
-                            <Trophy size={14} />
-                            Max: {assignment.maxScore} pts
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-[#4A7FA7]">
+                            <Trophy size={15} />
+                            {assignment.maxScore}
                           </div>
-
-                          {/* FILE COUNT */}
-
-                          {(assignment.files || []).length > 0 && (
-                            <div className="flex items-center gap-2 rounded-full bg-[#EAF3F9] px-3 py-1.5 text-xs font-semibold text-[#1A3D63]">
-                              <FileText size={14} />
-                              {assignment.files.length} file
-                              {assignment.files.length !== 1 ? "s" : ""}
-                            </div>
-                          )}
-                        </div>
+                        </td>
 
                         {/* FILES */}
 
-                        {(assignment.files || []).length > 0 && (
-                          <div className="space-y-2 pt-2">
-                            {assignment.files.map((file, index) => (
-                              <a
-                                key={`${file.fileName}-${index}`}
-                                href={getFileUrl(file.fileUrl)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex max-w-md items-center gap-3 rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] p-3 transition hover:bg-[#EAF3F9]"
-                              >
-                                <FileText
-                                  size={18}
-                                  className="shrink-0 text-[#1A3D63]"
-                                />
+                        <td className="px-4 py-4">
+                          {(assignment.files || []).length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {assignment.files.map((file, index) => (
+                                <a
+                                  key={`${file.fileName}-${index}`}
+                                  href={getFileUrl(file.fileUrl)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title={file.originalName}
+                                  className="flex items-center gap-1 rounded-lg bg-[#EAF3F9] px-2 py-1 text-xs font-semibold text-[#1A3D63] hover:bg-[#B3CFE5]"
+                                >
+                                  <FileText size={13} />
 
-                                <div className="min-w-0">
-                                  <p className="truncate text-xs font-bold text-[#0A1931]">
-                                    {file.originalName}
-                                  </p>
+                                  {assignment.files.length}
+                                </a>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">
+                              No files
+                            </span>
+                          )}
+                        </td>
 
-                                  <p className="text-[10px] text-gray-500">
-                                    {formatFileSize(file.size)}
-                                  </p>
-                                </div>
+                        {/* STATUS */}
 
-                                <ExternalLink
-                                  size={15}
-                                  className="ml-auto shrink-0 text-[#4A7FA7]"
-                                />
-                              </a>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* EXTERNAL LINK */}
-
-                        {assignment.link && (
-                          <a
-                            href={assignment.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex w-fit items-center gap-2 rounded-xl bg-[#EAF3F9] px-3 py-2 text-xs font-bold text-[#1A3D63] transition hover:bg-[#B3CFE5]"
+                        <td className="px-4 py-4">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                              expired
+                                ? "bg-red-100 text-red-700"
+                                : "bg-green-100 text-green-700"
+                            }`}
                           >
-                            <LinkIcon size={14} />
-                            Open External Link
-                            <ExternalLink size={13} />
-                          </a>
-                        )}
-                      </div>
+                            {expired ? "Expired" : "Live"}
+                          </span>
+                        </td>
 
-                      {/* ACTIONS */}
+                        {/* ACTIONS */}
 
-                      <div className="flex shrink-0 items-center gap-1">
-                        {/* EDIT */}
+                        <td className="px-4 py-4">
+                          <div className="flex justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleEdit(assignment)}
+                              className="rounded-lg p-2 text-gray-400 transition hover:bg-blue-50 hover:text-[#1A3D63]"
+                              title="Edit assignment"
+                            >
+                              <Pencil size={17} />
+                            </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(assignment)}
-                          className="rounded-xl p-2 text-gray-400 transition hover:bg-blue-50 hover:text-[#1A3D63]"
-                          title="Edit assignment"
-                        >
-                          <Pencil size={20} />
-                        </button>
-
-                        {/* DELETE */}
-
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(assignment._id)}
-                          className="rounded-xl p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
-                          title="Delete assignment"
-                        >
-                          <Trash2 size={20} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(assignment._id)}
+                              className="rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
+                              title="Delete assignment"
+                            >
+                              <Trash2 size={17} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

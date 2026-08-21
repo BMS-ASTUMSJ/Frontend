@@ -257,6 +257,8 @@ const AdminBatchHistory = () => {
 
         {/* BATCHES */}
 
+        {/* BATCHES */}
+
         {loading ? (
           <div className="flex min-h-80 items-center justify-center rounded-2xl border border-[#B3CFE5] bg-white">
             <div className="flex flex-col items-center gap-3">
@@ -282,62 +284,128 @@ const AdminBatchHistory = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {filteredBatches.map((batch) => (
-              <button
-                key={batch._id}
-                type="button"
-                onClick={() => openBatch(batch)}
-                className="group rounded-2xl border border-[#B3CFE5] bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-[#4A7FA7] hover:shadow-md"
-              >
-                <div className="mb-5 flex items-start justify-between">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0A1931] text-white">
-                    <Archive size={20} />
-                  </div>
+          <div className="overflow-hidden rounded-2xl border border-[#B3CFE5] bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-200 border-collapse">
+                <thead>
+                  <tr className="border-b border-[#B3CFE5] bg-[#F6FAFD]">
+                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                      Batch
+                    </th>
 
-                  <span
-                    className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase ${getStatusStyle(
-                      batch.status,
-                    )}`}
-                  >
-                    {batch.status || "Unknown"}
-                  </span>
-                </div>
+                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                      Description
+                    </th>
 
-                <h2 className="text-lg font-bold text-[#0A1931]">
-                  {batch.name}
-                </h2>
+                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                      Start Date
+                    </th>
 
-                {batch.description && (
-                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">
-                    {batch.description}
-                  </p>
-                )}
+                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                      End Date
+                    </th>
 
-                <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <CalendarDays size={14} className="text-[#4A7FA7]" />
+                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                      Status
+                    </th>
 
-                    <span>
-                      {formatDate(batch.startDate)} -{" "}
-                      {formatDate(batch.endDate)}
-                    </span>
-                  </div>
-                </div>
+                    <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-slate-500">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
 
-                <div className="mt-5 flex items-center justify-between text-xs font-bold text-[#1A3D63]">
-                  <span>View batch members</span>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredBatches.map((batch) => (
+                    <tr
+                      key={batch._id}
+                      className="transition hover:bg-[#F6FAFD]"
+                    >
+                      {/* BATCH */}
 
-                  <ChevronRight
-                    size={17}
-                    className="transition group-hover:translate-x-1"
-                  />
-                </div>
-              </button>
-            ))}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A1931] text-white">
+                            <Archive size={18} />
+                          </div>
+
+                          <div>
+                            <p className="text-sm font-bold text-[#0A1931]">
+                              {batch.name}
+                            </p>
+
+                            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                              Batch
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* DESCRIPTION */}
+
+                      <td className="max-w-65 px-5 py-4">
+                        <p className="line-clamp-2 text-xs leading-5 text-slate-500">
+                          {batch.description || "No description"}
+                        </p>
+                      </td>
+
+                      {/* START DATE */}
+
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <CalendarDays
+                            size={14}
+                            className="shrink-0 text-[#4A7FA7]"
+                          />
+
+                          {formatDate(batch.startDate)}
+                        </div>
+                      </td>
+
+                      {/* END DATE */}
+
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <CalendarDays
+                            size={14}
+                            className="shrink-0 text-[#4A7FA7]"
+                          />
+
+                          {formatDate(batch.endDate)}
+                        </div>
+                      </td>
+
+                      {/* STATUS */}
+
+                      <td className="px-5 py-4">
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase ${getStatusStyle(
+                            batch.status,
+                          )}`}
+                        >
+                          {batch.status || "Unknown"}
+                        </span>
+                      </td>
+
+                      {/* ACTION */}
+
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => openBatch(batch)}
+                          className="inline-flex items-center gap-2 rounded-xl bg-[#1A3D63] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#4A7FA7]"
+                        >
+                          View Members
+                          <ChevronRight size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
-
         {/* BATCH DETAILS MODAL */}
 
         {selectedBatch && (

@@ -715,9 +715,13 @@ function AdminProgress() {
         </div>
       </div>
 
-      {/* OVERVIEW */}
+      {/* ======================================================
+          OVERVIEW
+          ====================================================== */}
 
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* CURRICULUM OVERVIEW */}
+
         <div className="space-y-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8 lg:col-span-2">
           <div className="flex items-center justify-between border-b border-gray-100 pb-4">
             <div>
@@ -736,45 +740,36 @@ function AdminProgress() {
             </span>
           </div>
 
-          <div className="grid gap-6 pt-2 sm:grid-cols-2">
+          {/* CIRCULAR PROGRESS */}
+
+          <div className="grid gap-10 pt-4 sm:grid-cols-2">
             {/* CP */}
 
-            <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 text-[#1A3D63]">
-                    <Code2 className="h-4 w-4" />
-                  </div>
-
-                  <span className="text-sm font-bold text-[#0A1931]">
-                    CP Track
-                  </span>
+            <div className="flex flex-col items-center justify-center">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-[#1A3D63]">
+                  <Code2 className="h-4 w-4" />
                 </div>
 
                 <div>
-                  <span className="text-[11px] text-[#7A7F85]">
-                    Questions Solved
-                  </span>
+                  <h3 className="text-sm font-bold text-[#0A1931]">CP Track</h3>
 
-                  <p className="text-xl font-extrabold text-[#0A1931]">
-                    {totalQuestionsSolved}
-
-                    <span className="text-xs font-normal text-gray-400">
-                      {" "}
-                      / {totalExpectedQuestions}
-                    </span>
+                  <p className="text-[10px] text-[#7A7F85]">
+                    Competitive Programming
                   </p>
                 </div>
               </div>
 
-              <div className="relative flex h-28 w-28 items-center justify-center">
+              <div className="relative flex h-36 w-36 items-center justify-center">
                 <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
                   <path
                     className="text-gray-100"
                     strokeWidth="3.5"
                     stroke="currentColor"
                     fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
 
                   <path
@@ -784,60 +779,68 @@ function AdminProgress() {
                     strokeLinecap="round"
                     stroke="currentColor"
                     fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
                 </svg>
 
                 <div className="absolute text-center">
-                  <span className="text-lg font-black text-[#0A1931]">
+                  <span className="text-3xl font-black text-[#0A1931]">
                     {avgCpCompletion}%
                   </span>
 
-                  <span className="block text-[9px] font-bold text-[#7A7F85]">
-                    Avg. Solved
+                  <span className="block text-[10px] font-bold text-[#7A7F85]">
+                    Completed
                   </span>
                 </div>
+              </div>
+
+              <div className="mt-5 text-center">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#7A7F85]">
+                  Questions Solved
+                </p>
+
+                <p className="mt-1 text-xl font-extrabold text-[#0A1931]">
+                  {totalQuestionsSolved}
+
+                  <span className="text-xs font-normal text-gray-400">
+                    {" "}
+                    / {totalExpectedQuestions}
+                  </span>
+                </p>
               </div>
             </div>
 
             {/* DEV */}
 
-            <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
-                    <Monitor className="h-4 w-4" />
-                  </div>
-
-                  <span className="text-sm font-bold text-[#0A1931]">
-                    Dev Track
-                  </span>
+            <div className="flex flex-col items-center justify-center">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
+                  <Monitor className="h-4 w-4" />
                 </div>
 
                 <div>
-                  <span className="text-[11px] text-[#7A7F85]">
-                    Videos Completed
-                  </span>
+                  <h3 className="text-sm font-bold text-[#0A1931]">
+                    Dev Track
+                  </h3>
 
-                  <p className="text-xl font-extrabold text-[#0A1931]">
-                    {totalDevCompleted}
-
-                    <span className="text-xs font-normal text-gray-400">
-                      {" "}
-                      / {totalDevExpected || 0}
-                    </span>
+                  <p className="text-[10px] text-[#7A7F85]">
+                    Full-Stack Development
                   </p>
                 </div>
               </div>
 
-              <div className="relative flex h-28 w-28 items-center justify-center">
+              <div className="relative flex h-36 w-36 items-center justify-center">
                 <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
                   <path
                     className="text-gray-100"
                     strokeWidth="3.5"
                     stroke="currentColor"
                     fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
 
                   <path
@@ -847,19 +850,36 @@ function AdminProgress() {
                     strokeLinecap="round"
                     stroke="currentColor"
                     fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
                 </svg>
 
                 <div className="absolute text-center">
-                  <span className="text-lg font-black text-[#0A1931]">
+                  <span className="text-3xl font-black text-[#0A1931]">
                     {avgDevCompletion}%
                   </span>
 
-                  <span className="block text-[9px] font-bold text-[#7A7F85]">
-                    Avg. Done
+                  <span className="block text-[10px] font-bold text-[#7A7F85]">
+                    Completed
                   </span>
                 </div>
+              </div>
+
+              <div className="mt-5 text-center">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#7A7F85]">
+                  Videos Completed
+                </p>
+
+                <p className="mt-1 text-xl font-extrabold text-[#0A1931]">
+                  {totalDevCompleted}
+
+                  <span className="text-xs font-normal text-gray-400">
+                    {" "}
+                    / {totalDevExpected || 0}
+                  </span>
+                </p>
               </div>
             </div>
           </div>
@@ -985,7 +1005,9 @@ function AdminProgress() {
         </div>
       </div>
 
-      {/* PUBLISH CP + DEV */}
+      {/* ======================================================
+          PUBLISH CP + DEV
+          ====================================================== */}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* CP */}

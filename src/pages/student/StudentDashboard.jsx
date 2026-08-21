@@ -366,101 +366,45 @@ function StudentDashboard() {
             STATUS MESSAGE
         ====================================================== */}
 
-        <div
-          className={`mt-6 rounded-2xl border p-6 shadow-sm ${
-            isAtRisk
-              ? "border-amber-200 bg-amber-50"
-              : "border-green-200 bg-green-50"
-          }`}
-        >
-          <div className="flex items-start gap-4">
-            <div
-              className={`rounded-xl p-3 ${
-                isAtRisk ? "bg-amber-100" : "bg-green-100"
-              }`}
-            >
-              {isAtRisk ? (
-                <AlertCircle className="h-6 w-6 text-amber-600" />
-              ) : (
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
-              )}
-            </div>
-
-            <div>
-              <h2
-                className={`text-lg font-bold ${
-                  isAtRisk ? "text-amber-800" : "text-green-800"
-                }`}
-              >
-                {isAtRisk ? "Your Status is Pending" : "You're On Track"}
-              </h2>
-
-              <p
-                className={`mt-2 text-sm leading-6 ${
-                  isAtRisk ? "text-amber-700" : "text-green-700"
-                }`}
-              >
-                {risk.message}
-              </p>
-
-              {isAtRisk && risk.reason?.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {risk.reason.map((item, index) => (
-                    <span
-                      key={index}
-                      className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-700 shadow-sm"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
         {/* ======================================================
             KEEP LEARNING
         ====================================================== */}
+        <h2 className="text-lg mt-5 font-bold text-[#0A1931]">Keep Learning</h2>
 
-        <div className="mt-6 rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-[#0A1931]">Keep Learning</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Stay consistent with your bootcamp activities.
+        </p>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Stay consistent with your bootcamp activities.
-          </p>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {/* ATTENDANCE */}
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {/* ATTENDANCE */}
+          <div className="rounded-xl bg-[#F6FAFD] p-5">
+            <h3 className="font-semibold text-[#0A1931]">Attendance</h3>
 
-            <div className="rounded-xl bg-[#F6FAFD] p-5">
-              <h3 className="font-semibold text-[#0A1931]">Attendance</h3>
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Attend sessions regularly to maintain good progress.
+            </p>
+          </div>
 
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                Attend sessions regularly to maintain good progress.
-              </p>
-            </div>
+          {/* ASSIGNMENTS */}
 
-            {/* ASSIGNMENTS */}
+          <div className="rounded-xl bg-[#F6FAFD] p-5">
+            <h3 className="font-semibold text-[#0A1931]">Assignments</h3>
 
-            <div className="rounded-xl bg-[#F6FAFD] p-5">
-              <h3 className="font-semibold text-[#0A1931]">Assignments</h3>
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Complete your assignments and submit them before the deadline.
+            </p>
+          </div>
 
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                Complete your assignments and submit them before the deadline.
-              </p>
-            </div>
+          {/* PROGRESS */}
 
-            {/* PROGRESS */}
+          <div className="rounded-xl bg-[#F6FAFD] p-5">
+            <h3 className="font-semibold text-[#0A1931]">Stay Consistent</h3>
 
-            <div className="rounded-xl bg-[#F6FAFD] p-5">
-              <h3 className="font-semibold text-[#0A1931]">Stay Consistent</h3>
-
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                Regular participation and timely submissions help you stay on
-                track.
-              </p>
-            </div>
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Regular participation and timely submissions help you stay on
+              track.
+            </p>
           </div>
         </div>
       </div>

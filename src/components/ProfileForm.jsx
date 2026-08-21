@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Save, User } from "lucide-react";
+import { Loader2, Save, User, Camera, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import api from "../utils/api";
@@ -7,15 +7,17 @@ import api from "../utils/api";
 function ProfileForm() {
   const [profile, setProfile] = useState({
     firstName: "",
-    lastName: "",
-    email: "",
     phone: "",
     bio: "",
     profileImage: "",
   });
 
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [removingImage, setRemovingImage] = useState(false);
 
   // ============================================================
   // LOAD PROFILE
@@ -29,21 +31,21 @@ function ProfileForm() {
     try {
       setLoading(true);
 
-      const response = await api.get("/users/profile");
-
-      console.log("PROFILE RESPONSE:", response.data);
+      // Your profile router:
+      // GET /api/profile/me
+      const response = await api.get("/profile/me");
 
       if (response.data.success) {
         const user = response.data.user;
 
         setProfile({
           firstName: user?.firstName || "",
-          lastName: user?.lastName || "",
-          email: user?.email || "",
           phone: user?.phone || "",
           bio: user?.bio || "",
-          profileImage: user?.profileImage || "",
+          profileImage: user?.profileImage?.url || "",
         });
+
+        setPreviewImage(user?.profileImage?.url || "");
       } else {
         toast.error(response.data.message || "Failed to load profile");
       }
@@ -57,7 +59,7 @@ function ProfileForm() {
   };
 
   // ============================================================
-  // HANDLE INPUT
+  // HANDLE TEXT INPUT
   // ============================================================
 
   const handleChange = (event) => {
@@ -70,6 +72,68 @@ function ProfileForm() {
   };
 
   // ============================================================
+  // HANDLE IMAGE
+  // ============================================================
+
+  const handleImageChange = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5MB.");
+      return;
+    }
+
+    setSelectedImage(file);
+
+    const imageUrl = URL.createObjectURL(file);
+    setPreviewImage(imageUrl);
+  };
+
+  // ============================================================
+  // REMOVE IMAGE
+  // ============================================================
+
+  const handleRemoveImage = async () => {
+    try {
+      setRemovingImage(true);
+
+      const response = await api.delete("/profile/me/image");
+
+      if (response.data.success) {
+        setSelectedImage(null);
+
+        setProfile((previous) => ({
+          ...previous,
+          profileImage: "",
+        }));
+
+        setPreviewImage("");
+
+        toast.success(
+          response.data.message || "Profile image removed successfully.",
+        );
+      } else {
+        toast.error(response.data.message || "Failed to remove profile image.");
+      }
+    } catch (error) {
+      console.error("REMOVE PROFILE IMAGE ERROR:", error);
+
+      toast.error(
+        error.response?.data?.message || "Failed to remove profile image.",
+      );
+    } finally {
+      setRemovingImage(false);
+    }
+  };
+
+  // ============================================================
   // UPDATE PROFILE
   // ============================================================
 
@@ -79,39 +143,50 @@ function ProfileForm() {
     try {
       setSaving(true);
 
-      const response = await api.patch("/users/profile", {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        phone: profile.phone,
-        bio: profile.bio,
-        profileImage: profile.profileImage,
-      });
+      /*
+       * IMPORTANT:
+       * We use FormData because the backend uses:
+       *
+       * uploadProfile.single("profileImage")
+       *
+       * Therefore JSON will NOT upload the image.
+       */
 
-      console.log("UPDATE PROFILE RESPONSE:", response.data);
+      const formData = new FormData();
+
+      formData.append("firstName", profile.firstName);
+      formData.append("phone", profile.phone);
+      formData.append("bio", profile.bio);
+
+      if (selectedImage) {
+        formData.append("profileImage", selectedImage);
+      }
+
+      const response = await api.patch("/profile/me", formData);
 
       if (response.data.success) {
-        const user = response.data.user || response.data.data;
+        const user = response.data.user;
 
-        if (user) {
-          setProfile((previous) => ({
-            ...previous,
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            email: user.email || previous.email,
-            phone: user.phone || "",
-            bio: user.bio || "",
-            profileImage: user.profileImage || "",
-          }));
-        }
+        const imageUrl = user?.profileImage?.url || "";
 
-        toast.success(response.data.message || "Profile updated successfully");
+        setProfile({
+          firstName: user?.firstName || "",
+          phone: user?.phone || "",
+          bio: user?.bio || "",
+          profileImage: imageUrl,
+        });
+
+        setPreviewImage(imageUrl);
+        setSelectedImage(null);
+
+        toast.success(response.data.message || "Profile updated successfully.");
       } else {
-        toast.error(response.data.message || "Failed to update profile");
+        toast.error(response.data.message || "Failed to update profile.");
       }
     } catch (error) {
       console.error("UPDATE PROFILE ERROR:", error);
 
-      toast.error(error.response?.data?.message || "Failed to update profile");
+      toast.error(error.response?.data?.message || "Failed to update profile.");
     } finally {
       setSaving(false);
     }
@@ -134,7 +209,7 @@ function ProfileForm() {
   }
 
   // ============================================================
-  // PROFILE
+  // UI
   // ============================================================
 
   return (
@@ -152,34 +227,81 @@ function ProfileForm() {
           </p>
         </div>
 
-        {/* PROFILE CARD */}
+        {/* PROFILE */}
 
         <div className="overflow-hidden rounded-2xl border border-[#D6D6D6] bg-white shadow-sm">
           {/* PROFILE HEADER */}
 
           <div className="border-b border-[#D6D6D6] bg-[#F6FAFD] px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#B3CFE5]/50">
-                {profile.profileImage ? (
-                  <img
-                    src={profile.profileImage}
-                    alt="Profile"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <User className="h-7 w-7 text-[#1A3D63]" />
-                )}
+              <div className="relative">
+                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[#B3CFE5]/50">
+                  {previewImage ? (
+                    <img
+                      src={previewImage}
+                      alt="Profile"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-7 w-7 text-[#1A3D63]" />
+                  )}
+                </div>
+
+                {/* CAMERA BUTTON */}
+
+                <label
+                  htmlFor="profileImage"
+                  className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-[#0A1931] text-white shadow-md transition hover:bg-[#1A3D63]"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                </label>
+
+                <input
+                  id="profileImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
               </div>
 
               <div>
                 <h2 className="font-semibold text-[#0A1931]">
-                  {profile.firstName || profile.lastName
-                    ? `${profile.firstName} ${profile.lastName}`.trim()
-                    : "Student"}
+                  {profile.firstName || "Admin"}
                 </h2>
 
-                <p className="text-sm text-gray-500">{profile.email}</p>
+                <p className="text-sm text-gray-500">
+                  Update your profile information
+                </p>
               </div>
+            </div>
+
+            {/* IMAGE ACTIONS */}
+
+            <div className="mt-4 flex items-center gap-3">
+              <label
+                htmlFor="profileImage"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#D6D6D6] bg-white px-3 py-2 text-xs font-semibold text-[#1A3D63] transition hover:bg-[#F6FAFD]"
+              >
+                <Camera className="h-4 w-4" />
+                Update Image
+              </label>
+
+              {previewImage && (
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  disabled={removingImage}
+                  className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+                >
+                  {removingImage ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  Remove Image
+                </button>
+              )}
             </div>
           </div>
 
@@ -208,51 +330,6 @@ function ProfileForm() {
                 />
               </div>
 
-              {/* LAST NAME */}
-
-              <div>
-                <label
-                  htmlFor="lastName"
-                  className="mb-2 block text-sm font-medium text-[#0A1931]"
-                >
-                  Last Name
-                </label>
-
-                <input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  value={profile.lastName}
-                  onChange={handleChange}
-                  placeholder="Enter your last name"
-                  className="w-full rounded-xl border border-[#D6D6D6] bg-white px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]/40"
-                />
-              </div>
-
-              {/* EMAIL */}
-
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-2 block text-sm font-medium text-[#0A1931]"
-                >
-                  Email
-                </label>
-
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={profile.email}
-                  disabled
-                  className="w-full cursor-not-allowed rounded-xl border border-[#D6D6D6] bg-gray-50 px-4 py-3 text-sm text-gray-500"
-                />
-
-                <p className="mt-1 text-xs text-gray-400">
-                  Email cannot be changed here.
-                </p>
-              </div>
-
               {/* PHONE */}
 
               <div>
@@ -270,27 +347,6 @@ function ProfileForm() {
                   value={profile.phone}
                   onChange={handleChange}
                   placeholder="Enter your phone number"
-                  className="w-full rounded-xl border border-[#D6D6D6] bg-white px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]/40"
-                />
-              </div>
-
-              {/* PROFILE IMAGE */}
-
-              <div className="md:col-span-2">
-                <label
-                  htmlFor="profileImage"
-                  className="mb-2 block text-sm font-medium text-[#0A1931]"
-                >
-                  Profile Image URL
-                </label>
-
-                <input
-                  id="profileImage"
-                  name="profileImage"
-                  type="text"
-                  value={profile.profileImage}
-                  onChange={handleChange}
-                  placeholder="Enter profile image URL"
                   className="w-full rounded-xl border border-[#D6D6D6] bg-white px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]/40"
                 />
               </div>

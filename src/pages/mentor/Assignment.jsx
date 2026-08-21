@@ -1,547 +1,775 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
+
 import {
-  GraduationCap,
-  Search,
-  ExternalLink,
+  ClipboardList,
+  Calendar,
+  Trophy,
   CheckCircle,
-  MessageSquare,
-  Award,
+  AlertTriangle,
+  FileX,
+  UserCircle,
+  Code2,
+  ExternalLink,
+  Eye,
+  X,
+  FileText,
   Loader2,
+  Clock,
   Users,
-  Inbox,
-  GitBranch,
-  RotateCcw,
 } from "lucide-react";
 
-const MentorAssignment = () => {
+const Assignment = () => {
+  // ============================================================
+  // STATE
+  // ============================================================
+
   const [assignments, setAssignments] = useState([]);
   const [submissions, setSubmissions] = useState([]);
-  const [selectedAsm, setSelectedAsm] = useState("");
+
+  const [selectedAssignment, setSelectedAssignment] = useState(null);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
 
   const [loading, setLoading] = useState(true);
-  const [fetchingSubs, setFetchingSubs] = useState(false);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
-  const [gradeData, setGradeData] = useState({});
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+
+  // ============================================================
+  // GET ASSIGNMENTS
+  // ============================================================
+
+  const fetchAssignments = async () => {
+    try {
+      setLoading(true);
+
+      const response = await api.get("/assignments");
+
+      console.log("ASSIGNMENTS API RESPONSE:", response.data);
+
+      setAssignments(response.data.assignments || []);
+    } catch (error) {
+      console.error("GET ASSIGNMENTS ERROR:", error);
+
+      toast.error(
+        error.response?.data?.message || "Failed to load assignments.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ============================================================
+  // GET SUBMISSIONS FOR ASSIGNMENT
+  // ============================================================
+
+  const fetchSubmissions = async (assignmentId) => {
+    try {
+      setLoadingSubmissions(true);
+
+      console.log("==========================================");
+      console.log("SELECTED ASSIGNMENT:", assignmentId);
+
+      const response = await api.get(`/submissions/assignment/${assignmentId}`);
+
+      console.log("SUBMISSIONS API RESPONSE:", response.data);
+
+      console.log(
+        "NUMBER OF SUBMISSIONS:",
+        response.data.submissions?.length || 0,
+      );
+
+      console.log("SUBMISSIONS:", response.data.submissions);
+
+      console.log("TOTAL TEAM STUDENTS:", response.data.totalTeamStudents);
+
+      console.log("SUBMITTED STUDENTS:", response.data.submittedStudents);
+
+      console.log(
+        "STUDENTS WITHOUT SUBMISSION:",
+        response.data.studentsWithoutSubmission,
+      );
+
+      console.log("==========================================");
+
+      setSubmissions(response.data.submissions || []);
+    } catch (error) {
+      console.error("GET SUBMISSIONS ERROR:", error);
+
+      setSubmissions([]);
+
+      toast.error(
+        error.response?.data?.message || "Failed to load submissions.",
+      );
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  };
+
+  // ============================================================
+  // SELECT ASSIGNMENT
+  // ============================================================
+
+  const handleSelectAssignment = async (assignment) => {
+    setSelectedAssignment(assignment);
+    setSelectedSubmission(null);
+    setShowSubmissionModal(false);
+
+    await fetchSubmissions(assignment._id);
+  };
+
+  // ============================================================
+  // VIEW SUBMISSION
+  // ============================================================
+
+  const handleViewSubmission = (submission) => {
+    setSelectedSubmission(submission);
+    setShowSubmissionModal(true);
+  };
+
+  // ============================================================
+  // CLOSE SUBMISSION MODAL
+  // ============================================================
+
+  const closeSubmissionModal = () => {
+    setShowSubmissionModal(false);
+    setSelectedSubmission(null);
+  };
+
+  // ============================================================
+  // INITIAL LOAD
+  // ============================================================
 
   useEffect(() => {
-    const fetchAssignments = async () => {
-      try {
-        setLoading(true);
-
-        const res = await api.get("/assignments");
-
-        setAssignments(res.data.assignments || []);
-      } catch (err) {
-        console.error("FAILED TO LOAD ASSIGNMENTS:", err);
-
-        toast.error(
-          err.response?.data?.message || "Failed to load assignments",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAssignments();
   }, []);
 
-  const getSubmissionStatus = (submission) => {
-    if (submission?.status === "Graded") {
-      return "Graded";
-    }
+  // ============================================================
+  // STATUS UI
+  // ============================================================
 
-    if (submission?.status === "Resubmission Required") {
-      return "Resubmission Required";
-    }
-
-    return "Pending";
-  };
-
-  const loadSubmissions = async (assignmentId) => {
-    if (!assignmentId) {
-      setSelectedAsm("");
-      setSubmissions([]);
-      setGradeData({});
-      return;
-    }
-
-    setSelectedAsm(assignmentId);
-    setFetchingSubs(true);
-
-    try {
-      const res = await api.get(`/submissions/assignment/${assignmentId}`);
-
-      const fetchedSubmissions = res.data.submissions || [];
-
-      setSubmissions(fetchedSubmissions);
-
-      const initialGrades = {};
-
-      fetchedSubmissions.forEach((sub) => {
-        const automaticStatus = getSubmissionStatus(sub);
-
-        initialGrades[sub._id] = {
-          score: sub.score ?? "",
-          feedback: sub.feedback ?? "",
-          status: automaticStatus,
-        };
-      });
-
-      setGradeData(initialGrades);
-    } catch (err) {
-      console.error("ERROR LOADING SUBMISSIONS:", err);
-
-      toast.error(err.response?.data?.message || "Error loading submissions");
-
-      setSubmissions([]);
-      setGradeData({});
-    } finally {
-      setFetchingSubs(false);
-    }
-  };
-
-  const handleInputChange = (subId, field, value) => {
-    setGradeData((prev) => ({
-      ...prev,
-      [subId]: {
-        ...(prev[subId] || {}),
-        [field]: value,
-      },
-    }));
-  };
-
-  const requestResubmission = async (subId) => {
-    const confirmed = window.confirm(
-      "Do you want to request a resubmission from this student?",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    const currentGrade = gradeData[subId];
-
-    try {
-      await api.put(`/submissions/grade/${subId}`, {
-        score:
-          currentGrade?.score === "" ||
-          currentGrade?.score === null ||
-          currentGrade?.score === undefined
-            ? null
-            : Number(currentGrade.score),
-
-        feedback: currentGrade?.feedback?.trim() || "",
-
-        status: "Resubmission Required",
-      });
-
-      toast.success("Resubmission request sent successfully.");
-
-      await loadSubmissions(selectedAsm);
-    } catch (err) {
-      console.error("RESUBMISSION REQUEST FAILED:", err);
-
-      toast.error(
-        err.response?.data?.message || "Failed to request resubmission",
+  const getStatusBadge = (status) => {
+    if (status === "Graded") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+          <CheckCircle className="w-3.5 h-3.5" />
+          Graded
+        </span>
       );
     }
+
+    if (status === "Resubmission Required") {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+          <AlertTriangle className="w-3.5 h-3.5" />
+          Resubmission Required
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+        <Clock className="w-3.5 h-3.5" />
+        Pending
+      </span>
+    );
   };
 
-  const submitGrade = async (subId) => {
-    const currentGrade = gradeData[subId];
+  // ============================================================
+  // FORMAT DATE
+  // ============================================================
 
-    if (!currentGrade) {
-      toast.error("Evaluation data not found.");
-      return;
+  const formatDate = (date) => {
+    if (!date) return "—";
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "—";
     }
 
-    if (
-      currentGrade.score === "" ||
-      currentGrade.score === null ||
-      currentGrade.score === undefined
-    ) {
-      toast.error("Please enter a score.");
-      return;
-    }
-
-    const score = Number(currentGrade.score);
-
-    if (!Number.isFinite(score)) {
-      toast.error("Please enter a valid score.");
-      return;
-    }
-
-    if (score < 0) {
-      toast.error("Score cannot be negative.");
-      return;
-    }
-
-    const assignment = assignments.find((asm) => asm._id === selectedAsm);
-
-    if (!assignment) {
-      toast.error("Assignment information not found.");
-      return;
-    }
-
-    const maxScore = Number(assignment.maxScore ?? 100);
-
-    if (score > maxScore) {
-      toast.error(`Score cannot exceed ${maxScore}.`);
-      return;
-    }
-
-    try {
-      console.log("========== SENDING GRADE ==========");
-      console.log("Submission ID:", subId);
-      console.log("Score:", score);
-      console.log("Feedback:", currentGrade.feedback || "");
-      console.log("Status:", "Graded");
-      console.log("===================================");
-
-      await api.put(`/submissions/grade/${subId}`, {
-        score,
-        feedback: currentGrade.feedback?.trim() || "",
-        status: "Graded",
-      });
-
-      toast.success("Evaluation saved successfully.");
-
-      await loadSubmissions(selectedAsm);
-    } catch (err) {
-      console.error("GRADING FAILED:", err);
-
-      console.error("BACKEND RESPONSE:", err.response?.data);
-
-      toast.error(err.response?.data?.message || "Grading failed");
-    }
+    return parsedDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   };
+
+  // ============================================================
+  // LOADING
+  // ============================================================
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F6FAFD]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1A3D63]" />
+      <div className="min-h-screen bg-[#F6FAFD] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-[#1A3D63] animate-spin" />
+
+          <p className="text-sm text-gray-500">Loading assignments...</p>
+        </div>
       </div>
     );
   }
 
+  // ============================================================
+  // PAGE
+  // ============================================================
+
   return (
-    <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-8">
-      <div className="mx-auto max-w-6xl space-y-8">
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
+    <div className="min-h-screen bg-[#F6FAFD] p-6">
+      {/* ========================================================
+          HEADER
+      ======================================================== */}
 
-        <div className="flex flex-col justify-between gap-5 rounded-3xl bg-[#0A1931] p-8 text-white shadow-lg md:flex-row md:items-center">
-          <div className="flex items-center gap-5">
-            <div className="rounded-2xl bg-[#1A3D63] p-4">
-              <GraduationCap size={32} className="text-[#B3CFE5]" />
-            </div>
-
-            <div>
-              <h1 className="text-3xl font-bold">Grading Dashboard</h1>
-
-              <p className="mt-1 text-sm text-[#B3CFE5]">
-                Review projects from your assigned team members.
-              </p>
-            </div>
+      <div className="max-w-7xl mx-auto mb-8">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-[#1A3D63] flex items-center justify-center">
+            <ClipboardList className="w-6 h-6 text-white" />
           </div>
 
-          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-6 py-3">
-            <Users size={20} className="text-[#4A7FA7]" />
+          <div>
+            <h1 className="text-2xl font-bold text-[#0A1931]">Assignments</h1>
 
-            <span className="text-lg font-semibold">
-              {submissions.length} Submission
-              {submissions.length !== 1 ? "s" : ""}
-            </span>
+            <p className="text-sm text-gray-500">
+              View assignments and student submissions
+            </p>
           </div>
         </div>
+      </div>
 
-        {/* ======================================================
-            ASSIGNMENT SELECTOR
-        ====================================================== */}
+      {/* ========================================================
+          ASSIGNMENT TABLE
+      ======================================================== */}
 
-        <div className="rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm">
-          <label className="mb-3 block text-sm font-bold text-[#0A1931]">
-            Select Assignment to Grade
-          </label>
-
-          <div className="relative">
-            <select
-              value={selectedAsm}
-              onChange={(e) => loadSubmissions(e.target.value)}
-              className="w-full appearance-none rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD] p-4 font-semibold text-[#0A1931] outline-none transition focus:ring-2 focus:ring-[#1A3D63]"
-            >
-              <option value="">Choose a project</option>
-
-              {assignments.map((assignment) => (
-                <option key={assignment._id} value={assignment._id}>
-                  {assignment.title}
-                </option>
-              ))}
-            </select>
-
-            <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#4A7FA7]">
-              <Search size={20} />
+      <div className="max-w-7xl mx-auto">
+        {assignments.length === 0 ? (
+          <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+              <FileX className="w-8 h-8 text-gray-400" />
             </div>
+
+            <h2 className="text-lg font-semibold text-gray-700">
+              No assignments found
+            </h2>
+
+            <p className="text-sm text-gray-500 mt-1">
+              There are no assignments available.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px]">
+                <thead className="bg-[#F6FAFD] border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Assignment
+                    </th>
 
-        {/* ======================================================
-            SUBMISSIONS
-        ====================================================== */}
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Batch
+                    </th>
 
-        <div className="space-y-6">
-          {fetchingSubs ? (
-            <div className="flex h-64 items-center justify-center">
-              <Loader2 className="h-10 w-10 animate-spin text-[#1A3D63]" />
-            </div>
-          ) : !selectedAsm ? (
-            <div className="rounded-3xl border border-dashed border-[#B3CFE5] bg-white p-16 text-center">
-              <Inbox size={48} className="mx-auto mb-4 text-[#B3CFE5]" />
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Instructor
+                    </th>
 
-              <p className="text-lg font-semibold text-[#0A1931]">
-                No Selection
-              </p>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Deadline
+                    </th>
 
-              <p className="text-sm text-[#7A7F85]">
-                Please select an assignment from the dropdown above to view
-                submissions.
-              </p>
-            </div>
-          ) : submissions.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-[#B3CFE5] bg-white p-16 text-center">
-              <CheckCircle size={48} className="mx-auto mb-4 text-green-300" />
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Max Score
+                    </th>
 
-              <p className="text-lg font-semibold text-[#0A1931]">
-                No Submissions
-              </p>
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
 
-              <p className="text-sm text-[#7A7F85]">
-                No students in your assigned teams have submitted this
-                assignment yet.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-6">
-              {submissions.map((sub) => {
-                const currentGrade = gradeData[sub._id] || {
-                  score: sub.score ?? "",
-                  feedback: sub.feedback ?? "",
-                  status: getSubmissionStatus(sub),
-                };
+                <tbody className="divide-y divide-gray-100">
+                  {assignments.map((assignment) => (
+                    <tr
+                      key={assignment._id}
+                      className={`hover:bg-gray-50 transition ${
+                        selectedAssignment?._id === assignment._id
+                          ? "bg-[#F6FAFD]"
+                          : ""
+                      }`}
+                    >
+                      {/* ASSIGNMENT */}
 
-                const status = currentGrade.status || getSubmissionStatus(sub);
-
-                const isPending = status === "Pending";
-
-                const isGraded = status === "Graded";
-
-                return (
-                  <div
-                    key={sub._id}
-                    className="overflow-hidden rounded-3xl border border-[#B3CFE5] bg-white shadow-sm transition hover:shadow-md"
-                  >
-                    <div className="flex flex-col lg:flex-row">
-                      {/* ==================================================
-                          STUDENT INFORMATION
-                      ================================================== */}
-
-                      <div className="border-b border-[#B3CFE5] bg-[#F6FAFD] p-6 lg:w-1/3 lg:border-b-0 lg:border-r">
-                        <div className="mb-4 flex items-center gap-4">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1A3D63] text-xl font-bold text-white">
-                            {sub.student?.firstName?.[0] || "S"}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-[#B3CFE5]/40 flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-5 h-5 text-[#1A3D63]" />
                           </div>
 
-                          <div>
-                            <h4 className="text-lg font-black text-[#0A1931]">
-                              {sub.student?.firstName || ""}{" "}
-                              {sub.student?.lastName || ""}
-                            </h4>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[#0A1931]">
+                              {assignment.title}
+                            </p>
 
-                            <span className="text-[10px] font-bold uppercase text-[#4A7FA7]">
-                              Assigned Student
-                            </span>
+                            <p className="text-xs text-gray-500 max-w-xs truncate">
+                              {assignment.description || "No description"}
+                            </p>
                           </div>
                         </div>
+                      </td>
 
-                        <div className="space-y-4">
+                      {/* BATCH */}
+
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600">
+                          {assignment.batch?.name || "Current Batch"}
+                        </span>
+                      </td>
+
+                      {/* INSTRUCTOR */}
+
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600">
+                          {assignment.instructorName || "—"}
+                        </span>
+                      </td>
+
+                      {/* DEADLINE */}
+
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Calendar className="w-4 h-4 text-[#4A7FA7]" />
+
+                          {formatDate(assignment.deadline)}
+                        </div>
+                      </td>
+
+                      {/* MAX SCORE */}
+
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Trophy className="w-4 h-4 text-[#4A7FA7]" />
+
+                          {assignment.maxScore || 100}
+                        </div>
+                      </td>
+
+                      {/* ACTION */}
+
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => handleSelectAssignment(assignment)}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1A3D63] text-white text-sm font-medium hover:bg-[#0A1931] transition"
+                        >
+                          <Users className="w-4 h-4" />
+                          View Submissions
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ========================================================
+          SELECTED ASSIGNMENT / SUBMISSIONS
+      ======================================================== */}
+
+      {selectedAssignment && (
+        <div className="max-w-7xl mx-auto mt-8">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            {/* ==================================================
+                TABLE HEADER
+            ================================================== */}
+
+            <div className="px-6 py-5 border-b border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-[#0A1931]">
+                    Student Submissions
+                  </h2>
+
+                  <p className="text-sm text-gray-500 mt-1">
+                    {selectedAssignment.title}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1.5 rounded-lg bg-[#F6FAFD] text-[#1A3D63] text-sm font-semibold">
+                    {submissions.length} submission
+                    {submissions.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* ==================================================
+                LOADING
+            ================================================== */}
+
+            {loadingSubmissions ? (
+              <div className="py-16 flex flex-col items-center justify-center">
+                <Loader2 className="w-8 h-8 text-[#1A3D63] animate-spin mb-3" />
+
+                <p className="text-sm text-gray-500">Loading submissions...</p>
+              </div>
+            ) : submissions.length === 0 ? (
+              <div className="py-16 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                  <FileX className="w-8 h-8 text-gray-400" />
+                </div>
+
+                <h3 className="text-lg font-semibold text-gray-700">
+                  No submissions yet
+                </h3>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  No students have submitted this assignment.
+                </p>
+              </div>
+            ) : (
+              /* ==================================================
+                 SUBMISSIONS TABLE
+              ================================================== */
+
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px]">
+                  <thead className="bg-[#F6FAFD] border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Student
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        GitHub
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Live Demo
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Submitted
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Status
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Score
+                      </th>
+
+                      <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-gray-100">
+                    {submissions.map((submission) => {
+                      const student = submission.student;
+
+                      const studentName = student
+                        ? `${student.firstName || ""} ${
+                            student.lastName || ""
+                          }`.trim()
+                        : "Unknown Student";
+
+                      return (
+                        <tr
+                          key={submission._id}
+                          className="hover:bg-gray-50 transition"
+                        >
+                          {/* STUDENT */}
+
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-[#B3CFE5] flex items-center justify-center flex-shrink-0">
+                                <UserCircle className="w-6 h-6 text-[#1A3D63]" />
+                              </div>
+
+                              <div className="min-w-0">
+                                <p className="font-semibold text-[#0A1931] truncate">
+                                  {studentName}
+                                </p>
+
+                                <p className="text-xs text-gray-500 truncate">
+                                  {student?.email || "No email"}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+
                           {/* GITHUB */}
 
-                          {sub.githubUrl ? (
-                            <a
-                              href={sub.githubUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-2 rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm font-bold text-indigo-600 transition hover:bg-indigo-50"
-                            >
-                              <GitBranch size={18} />
-                              Open Repository
-                              <ExternalLink size={14} className="ml-auto" />
-                            </a>
-                          ) : (
-                            <div className="flex items-center gap-2 rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm font-bold text-[#7A7F85]">
-                              <GitBranch size={18} />
-                              No Repository Provided
-                            </div>
-                          )}
+                          <td className="px-6 py-4">
+                            {submission.githubUrl ? (
+                              <a
+                                href={submission.githubUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 text-sm font-medium text-[#1A3D63] hover:underline"
+                              >
+                                <Code2 className="w-4 h-4" />
+                                GitHub
+                              </a>
+                            ) : (
+                              <span className="text-sm text-gray-400">—</span>
+                            )}
+                          </td>
 
                           {/* LIVE DEMO */}
 
-                          {sub.liveDemoUrl && (
-                            <a
-                              href={sub.liveDemoUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-2 rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm font-bold text-blue-600 transition hover:bg-blue-50"
-                            >
-                              <ExternalLink size={18} />
-                              Open Live Demo
-                            </a>
-                          )}
+                          <td className="px-6 py-4">
+                            {submission.liveDemoUrl ? (
+                              <a
+                                href={submission.liveDemoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 text-sm font-medium text-[#1A3D63] hover:underline"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                                Demo
+                              </a>
+                            ) : (
+                              <span className="text-sm text-gray-400">—</span>
+                            )}
+                          </td>
 
-                          {/* NOTES */}
+                          {/* DATE */}
 
-                          <div className="rounded-xl border border-[#B3CFE5] bg-white p-3">
-                            <p className="mb-1 text-xs font-bold text-[#7A7F85]">
-                              Student Notes:
-                            </p>
+                          <td className="px-6 py-4">
+                            <span className="text-sm text-gray-600">
+                              {formatDate(submission.createdAt)}
+                            </span>
+                          </td>
 
-                            <p className="text-xs italic leading-relaxed text-[#0A1931]">
-                              {sub.notes || "No notes provided by student."}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                          {/* STATUS */}
 
-                      {/* ==================================================
-                          EVALUATION
-                      ================================================== */}
+                          <td className="px-6 py-4">
+                            {getStatusBadge(submission.status)}
+                          </td>
 
-                      <div className="flex-1 p-6 lg:p-8">
-                        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 text-[#1A3D63]">
-                            <Award size={20} />
+                          {/* SCORE */}
 
-                            <h5 className="font-bold">Mentor Evaluation</h5>
-                          </div>
+                          <td className="px-6 py-4">
+                            {submission.score !== null &&
+                            submission.score !== undefined ? (
+                              <span className="font-bold text-[#0A1931]">
+                                {submission.score}
 
-                          {/* AUTOMATIC STATUS */}
+                                {selectedAssignment.maxScore
+                                  ? ` / ${selectedAssignment.maxScore}`
+                                  : ""}
+                              </span>
+                            ) : (
+                              <span className="text-sm text-gray-400">
+                                Not graded
+                              </span>
+                            )}
+                          </td>
 
-                          <span
-                            className={`rounded-full px-3 py-1 text-[10px] font-black uppercase ${
-                              isPending
-                                ? "bg-yellow-100 text-yellow-700"
-                                : isGraded
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-orange-100 text-orange-700"
-                            }`}
-                          >
-                            {status}
-                          </span>
-                        </div>
+                          {/* ACTION */}
 
-                        <div className="grid gap-6">
-                          {/* SCORE + FEEDBACK */}
-
-                          <div className="flex flex-col gap-4 md:flex-row">
-                            {/* SCORE */}
-
-                            <div className="md:w-32">
-                              <label className="mb-2 block text-xs font-bold text-[#7A7F85]">
-                                Score
-                              </label>
-
-                              <input
-                                type="number"
-                                min="0"
-                                max={
-                                  assignments.find((a) => a._id === selectedAsm)
-                                    ?.maxScore || 100
-                                }
-                                placeholder="0"
-                                className="w-full rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD] p-4 text-center text-xl font-black text-[#1A3D63] outline-none focus:ring-2 focus:ring-[#1A3D63]"
-                                value={currentGrade.score}
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    sub._id,
-                                    "score",
-                                    e.target.value,
-                                  )
-                                }
-                              />
-                            </div>
-
-                            {/* FEEDBACK */}
-
-                            <div className="flex-1">
-                              <label className="mb-2 block text-xs font-bold text-[#7A7F85]">
-                                Feedback & Comments
-                              </label>
-
-                              <div className="relative">
-                                <textarea
-                                  placeholder="Give constructive feedback..."
-                                  className="h-25 w-full resize-none rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD] p-4 pr-12 text-sm outline-none focus:ring-2 focus:ring-[#1A3D63]"
-                                  value={currentGrade.feedback}
-                                  onChange={(e) =>
-                                    handleInputChange(
-                                      sub._id,
-                                      "feedback",
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-
-                                <MessageSquare
-                                  size={18}
-                                  className="absolute right-4 top-4 text-[#B3CFE5]"
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* ==================================================
-                              SMALL ACTION BUTTONS
-                          ================================================== */}
-
-                          <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
-                            {/* REQUEST RESUBMISSION */}
-
+                          <td className="px-6 py-4 text-right">
                             <button
-                              type="button"
-                              onClick={() => requestResubmission(sub._id)}
-                              className="flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-orange-700"
+                              onClick={() => handleViewSubmission(submission)}
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1A3D63] text-white text-sm font-medium hover:bg-[#0A1931] transition"
                             >
-                              <RotateCcw size={15} />
-                              Request Resubmission
+                              <Eye className="w-4 h-4" />
+                              View
                             </button>
-
-                            {/* SUBMIT / UPDATE GRADE */}
-
-                            <button
-                              type="button"
-                              onClick={() => submitGrade(sub._id)}
-                              className="flex items-center gap-2 rounded-xl bg-[#1A3D63] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#0A1931]"
-                            >
-                              <CheckCircle size={15} />
-
-                              {isGraded ? "Update Grade" : "Submit Grade"}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ========================================================
+          SUBMISSION DETAILS MODAL
+      ======================================================== */}
+
+      {showSubmissionModal && selectedSubmission && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+            {/* MODAL HEADER */}
+
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+              <div>
+                <h2 className="text-xl font-bold text-[#0A1931]">
+                  Submission Details
+                </h2>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  {selectedSubmission.student?.firstName || "Unknown"}{" "}
+                  {selectedSubmission.student?.lastName || ""}
+                </p>
+              </div>
+
+              <button
+                onClick={closeSubmissionModal}
+                className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-gray-100 transition"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* MODAL CONTENT */}
+
+            <div className="p-6 space-y-6">
+              {/* STUDENT */}
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-[#B3CFE5] flex items-center justify-center">
+                  <UserCircle className="w-7 h-7 text-[#1A3D63]" />
+                </div>
+
+                <div>
+                  <h3 className="font-bold text-[#0A1931]">
+                    {selectedSubmission.student?.firstName || ""}{" "}
+                    {selectedSubmission.student?.lastName || ""}
+                  </h3>
+
+                  <p className="text-sm text-gray-500">
+                    {selectedSubmission.student?.email || "No email"}
+                  </p>
+                </div>
+              </div>
+
+              {/* STATUS */}
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                  Status
+                </p>
+
+                {getStatusBadge(selectedSubmission.status)}
+              </div>
+
+              {/* SCORE */}
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                  Score
+                </p>
+
+                <div className="text-lg font-bold text-[#0A1931]">
+                  {selectedSubmission.score !== null &&
+                  selectedSubmission.score !== undefined
+                    ? `${selectedSubmission.score} / ${
+                        selectedAssignment?.maxScore || 100
+                      }`
+                    : "Not graded"}
+                </div>
+              </div>
+
+              {/* GITHUB */}
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                  GitHub Repository
+                </p>
+
+                {selectedSubmission.githubUrl ? (
+                  <a
+                    href={selectedSubmission.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-3 rounded-lg bg-[#F6FAFD] text-[#1A3D63] hover:bg-[#B3CFE5]/30 transition break-all"
+                  >
+                    <Code2 className="w-5 h-5 flex-shrink-0" />
+
+                    <span className="text-sm">
+                      {selectedSubmission.githubUrl}
+                    </span>
+                  </a>
+                ) : (
+                  <p className="text-sm text-gray-400">No GitHub URL</p>
+                )}
+              </div>
+
+              {/* LIVE DEMO */}
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                  Live Demo
+                </p>
+
+                {selectedSubmission.liveDemoUrl ? (
+                  <a
+                    href={selectedSubmission.liveDemoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-3 rounded-lg bg-[#F6FAFD] text-[#1A3D63] hover:bg-[#B3CFE5]/30 transition break-all"
+                  >
+                    <ExternalLink className="w-5 h-5 flex-shrink-0" />
+
+                    <span className="text-sm">
+                      {selectedSubmission.liveDemoUrl}
+                    </span>
+                  </a>
+                ) : (
+                  <p className="text-sm text-gray-400">No live demo URL</p>
+                )}
+              </div>
+
+              {/* NOTES */}
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                  Student Notes
+                </p>
+
+                <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                    {selectedSubmission.notes || "No notes provided."}
+                  </p>
+                </div>
+              </div>
+
+              {/* FEEDBACK */}
+
+              {selectedSubmission.feedback && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                    Mentor Feedback
+                  </p>
+
+                  <div className="p-4 rounded-lg bg-[#F6FAFD] border border-[#B3CFE5]">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {selectedSubmission.feedback}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* FOOTER */}
+
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={closeSubmissionModal}
+                className="px-5 py-2.5 rounded-lg bg-[#1A3D63] text-white text-sm font-semibold hover:bg-[#0A1931] transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default MentorAssignment;
+export default Assignment;

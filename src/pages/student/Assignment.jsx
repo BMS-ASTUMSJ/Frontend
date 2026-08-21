@@ -14,8 +14,11 @@ const StudentAssignment = () => {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // ============================================================
+  // LOAD ASSIGNMENTS + SUBMISSIONS
+  // ============================================================
 
   const loadData = async () => {
     try {
@@ -27,7 +30,6 @@ const StudentAssignment = () => {
       ]);
 
       setAssignments(assignmentsRes.data.assignments || []);
-
       setMySubmissions(submissionsRes.data.submissions || []);
     } catch (err) {
       console.error("Failed to load assignment data:", err);
@@ -42,6 +44,10 @@ const StudentAssignment = () => {
     loadData();
   }, []);
 
+  // ============================================================
+  // GET SUBMISSION FOR ASSIGNMENT
+  // ============================================================
+
   const getSubmission = (assignmentId) => {
     return mySubmissions.find((submission) => {
       const submissionAssignment = submission.assignment;
@@ -54,11 +60,19 @@ const StudentAssignment = () => {
     });
   };
 
+  // ============================================================
+  // CHECK DEADLINE
+  // ============================================================
+
   const isExpired = (deadline) => {
     if (!deadline) return false;
 
     return new Date(deadline) < new Date();
   };
+
+  // ============================================================
+  // OPEN SUBMISSION MODAL
+  // ============================================================
 
   const openSubmissionModal = (assignment) => {
     const submission = getSubmission(assignment._id);
@@ -67,9 +81,7 @@ const StudentAssignment = () => {
 
     if (submission?.status === "Resubmission Required") {
       setGithubUrl(submission.githubUrl || "");
-
       setLiveDemoUrl(submission.liveDemoUrl || "");
-
       setNotes(submission.notes || "");
 
       setIsUpdating(false);
@@ -79,9 +91,7 @@ const StudentAssignment = () => {
 
     if (submission?.status === "Pending") {
       setGithubUrl(submission.githubUrl || "");
-
       setLiveDemoUrl(submission.liveDemoUrl || "");
-
       setNotes(submission.notes || "");
 
       setIsUpdating(true);
@@ -95,6 +105,10 @@ const StudentAssignment = () => {
     setIsUpdating(false);
   };
 
+  // ============================================================
+  // CLOSE MODAL
+  // ============================================================
+
   const closeModal = () => {
     if (submitting) return;
 
@@ -106,6 +120,10 @@ const StudentAssignment = () => {
 
     setIsUpdating(false);
   };
+
+  // ============================================================
+  // SUBMIT / UPDATE / RESUBMIT
+  // ============================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -134,21 +152,19 @@ const StudentAssignment = () => {
 
     const isPendingUpdate = existingSubmission?.status === "Pending";
 
+    // Normal submissions cannot be made after deadline.
+    // Resubmission is still allowed.
     if (isExpired(assignment.deadline) && !isResubmission) {
       toast.error("The deadline for this assignment has passed.");
-
       return;
     }
 
     try {
       setSubmitting(true);
 
-      const payload = {
-        assignmentId: selectedId,
-        githubUrl: githubUrl.trim(),
-        liveDemoUrl: liveDemoUrl.trim(),
-        notes: notes.trim(),
-      };
+      // ========================================================
+      // UPDATE PENDING SUBMISSION
+      // ========================================================
 
       if (isPendingUpdate) {
         const res = await api.put(`/submissions/${existingSubmission._id}`, {
@@ -165,6 +181,17 @@ const StudentAssignment = () => {
 
         return;
       }
+
+      // ========================================================
+      // NEW SUBMISSION / RESUBMISSION
+      // ========================================================
+
+      const payload = {
+        assignmentId: selectedId,
+        githubUrl: githubUrl.trim(),
+        liveDemoUrl: liveDemoUrl.trim(),
+        notes: notes.trim(),
+      };
 
       const res = await api.post("/submissions", payload);
 
@@ -187,6 +214,54 @@ const StudentAssignment = () => {
     }
   };
 
+  // ============================================================
+  // STATUS BADGE
+  // ============================================================
+
+  const getStatusBadge = (status) => {
+    if (!status) {
+      return (
+        <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+          Not Submitted
+        </span>
+      );
+    }
+
+    if (status === "Graded") {
+      return (
+        <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+          Graded
+        </span>
+      );
+    }
+
+    if (status === "Resubmission Required") {
+      return (
+        <span className="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+          Resubmit
+        </span>
+      );
+    }
+
+    if (status === "Pending") {
+      return (
+        <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+          Pending
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+        {status}
+      </span>
+    );
+  };
+
+  // ============================================================
+  // LOADING
+  // ============================================================
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F6FAFD]">
@@ -197,9 +272,17 @@ const StudentAssignment = () => {
     );
   }
 
+  // ============================================================
+  // PAGE
+  // ============================================================
+
   return (
-    <div className="min-h-screen bg-[#F6FAFD] p-6">
-      <div className="mx-auto max-w-5xl">
+    <div className="min-h-screen bg-[#F6FAFD] p-4 sm:p-6">
+      <div className="mx-auto max-w-7xl">
+        {/* ======================================================
+            HEADER
+        ====================================================== */}
+
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-[#0A1931]">
             Course Assignments
@@ -216,7 +299,7 @@ const StudentAssignment = () => {
         ====================================================== */}
 
         {assignments.length === 0 ? (
-          <div className="rounded-2xl border border-[#B3CFE5] bg-white p-10 text-center">
+          <div className="rounded-2xl border border-[#B3CFE5] bg-white p-10 text-center shadow-sm">
             <h3 className="text-lg font-bold text-[#0A1931]">
               No assignments available
             </h3>
@@ -226,239 +309,257 @@ const StudentAssignment = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-5">
-            {assignments.map((asm) => {
-              const submission = getSubmission(asm._id);
+          /* ====================================================
+             TABLE
+          ==================================================== */
 
-              const status = submission?.status || null;
+          <div className="overflow-hidden rounded-2xl border border-[#B3CFE5] bg-white shadow-sm">
+            {/* MOBILE SCROLL */}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1050px] border-collapse">
+                {/* =================================================
+                    TABLE HEADER
+                ================================================= */}
 
-              const canResubmit = status === "Resubmission Required";
+                <thead>
+                  <tr className="border-b border-[#B3CFE5] bg-[#F6FAFD] text-left">
+                    <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[#0A1931]">
+                      Assignment
+                    </th>
 
-              const isGraded = status === "Graded";
+                    <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[#0A1931]">
+                      Instructor
+                    </th>
 
-              const isPending = status === "Pending";
+                    <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[#0A1931]">
+                      Deadline
+                    </th>
 
-              const expired = isExpired(asm.deadline);
+                    <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[#0A1931]">
+                      Max Score
+                    </th>
 
-              return (
-                <div
-                  key={asm._id}
-                  className="rounded-2xl border border-[#B3CFE5] bg-white p-6 shadow-sm"
-                >
-                  {/* ==================================================
-                      TOP SECTION
-                  ================================================== */}
+                    <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[#0A1931]">
+                      Status
+                    </th>
 
-                  <div className="flex flex-col justify-between gap-5 md:flex-row">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h3 className="text-xl font-bold text-[#0A1931]">
-                          {asm.title}
-                        </h3>
+                    <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[#0A1931]">
+                      Grade
+                    </th>
 
-                        {/* STATUS */}
+                    <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide text-[#0A1931]">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
 
-                        {status && (
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-bold ${
-                              isGraded
-                                ? "bg-green-100 text-green-700"
-                                : canResubmit
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-orange-100 text-orange-700"
-                            }`}
-                          >
-                            {status}
+                {/* =================================================
+                    TABLE BODY
+                ================================================= */}
+
+                <tbody className="divide-y divide-[#E5EEF5]">
+                  {assignments.map((asm) => {
+                    const submission = getSubmission(asm._id);
+
+                    const status = submission?.status || null;
+
+                    const canResubmit = status === "Resubmission Required";
+
+                    const isGraded = status === "Graded";
+
+                    const isPending = status === "Pending";
+
+                    const expired = isExpired(asm.deadline);
+
+                    return (
+                      <tr
+                        key={asm._id}
+                        className="transition hover:bg-[#F8FBFD]"
+                      >
+                        {/* ==========================================
+                            ASSIGNMENT
+                        ========================================== */}
+
+                        <td className="px-5 py-5">
+                          <div className="max-w-xs">
+                            <p className="font-semibold text-[#0A1931]">
+                              {asm.title}
+                            </p>
+
+                            <p className="mt-1 line-clamp-2 text-xs text-[#7A7F85]">
+                              {asm.description || "No description provided."}
+                            </p>
+
+                            {submission?.feedback && (
+                              <button
+                                type="button"
+                                onClick={() => alert(submission.feedback)}
+                                className="mt-2 text-xs font-semibold text-[#1A3D63] hover:underline"
+                              >
+                                View Feedback
+                              </button>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* ==========================================
+                            INSTRUCTOR
+                        ========================================== */}
+
+                        <td className="px-5 py-5 text-sm text-[#4A7FA7]">
+                          {asm.instructorName || asm.instructor || "—"}
+                        </td>
+
+                        {/* ==========================================
+                            DEADLINE
+                        ========================================== */}
+
+                        <td className="px-5 py-5">
+                          {asm.deadline ? (
+                            <div>
+                              <p
+                                className={`text-sm font-semibold ${
+                                  expired ? "text-red-600" : "text-[#1A3D63]"
+                                }`}
+                              >
+                                {new Date(asm.deadline).toLocaleDateString()}
+                              </p>
+
+                              <p className="mt-1 text-xs text-[#7A7F85]">
+                                {new Date(asm.deadline).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+
+                              {expired && (
+                                <span className="mt-1 inline-block text-xs font-semibold text-red-600">
+                                  Expired
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-[#7A7F85]">
+                              No deadline
+                            </span>
+                          )}
+                        </td>
+
+                        {/* ==========================================
+                            MAX SCORE
+                        ========================================== */}
+
+                        <td className="px-5 py-5">
+                          <span className="text-sm font-semibold text-[#0A1931]">
+                            {asm.maxScore ?? "—"}
                           </span>
-                        )}
-                      </div>
+                        </td>
 
-                      <p className="my-3 leading-relaxed text-[#7A7F85]">
-                        {asm.description || "No description provided."}
-                      </p>
+                        {/* ==========================================
+                            STATUS
+                        ========================================== */}
 
-                      {/* DEADLINE */}
+                        <td className="px-5 py-5">{getStatusBadge(status)}</td>
 
-                      {asm.deadline && (
-                        <p
-                          className={`text-sm font-semibold ${
-                            expired ? "text-red-600" : "text-[#4A7FA7]"
-                          }`}
-                        >
-                          Deadline: {new Date(asm.deadline).toLocaleString()}
-                          {expired && " — Expired"}
-                        </p>
-                      )}
+                        {/* ==========================================
+                            GRADE
+                        ========================================== */}
 
-                      {/* MAX SCORE */}
+                        <td className="px-5 py-5">
+                          {isGraded ? (
+                            <div>
+                              <span className="text-lg font-bold text-green-600">
+                                {submission.score}
+                              </span>
 
-                      {asm.maxScore !== undefined && (
-                        <p className="mt-1 text-sm text-[#7A7F85]">
-                          Maximum Score: {asm.maxScore}
-                        </p>
-                      )}
-                    </div>
+                              <span className="text-sm text-[#7A7F85]">
+                                {" "}
+                                / {asm.maxScore}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-[#7A7F85]">—</span>
+                          )}
+                        </td>
 
-                    {/* ==================================================
-                        ACTION BUTTONS
-                    ================================================== */}
+                        {/* ==========================================
+                            ACTION
+                        ========================================== */}
 
-                    <div className="flex items-start">
-                      {/* NEVER SUBMITTED */}
+                        <td className="px-5 py-5 text-right">
+                          {/* NEVER SUBMITTED */}
 
-                      {!submission && (
-                        <button
-                          type="button"
-                          onClick={() => openSubmissionModal(asm)}
-                          disabled={expired}
-                          className="rounded-lg bg-[#1A3D63] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0A1931] disabled:cursor-not-allowed disabled:bg-gray-300"
-                        >
-                          {expired ? "Deadline Passed" : "Submit Work"}
-                        </button>
-                      )}
+                          {!submission && (
+                            <button
+                              type="button"
+                              onClick={() => openSubmissionModal(asm)}
+                              disabled={expired}
+                              className="rounded-lg bg-[#1A3D63] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#0A1931] disabled:cursor-not-allowed disabled:bg-gray-300"
+                            >
+                              {expired ? "Deadline Passed" : "Submit"}
+                            </button>
+                          )}
 
-                      {/* ==================================================
-                          PENDING
-                      ================================================== */}
+                          {/* PENDING */}
 
-                      {isPending && (
-                        <button
-                          type="button"
-                          onClick={() => openSubmissionModal(asm)}
-                          className="rounded-lg bg-[#1A3D63] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0A1931]"
-                        >
-                          Update Submission
-                        </button>
-                      )}
+                          {isPending && (
+                            <button
+                              type="button"
+                              onClick={() => openSubmissionModal(asm)}
+                              className="rounded-lg bg-[#1A3D63] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#0A1931]"
+                            >
+                              Update
+                            </button>
+                          )}
 
-                      {/* ==================================================
-                          GRADED
-                      ================================================== */}
+                          {/* GRADED */}
 
-                      {isGraded && (
-                        <button
-                          type="button"
-                          disabled
-                          className="cursor-not-allowed rounded-lg bg-green-100 px-4 py-2 text-sm font-semibold text-green-700"
-                        >
-                          Graded
-                        </button>
-                      )}
+                          {isGraded && (
+                            <button
+                              type="button"
+                              disabled
+                              className="cursor-not-allowed rounded-lg bg-green-100 px-4 py-2 text-xs font-semibold text-green-700"
+                            >
+                              Graded
+                            </button>
+                          )}
 
-                      {/* ==================================================
-                          RESUBMISSION REQUIRED
-                      ================================================== */}
+                          {/* RESUBMISSION */}
 
-                      {canResubmit && (
-                        <button
-                          type="button"
-                          onClick={() => openSubmissionModal(asm)}
-                          className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-700"
-                        >
-                          Resubmit Work
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                          {canResubmit && (
+                            <button
+                              type="button"
+                              onClick={() => openSubmissionModal(asm)}
+                              className="rounded-lg bg-orange-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-orange-700"
+                            >
+                              Resubmit
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                  {/* ==================================================
-                      EXISTING SUBMISSION
-                  ================================================== */}
+            {/* ======================================================
+                TABLE FOOTER
+            ====================================================== */}
 
-                  {submission && (
-                    <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
-                      <p className="text-sm font-bold text-[#1A3D63]">
-                        Submission Status: {submission.status}
-                      </p>
-
-                      {/* GITHUB */}
-
-                      {submission.githubUrl && (
-                        <a
-                          href={submission.githubUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-2 inline-block text-sm text-blue-600 hover:underline"
-                        >
-                          View GitHub Repository
-                        </a>
-                      )}
-
-                      {/* LIVE DEMO */}
-
-                      {submission.liveDemoUrl && (
-                        <a
-                          href={submission.liveDemoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-1 block text-sm text-blue-600 hover:underline"
-                        >
-                          View Live Demo
-                        </a>
-                      )}
-
-                      {/* NOTES */}
-
-                      {submission.notes && (
-                        <p className="mt-3 text-sm text-[#7A7F85]">
-                          <strong>Your notes:</strong> {submission.notes}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ==================================================
-                      RESUBMISSION REQUEST
-                  ================================================== */}
-
-                  {canResubmit && (
-                    <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
-                      <p className="font-bold text-red-700">
-                        Resubmission requested
-                      </p>
-
-                      <p className="mt-1 text-sm text-red-700">
-                        Your mentor has requested changes to your submission.
-                        Update your project and submit it again.
-                      </p>
-
-                      {submission.feedback && (
-                        <div className="mt-3 rounded-lg bg-white p-3">
-                          <p className="text-xs font-bold text-gray-500">
-                            Mentor Feedback
-                          </p>
-
-                          <p className="mt-1 text-sm text-gray-800">
-                            {submission.feedback}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ==================================================
-                      GRADED RESULT
-                  ================================================== */}
-
-                  {isGraded && (
-                    <div className="mt-5 rounded-xl border border-green-200 bg-green-50 p-4">
-                      <p className="font-bold text-green-700">
-                        Grade: {submission.score} / {asm.maxScore}
-                      </p>
-
-                      {submission.feedback && (
-                        <p className="mt-2 text-sm italic text-green-800">
-                          "{submission.feedback}"
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            <div className="border-t border-[#B3CFE5] bg-[#F6FAFD] px-5 py-3">
+              <p className="text-xs text-[#7A7F85]">
+                Showing {assignments.length} assignment
+                {assignments.length !== 1 ? "s" : ""}
+              </p>
+            </div>
           </div>
         )}
       </div>
+
+      {/* ==========================================================
+          SUBMISSION MODAL
+      ========================================================== */}
 
       {selectedId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -466,6 +567,10 @@ const StudentAssignment = () => {
             onSubmit={handleSubmit}
             className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
           >
+            {/* ====================================================
+                TITLE
+            ==================================================== */}
+
             <h3 className="mb-2 text-xl font-bold text-[#0A1931]">
               {isUpdating
                 ? "Update Submission"
@@ -482,6 +587,10 @@ const StudentAssignment = () => {
                   : "Provide the links to your project."}
             </p>
 
+            {/* ====================================================
+                GITHUB
+            ==================================================== */}
+
             <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
               GitHub Repository *
             </label>
@@ -496,7 +605,9 @@ const StudentAssignment = () => {
               disabled={submitting}
             />
 
-            {/* LIVE DEMO */}
+            {/* ====================================================
+                LIVE DEMO
+            ==================================================== */}
 
             <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
               Live Demo URL
@@ -511,7 +622,9 @@ const StudentAssignment = () => {
               disabled={submitting}
             />
 
-            {/* NOTES */}
+            {/* ====================================================
+                NOTES
+            ==================================================== */}
 
             <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
               Notes
@@ -525,7 +638,9 @@ const StudentAssignment = () => {
               disabled={submitting}
             />
 
-            {/* BUTTONS */}
+            {/* ====================================================
+                BUTTONS
+            ==================================================== */}
 
             <div className="flex gap-3">
               <button
