@@ -2,13 +2,7 @@ import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../utils/api";
-import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Loader2,
-} from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import logo from "./../assets/ASTUMSJ-Pp.jpg";
 
@@ -32,12 +26,7 @@ function LoginPage() {
     }));
   };
 
-  /**
-   * Decide where the user should go after login.
-   */
   const redirectUser = (user) => {
-    // Only students and mentors are forced to the
-    // change-password page.
     if (
       (user.role === "student" || user.role === "mentor") &&
       user.mustChangePassword === true
@@ -93,7 +82,9 @@ function LoginPage() {
       const { accessToken, user } = response.data;
 
       if (!accessToken || !user) {
-        toast.error("Login succeeded but account information was not received.");
+        toast.error(
+          "Login succeeded but account information was not received.",
+        );
         return;
       }
 
@@ -106,12 +97,10 @@ function LoginPage() {
       if (err.response?.status === 401) {
         toast.error("Incorrect email or password.");
       } else if (err.response?.status === 403) {
-        toast.error(
-          message || "Your account is suspended or not approved."
-        );
+        toast.error(message || "Your account is suspended or not approved.");
       } else if (!err.response) {
         toast.error(
-          "Cannot connect to the server. Make sure the backend is running."
+          "Cannot connect to the server. Make sure the backend is running.",
         );
       } else {
         toast.error(message || "Login failed. Please try again.");
@@ -151,21 +140,15 @@ function LoginPage() {
       const message = err.response?.data?.message;
 
       if (err.response?.status === 404) {
-        toast.error(
-          message || "No account exists with this Google email."
-        );
+        toast.error(message || "No account exists with this Google email.");
       } else if (err.response?.status === 403) {
-        toast.error(
-          message || "Your account is suspended."
-        );
+        toast.error(message || "Your account is suspended.");
       } else if (!err.response) {
         toast.error(
-          "Cannot connect to the server. Make sure the backend is running."
+          "Cannot connect to the server. Make sure the backend is running.",
         );
       } else {
-        toast.error(
-          message || "Google login failed. Please try again."
-        );
+        toast.error(message || "Google login failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -175,7 +158,6 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-[#F6FAFD] px-4 py-12">
       <div className="mx-auto grid min-h-[calc(100vh-6rem)] max-w-5xl overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-[#B3CFE5] md:grid-cols-2">
-
         {/* LEFT SIDE */}
         <div className="hidden bg-[#0A1931] p-10 text-white md:flex md:flex-col md:justify-between">
           <div>
@@ -196,20 +178,17 @@ function LoginPage() {
             </h1>
 
             <p className="mt-5 max-w-sm leading-7 text-[#B3CFE5]">
-              Continue your learning journey, connect with mentors,
-              and keep growing your technical skills.
+              Continue your learning journey, connect with mentors, and keep
+              growing your technical skills.
             </p>
           </div>
 
-          <p className="text-sm text-[#7A7F85]">
-            Learn. Build. Compete. Grow.
-          </p>
+          <p className="text-sm text-[#7A7F85]">Learn. Build. Compete. Grow.</p>
         </div>
 
         {/* RIGHT SIDE */}
         <div className="flex items-center p-7 sm:p-10">
           <div className="w-full">
-
             <div className="mb-8">
               <Link
                 to="/"
@@ -218,25 +197,18 @@ function LoginPage() {
                 ← Back to Home
               </Link>
 
-              <h2 className="text-3xl font-bold text-[#0A1931]">
-                Login
-              </h2>
+              <h2 className="text-3xl font-bold text-[#0A1931]">Login</h2>
 
               <p className="mt-2 text-sm text-[#7A7F85]">
                 Enter your account details to continue.
               </p>
             </div>
 
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-5"
-            >
-
+            <form onSubmit={handleSubmit} className="space-y-5">
               {/* EMAIL */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Email Address{" "}
-                  <span className="text-red-500">*</span>
+                  Email Address <span className="text-red-500">*</span>
                 </label>
 
                 <div className="relative">
@@ -258,8 +230,7 @@ function LoginPage() {
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-sm font-semibold text-[#0A1931]">
-                    Password{" "}
-                    <span className="text-red-500">*</span>
+                    Password <span className="text-red-500">*</span>
                   </label>
 
                   <Link
@@ -285,9 +256,7 @@ function LoginPage() {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      setShowPassword((prev) => !prev)
-                    }
+                    onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A7F85] hover:text-[#1A3D63]"
                   >
                     {showPassword ? (
@@ -305,9 +274,7 @@ function LoginPage() {
                 disabled={loading}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1A3D63] py-3.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading && (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                )}
+                {loading && <Loader2 className="h-5 w-5 animate-spin" />}
 
                 {loading ? "Signing in..." : "Login"}
               </button>
@@ -330,9 +297,7 @@ function LoginPage() {
                 <GoogleLogin
                   onSuccess={handleGoogleLogin}
                   onError={() =>
-                    toast.error(
-                      "Google login failed. Please try again."
-                    )
+                    toast.error("Google login failed. Please try again.")
                   }
                   useOneTap={false}
                 />
@@ -341,7 +306,6 @@ function LoginPage() {
 
             <p className="mt-8 text-center text-sm text-[#7A7F85]">
               Don't have an account?{" "}
-
               <Link
                 to="/register"
                 className="font-semibold text-[#1A3D63] hover:text-[#4A7FA7]"

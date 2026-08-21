@@ -107,8 +107,7 @@ function ForgotPassword() {
       });
 
       toast.success(
-        response.data.message ||
-          "Your password has been reset successfully.",
+        response.data.message || "Your password has been reset successfully.",
       );
 
       setTimeout(() => {
@@ -143,17 +142,11 @@ function ForgotPassword() {
 
           <div className="mb-8">
             <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-[#B3CFE5]">
-              {step === 1 && (
-                <Mail className="h-6 w-6 text-[#1A3D63]" />
-              )}
+              {step === 1 && <Mail className="h-6 w-6 text-[#1A3D63]" />}
 
-              {step === 2 && (
-                <KeyRound className="h-6 w-6 text-[#1A3D63]" />
-              )}
+              {step === 2 && <KeyRound className="h-6 w-6 text-[#1A3D63]" />}
 
-              {step === 3 && (
-                <Lock className="h-6 w-6 text-[#1A3D63]" />
-              )}
+              {step === 3 && <Lock className="h-6 w-6 text-[#1A3D63]" />}
             </div>
 
             <h1 className="text-3xl font-bold text-[#0A1931]">
@@ -166,11 +159,9 @@ function ForgotPassword() {
               {step === 1 &&
                 "Enter your email and we'll send you a verification code."}
 
-              {step === 2 &&
-                `Enter the 6-digit code sent to ${email}.`}
+              {step === 2 && `Enter the 6-digit code sent to ${email}.`}
 
-              {step === 3 &&
-                "Create a new password for your account."}
+              {step === 3 && "Create a new password for your account."}
             </p>
           </div>
 
@@ -224,9 +215,7 @@ function ForgotPassword() {
                   inputMode="numeric"
                   maxLength={6}
                   value={otp}
-                  onChange={(e) =>
-                    setOtp(e.target.value.replace(/\D/g, ""))
-                  }
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
                   className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-4 text-center text-2xl font-bold tracking-[0.5em] text-[#0A1931] outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
                 />

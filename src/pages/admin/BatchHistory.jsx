@@ -22,10 +22,6 @@ const AdminBatchHistory = () => {
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
 
-  // ==========================================================
-  // LOAD BATCHES
-  // ==========================================================
-
   const fetchBatches = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -52,10 +48,6 @@ const AdminBatchHistory = () => {
   useEffect(() => {
     fetchBatches();
   }, [fetchBatches]);
-
-  // ==========================================================
-  // LOAD MEMBERS
-  // ==========================================================
 
   const openBatch = async (batch) => {
     setSelectedBatch(batch);
@@ -159,27 +151,15 @@ const AdminBatchHistory = () => {
     }
   };
 
-  // ==========================================================
-  // CLOSE
-  // ==========================================================
-
   const closeBatch = () => {
     setSelectedBatch(null);
     setMembers([]);
     setError("");
   };
 
-  // ==========================================================
-  // FILTER
-  // ==========================================================
-
   const filteredBatches = batches.filter((batch) =>
     batch.name?.toLowerCase().includes(search.toLowerCase()),
   );
-
-  // ==========================================================
-  // DATE
-  // ==========================================================
 
   const formatDate = (date) => {
     if (!date) return "N/A";
@@ -197,10 +177,6 @@ const AdminBatchHistory = () => {
     });
   };
 
-  // ==========================================================
-  // STATUS
-  // ==========================================================
-
   const getStatusStyle = (status) => {
     switch (String(status || "").toLowerCase()) {
       case "active":
@@ -216,10 +192,6 @@ const AdminBatchHistory = () => {
         return "bg-slate-50 text-slate-600 border-slate-200";
     }
   };
-
-  // ==========================================================
-  // RENDER
-  // ==========================================================
 
   return (
     <div className="min-h-screen bg-[#F6FAFD] p-4 sm:p-6 lg:p-8">

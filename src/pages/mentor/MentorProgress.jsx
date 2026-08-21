@@ -40,8 +40,7 @@ const MentorProgress = () => {
       console.error("Failed to load mentor progress:", err);
 
       setError(
-        err?.response?.data?.message ||
-          "Failed to load mentor progress."
+        err?.response?.data?.message || "Failed to load mentor progress.",
       );
 
       setProgress([]);
@@ -51,18 +50,12 @@ const MentorProgress = () => {
   };
 
   const getStatus = (student) => {
-    return (
-      student?.status ||
-      student?.progressStatus ||
-      "not_started"
-    );
+    return student?.status || student?.progressStatus || "not_started";
   };
 
   const getPercentage = (student) => {
     const value =
-      student?.progressPercentage ??
-      student?.percentage ??
-      student?.progress;
+      student?.progressPercentage ?? student?.percentage ?? student?.progress;
 
     if (typeof value === "number") {
       return Math.min(Math.max(value, 0), 100);
@@ -76,15 +69,15 @@ const MentorProgress = () => {
   };
 
   const completed = progress.filter(
-    (student) => getStatus(student) === "done"
+    (student) => getStatus(student) === "done",
   ).length;
 
   const inProgress = progress.filter(
-    (student) => getStatus(student) === "in_progress"
+    (student) => getStatus(student) === "in_progress",
   ).length;
 
   const needHelp = progress.filter(
-    (student) => getStatus(student) === "need_help"
+    (student) => getStatus(student) === "need_help",
   ).length;
 
   if (loading) {
@@ -108,14 +101,10 @@ const MentorProgress = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-950 sm:p-6">
       <div className="mx-auto max-w-7xl space-y-6">
-
         {/* HEADER */}
         <div>
           <div className="flex items-center gap-3">
-            <BarChart3
-              size={30}
-              className="text-blue-600"
-            />
+            <BarChart3 size={30} className="text-blue-600" />
 
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
               Students Progress
@@ -136,7 +125,6 @@ const MentorProgress = () => {
 
         {/* STAT CARDS */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-
           {/* COMPLETED */}
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between">
@@ -144,10 +132,7 @@ const MentorProgress = () => {
                 Completed
               </p>
 
-              <CheckCircle
-                size={24}
-                className="text-green-600"
-              />
+              <CheckCircle size={24} className="text-green-600" />
             </div>
 
             <h2 className="mt-3 text-3xl font-bold text-gray-900 dark:text-white">
@@ -166,10 +151,7 @@ const MentorProgress = () => {
                 In Progress
               </p>
 
-              <Clock
-                size={24}
-                className="text-yellow-600"
-              />
+              <Clock size={24} className="text-yellow-600" />
             </div>
 
             <h2 className="mt-3 text-3xl font-bold text-gray-900 dark:text-white">
@@ -188,10 +170,7 @@ const MentorProgress = () => {
                 Need Help
               </p>
 
-              <AlertCircle
-                size={24}
-                className="text-red-600"
-              />
+              <AlertCircle size={24} className="text-red-600" />
             </div>
 
             <h2 className="mt-3 text-3xl font-bold text-gray-900 dark:text-white">
@@ -206,7 +185,6 @@ const MentorProgress = () => {
 
         {/* STUDENTS */}
         <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Assigned Students Progress
@@ -219,11 +197,7 @@ const MentorProgress = () => {
 
           {progress.length === 0 ? (
             <div className="flex min-h-64 flex-col items-center justify-center text-center">
-
-              <TrendingUp
-                size={40}
-                className="text-gray-400"
-              />
+              <TrendingUp size={40} className="text-gray-400" />
 
               <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">
                 No student progress
@@ -235,13 +209,10 @@ const MentorProgress = () => {
             </div>
           ) : (
             <div className="space-y-4">
-
               {progress.map((student, index) => {
-                const percentage =
-                  getPercentage(student);
+                const percentage = getPercentage(student);
 
-                const status =
-                  getStatus(student);
+                const status = getStatus(student);
 
                 const studentName =
                   student?.student?.name ||
@@ -250,24 +221,15 @@ const MentorProgress = () => {
                   student?.fullName ||
                   "Student";
 
-                const email =
-                  student?.student?.email ||
-                  student?.email ||
-                  "";
+                const email = student?.student?.email || student?.email || "";
 
                 return (
                   <div
-                    key={
-                      student?._id ||
-                      student?.student?._id ||
-                      index
-                    }
+                    key={student?._id || student?.student?._id || index}
                     className="rounded-xl border border-gray-200 p-5 dark:border-gray-800"
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
                       <div className="min-w-0 flex-1">
-
                         <h3 className="font-semibold text-gray-900 dark:text-white">
                           {studentName}
                         </h3>
@@ -279,7 +241,6 @@ const MentorProgress = () => {
                         )}
 
                         <div className="mt-4">
-
                           <div className="mb-2 flex justify-between text-xs">
                             <span className="text-gray-500 dark:text-gray-400">
                               Progress
@@ -298,7 +259,6 @@ const MentorProgress = () => {
                               }}
                             />
                           </div>
-
                         </div>
                       </div>
 
@@ -307,26 +267,24 @@ const MentorProgress = () => {
                           status === "done"
                             ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
                             : status === "in_progress"
-                            ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400"
-                            : status === "need_help"
-                            ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400"
-                            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400"
+                              : status === "need_help"
+                                ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400"
+                                : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
                         }`}
                       >
                         {status === "done"
                           ? "Completed"
                           : status === "in_progress"
-                          ? "In Progress"
-                          : status === "need_help"
-                          ? "Need Help"
-                          : "Not Started"}
+                            ? "In Progress"
+                            : status === "need_help"
+                              ? "Need Help"
+                              : "Not Started"}
                       </span>
-
                     </div>
                   </div>
                 );
               })}
-
             </div>
           )}
         </div>

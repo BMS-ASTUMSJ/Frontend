@@ -24,7 +24,6 @@ function TeamManagement() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingTeamId, setEditingTeamId] = useState(null);
 
-  // DELETE CONFIRMATION
   const [deleteTeam, setDeleteTeam] = useState(null);
 
   const [name, setName] = useState("");
@@ -35,10 +34,6 @@ function TeamManagement() {
   const [mentor2, setMentor2] = useState("");
 
   const [selectedStudents, setSelectedStudents] = useState([]);
-
-  // ============================================================
-  // FETCH DATA
-  // ============================================================
 
   const fetchData = async () => {
     try {
@@ -73,10 +68,6 @@ function TeamManagement() {
     fetchData();
   }, []);
 
-  // ============================================================
-  // GET BATCH ID
-  // ============================================================
-
   const getBatchId = (studentBatch) => {
     if (!studentBatch) {
       return "";
@@ -93,19 +84,11 @@ function TeamManagement() {
     return "";
   };
 
-  // ============================================================
-  // FILTER MENTORS
-  // ============================================================
-
   const filteredMentors = mentors.filter(
     (mentor) =>
       mentor.gender?.toLowerCase() === gender?.toLowerCase() &&
       mentor.status?.toLowerCase() === "approved",
   );
-
-  // ============================================================
-  // FILTER STUDENTS
-  // ============================================================
 
   const filteredStudents = students.filter((student) => {
     const studentBatchId = getBatchId(student.batch);
@@ -132,10 +115,6 @@ function TeamManagement() {
     );
   });
 
-  // ============================================================
-  // RESET FORM
-  // ============================================================
-
   const resetForm = () => {
     setName("");
     setGender("");
@@ -148,10 +127,6 @@ function TeamManagement() {
     setEditingTeamId(null);
   };
 
-  // ============================================================
-  // GENDER CHANGE
-  // ============================================================
-
   const handleGenderChange = (value) => {
     setGender(value);
     setMentor1("");
@@ -159,18 +134,10 @@ function TeamManagement() {
     setSelectedStudents([]);
   };
 
-  // ============================================================
-  // BATCH CHANGE
-  // ============================================================
-
   const handleBatchChange = (value) => {
     setBatch(value);
     setSelectedStudents([]);
   };
-
-  // ============================================================
-  // STUDENT CHANGE
-  // ============================================================
 
   const handleStudentChange = (studentId) => {
     setSelectedStudents((previous) => {
@@ -181,10 +148,6 @@ function TeamManagement() {
       return [...previous, studentId];
     });
   };
-
-  // ============================================================
-  // CREATE / UPDATE TEAM
-  // ============================================================
 
   const handleSaveTeam = async (event) => {
     event.preventDefault();
@@ -263,10 +226,6 @@ function TeamManagement() {
     }
   };
 
-  // ============================================================
-  // EDIT TEAM
-  // ============================================================
-
   const handleEditTeam = (team) => {
     setIsEditing(true);
     setEditingTeamId(team._id);
@@ -290,17 +249,9 @@ function TeamManagement() {
     });
   };
 
-  // ============================================================
-  // OPEN DELETE CONFIRMATION
-  // ============================================================
-
   const handleDeleteTeam = (team) => {
     setDeleteTeam(team);
   };
-
-  // ============================================================
-  // CONFIRM DELETE
-  // ============================================================
 
   const confirmDeleteTeam = async () => {
     if (!deleteTeam) return;
@@ -330,10 +281,6 @@ function TeamManagement() {
     }
   };
 
-  // ============================================================
-  // LOADING
-  // ============================================================
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F6FAFD]">
@@ -342,15 +289,9 @@ function TeamManagement() {
     );
   }
 
-  // ============================================================
-  // UI
-  // ============================================================
-
   return (
     <div className="relative min-h-screen bg-[#F6FAFD] p-4 md:p-6">
       <div className="mx-auto max-w-7xl space-y-6">
-        {/* HEADER */}
-
         <div className="flex flex-col justify-between gap-5 rounded-3xl bg-[#0A1931] p-6 text-white shadow-sm md:flex-row md:items-center md:p-8">
           <div className="flex items-center gap-4">
             <div className="rounded-2xl bg-[#1A3D63] p-3">

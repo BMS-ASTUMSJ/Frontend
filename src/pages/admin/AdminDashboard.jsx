@@ -35,7 +35,7 @@ function AdminDashboard() {
         if (isMounted) {
           setError(
             err.response?.data?.message ||
-              "Failed to load dashboard statistics."
+              "Failed to load dashboard statistics.",
           );
         }
       } finally {
@@ -119,9 +119,7 @@ function AdminDashboard() {
                 {overallStats?.totalStudentsAllTime || 0}
               </h2>
 
-              <p className="mt-1 text-xs text-[#7A7F85]">
-                Registered students
-              </p>
+              <p className="mt-1 text-xs text-[#7A7F85]">Registered students</p>
             </div>
 
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F1F8] text-[#1A3D63]">
@@ -139,9 +137,7 @@ function AdminDashboard() {
                 {overallStats?.totalMentors || 0}
               </h2>
 
-              <p className="mt-1 text-xs text-[#7A7F85]">
-                Currently active
-              </p>
+              <p className="mt-1 text-xs text-[#7A7F85]">Currently active</p>
             </div>
 
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
@@ -159,9 +155,7 @@ function AdminDashboard() {
                 {currentBatch?.applicantCount || 0}
               </h2>
 
-              <p className="mt-1 text-xs text-[#7A7F85]">
-                Waiting for review
-              </p>
+              <p className="mt-1 text-xs text-[#7A7F85]">Waiting for review</p>
             </div>
 
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
@@ -179,9 +173,7 @@ function AdminDashboard() {
                 {overallStats?.totalBatches || 0}
               </h2>
 
-              <p className="mt-1 text-xs text-[#7A7F85]">
-                Published cohorts
-              </p>
+              <p className="mt-1 text-xs text-[#7A7F85]">Published cohorts</p>
             </div>
 
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-700">
@@ -275,9 +267,7 @@ function AdminDashboard() {
                   {currentBatch?.teamCount || 0}
                 </div>
 
-                <p className="mt-1 text-xs text-gray-300">
-                  Teams formed
-                </p>
+                <p className="mt-1 text-xs text-gray-300">Teams formed</p>
               </div>
 
               <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
@@ -289,9 +279,7 @@ function AdminDashboard() {
                   {currentBatch?.mentorCount || 0}
                 </div>
 
-                <p className="mt-1 text-xs text-gray-300">
-                  Active mentors
-                </p>
+                <p className="mt-1 text-xs text-gray-300">Active mentors</p>
               </div>
 
               <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
@@ -422,9 +410,7 @@ function AdminDashboard() {
 
         <div>
           <div className="mb-4">
-            <h2 className="text-lg font-bold text-[#0A1931]">
-              Quick Actions
-            </h2>
+            <h2 className="text-lg font-bold text-[#0A1931]">Quick Actions</h2>
 
             <p className="mt-1 text-xs text-[#7A7F85]">
               Quickly access the most important admin tools.
@@ -466,9 +452,7 @@ function AdminDashboard() {
                 <ArrowRight className="h-5 w-5 text-gray-400 transition group-hover:translate-x-1 group-hover:text-[#1A3D63]" />
               </div>
 
-              <h3 className="mt-4 font-bold text-[#0A1931]">
-                Team Formations
-              </h3>
+              <h3 className="mt-4 font-bold text-[#0A1931]">Team Formations</h3>
 
               <p className="mt-1 text-xs leading-5 text-[#7A7F85]">
                 Group students into teams and assign mentors.
@@ -484,9 +468,7 @@ function AdminDashboard() {
               </div>
 
               <div className="mt-4 flex items-center justify-between">
-                <h3 className="font-bold text-[#0A1931]">
-                  Cohort Management
-                </h3>
+                <h3 className="font-bold text-[#0A1931]">Cohort Management</h3>
 
                 <ArrowRight className="h-5 w-5 text-gray-400 transition group-hover:translate-x-1 group-hover:text-[#1A3D63]" />
               </div>

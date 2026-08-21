@@ -88,9 +88,7 @@ function StudentProgress() {
       setSuccess("Progress updated successfully.");
       await loadProgressData();
     } catch (err) {
-      setError(
-        err?.response?.data?.message || "Failed to update progress.",
-      );
+      setError(err?.response?.data?.message || "Failed to update progress.");
     } finally {
       setUpdatingId(null);
     }
@@ -111,15 +109,12 @@ function StudentProgress() {
       setError("");
       setSuccess("");
 
-      await api.patch(
-        `/progress/student/progress/${selectedCpContent._id}`,
-        {
-          submissionLink: cpForm.submissionLink.trim(),
-          attempts: Number(cpForm.attempts) || 1,
-          timeSpent: Number(cpForm.timeSpent) || 0,
-          status: "done",
-        },
-      );
+      await api.patch(`/progress/student/progress/${selectedCpContent._id}`, {
+        submissionLink: cpForm.submissionLink.trim(),
+        attempts: Number(cpForm.attempts) || 1,
+        timeSpent: Number(cpForm.timeSpent) || 0,
+        status: "done",
+      });
 
       setSuccess("Solution submitted successfully.");
       setSelectedCpContent(null);
@@ -131,9 +126,7 @@ function StudentProgress() {
 
       await loadProgressData();
     } catch (err) {
-      setError(
-        err?.response?.data?.message || "Failed to submit solution.",
-      );
+      setError(err?.response?.data?.message || "Failed to submit solution.");
     } finally {
       setSubmittingCp(false);
     }
@@ -146,8 +139,7 @@ function StudentProgress() {
       selectedType === "all" || content?.type === selectedType;
 
     const weekMatches =
-      selectedWeek === "all" ||
-      String(content?.week) === String(selectedWeek);
+      selectedWeek === "all" || String(content?.week) === String(selectedWeek);
 
     return typeMatches && weekMatches;
   });
@@ -169,9 +161,7 @@ function StudentProgress() {
 
   const completion =
     dashboard?.overall?.completion ||
-    (totalItems > 0
-      ? Math.round((totalCompleted / totalItems) * 100)
-      : 0);
+    (totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0);
 
   const uniqueWeeks = Array.from(
     new Set(
@@ -315,11 +305,7 @@ function StudentProgress() {
                         : "text-[#7A7F85]"
                     }`}
                   >
-                    {type === "all"
-                      ? "All"
-                      : type === "cp"
-                        ? "CP"
-                        : "Dev"}
+                    {type === "all" ? "All" : type === "cp" ? "CP" : "Dev"}
                   </button>
                 ))}
               </div>
@@ -422,8 +408,7 @@ function StudentProgress() {
                           onClick={() => {
                             setSelectedCpContent(content);
                             setCpForm({
-                              submissionLink:
-                                progress.submissionLink || "",
+                              submissionLink: progress.submissionLink || "",
                               attempts: progress.attempts || 1,
                               timeSpent: progress.timeSpent || 30,
                             });
@@ -586,9 +571,7 @@ function StudentProgress() {
                   disabled={submittingCp}
                   className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {submittingCp && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
+                  {submittingCp && <Loader2 className="h-4 w-4 animate-spin" />}
                   Save & Complete
                 </button>
               </div>

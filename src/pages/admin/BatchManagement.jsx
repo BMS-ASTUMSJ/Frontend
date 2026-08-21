@@ -37,7 +37,7 @@ function BatchManagement() {
 
       setError(
         err.response?.data?.message ||
-          "Failed to fetch batches from the server."
+          "Failed to fetch batches from the server.",
       );
     } finally {
       setLoading(false);
@@ -119,7 +119,7 @@ function BatchManagement() {
       });
 
       setSuccess(
-        response.data?.message || "Batch status updated successfully."
+        response.data?.message || "Batch status updated successfully.",
       );
 
       if (response.data?.batches) {
@@ -127,8 +127,8 @@ function BatchManagement() {
       } else if (response.data?.batch) {
         setBatches((previousBatches) =>
           previousBatches.map((item) =>
-            item._id === batchId ? response.data.batch : item
-          )
+            item._id === batchId ? response.data.batch : item,
+          ),
         );
       } else {
         setBatches((previousBatches) =>
@@ -138,16 +138,14 @@ function BatchManagement() {
                   ...item,
                   status: newStatus,
                 }
-              : item
-          )
+              : item,
+          ),
         );
       }
     } catch (err) {
       console.error("Update batch status error:", err);
 
-      setError(
-        err.response?.data?.message || "Failed to update batch status."
-      );
+      setError(err.response?.data?.message || "Failed to update batch status.");
     } finally {
       setActionId(null);
     }
@@ -161,14 +159,14 @@ function BatchManagement() {
       setActionId(`registration-${batchId}`);
 
       const response = await api.patch(
-        `/batches/${batchId}/toggle-registration`
+        `/batches/${batchId}/toggle-registration`,
       );
 
       if (response.data?.batch) {
         setBatches((previousBatches) =>
           previousBatches.map((batch) =>
-            batch._id === batchId ? response.data.batch : batch
-          )
+            batch._id === batchId ? response.data.batch : batch,
+          ),
         );
       }
 
@@ -181,14 +179,13 @@ function BatchManagement() {
       }
 
       setSuccess(
-        response.data?.message || "Registration status updated successfully."
+        response.data?.message || "Registration status updated successfully.",
       );
     } catch (err) {
       console.error("Toggle registration error:", err);
 
       setError(
-        err.response?.data?.message ||
-          "Failed to update registration status."
+        err.response?.data?.message || "Failed to update registration status.",
       );
     } finally {
       setActionId(null);
@@ -219,7 +216,7 @@ function BatchManagement() {
   };
 
   const hasOpenRegistration = batches.some(
-    (batch) => batch.isRegistrationOpen === true
+    (batch) => batch.isRegistrationOpen === true,
   );
 
   return (
@@ -254,9 +251,7 @@ function BatchManagement() {
                 />
 
                 <span className="text-sm font-bold text-white">
-                  {hasOpenRegistration
-                    ? "Currently Open"
-                    : "Currently Closed"}
+                  {hasOpenRegistration ? "Currently Open" : "Currently Closed"}
                 </span>
               </div>
             </div>
@@ -391,7 +386,6 @@ function BatchManagement() {
                 ) : (
                   <Plus className="h-5 w-5" />
                 )}
-
                 Create Batch
               </button>
             </form>
@@ -447,7 +441,7 @@ function BatchManagement() {
 
                           <span
                             className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusStyle(
-                              batch.status
+                              batch.status,
                             )}`}
                           >
                             {batch.status || "unknown"}
@@ -481,7 +475,7 @@ function BatchManagement() {
                           }
                           disabled={actionId === batch._id}
                           className={`rounded-xl border px-3 py-2 text-xs font-bold outline-none transition ${getStatusStyle(
-                            batch.status
+                            batch.status,
                           )} ${
                             actionId === batch._id
                               ? "cursor-not-allowed opacity-50"
@@ -500,9 +494,7 @@ function BatchManagement() {
                       <button
                         type="button"
                         onClick={() => handleToggleRegistration(batch._id)}
-                        disabled={
-                          actionId === `registration-${batch._id}`
-                        }
+                        disabled={actionId === `registration-${batch._id}`}
                         className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                           batch.isRegistrationOpen
                             ? "bg-green-100 text-green-700 hover:bg-green-200"

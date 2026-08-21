@@ -11,6 +11,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Loader2,
+  CalendarX,
+  FileX,
 } from "lucide-react";
 
 const MyStudents = () => {
@@ -31,10 +33,6 @@ const MyStudents = () => {
         setLoading(true);
         setError("");
 
-        /*
-         * Change this endpoint if your backend uses
-         * a different mentor students endpoint.
-         */
         const response = await api.get("/users/my-students");
 
         setStudents(response.data?.students || []);
@@ -62,9 +60,8 @@ const MyStudents = () => {
 
     if (!searchValue) return true;
 
-    const name = `${student.firstName || ""} ${
-      student.lastName || ""
-    }`.toLowerCase();
+    const name =
+      `${student.firstName || ""} ${student.lastName || ""}`.toLowerCase();
 
     const email = student.email?.toLowerCase() || "";
 
@@ -101,6 +98,10 @@ const MyStudents = () => {
     );
   }
 
+  // ============================================================
+  // PAGE
+  // ============================================================
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-950 sm:p-6">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -114,14 +115,15 @@ const MyStudents = () => {
           </h1>
 
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            View the students assigned to you and monitor their progress.
+            View your assigned students and monitor their progress and risk
+            status.
           </p>
         </div>
 
         {/* ERROR */}
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
             {error}
           </div>
         )}
@@ -131,7 +133,7 @@ const MyStudents = () => {
         ===================================================== */}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {/* ASSIGNED */}
+          {/* ASSIGNED STUDENTS */}
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between">
@@ -151,7 +153,7 @@ const MyStudents = () => {
             </div>
           </div>
 
-          {/* AVERAGE */}
+          {/* AVERAGE PROGRESS */}
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between">
@@ -212,7 +214,8 @@ const MyStudents = () => {
               </h2>
 
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Only students assigned to you are shown here.
+                Students with 2 absences or 2 missed assignments are marked at
+                risk.
               </p>
             </div>
 
@@ -229,7 +232,7 @@ const MyStudents = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search student..."
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
           </div>
@@ -253,13 +256,23 @@ const MyStudents = () => {
               filteredStudents.map((student) => {
                 const progress = student.progress || 0;
 
+                const absenceCount =
+                  student.risk?.absenceCount ||
+                  student.risk?.attendanceIssues ||
+                  0;
+
+                const missedAssignmentCount =
+                  student.risk?.missedAssignmentCount ||
+                  student.risk?.assignmentIssues ||
+                  0;
+
                 return (
                   <div
                     key={student._id}
                     className={`rounded-2xl border p-5 transition hover:shadow-sm ${
                       student.atRisk
-                        ? "border-red-300 bg-red-50/40 dark:border-red-900 dark:bg-red-950/20"
-                        : "border-gray-200 dark:border-gray-800"
+                        ? "border-red-300 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20"
+                        : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
                     }`}
                   >
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -267,9 +280,9 @@ const MyStudents = () => {
 
                       <div className="flex items-center gap-4">
                         <div
-                          className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
                             student.atRisk
-                              ? "bg-red-100 text-red-600"
+                              ? "bg-red-100 text-red-600 dark:bg-red-950"
                               : "bg-[#1A3D63] text-white"
                           }`}
                         >
@@ -285,8 +298,6 @@ const MyStudents = () => {
                             <h3 className="font-semibold text-gray-900 dark:text-white">
                               {student.firstName} {student.lastName}
                             </h3>
-
-                            {/* AT RISK BADGE */}
 
                             {student.atRisk ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700 dark:bg-red-900 dark:text-red-300">
@@ -311,10 +322,30 @@ const MyStudents = () => {
 
                             <span>
                               {student.batch?.name ||
-                                student.batch ||
+                                student.batch?.toString?.() ||
                                 "No batch"}
                             </span>
                           </div>
+
+                          {/* RISK DETAILS */}
+
+                          {student.atRisk && (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {absenceCount >= 2 && (
+                                <span className="inline-flex items-center gap-1 rounded-lg bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
+                                  <CalendarX size={13} />
+                                  {absenceCount} Absences
+                                </span>
+                              )}
+
+                              {missedAssignmentCount >= 2 && (
+                                <span className="inline-flex items-center gap-1 rounded-lg bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
+                                  <FileX size={13} />
+                                  {missedAssignmentCount} Missed Assignments
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -339,7 +370,7 @@ const MyStudents = () => {
 
                         <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
                           <div
-                            className={`h-full rounded-full ${
+                            className={`h-full rounded-full transition-all ${
                               student.atRisk ? "bg-red-500" : "bg-blue-600"
                             }`}
                             style={{
@@ -388,21 +419,51 @@ const MyStudents = () => {
               </button>
             </div>
 
-            {/* AT RISK NOTIFICATION */}
+            {/* RISK STATUS */}
 
             <div className="mt-6">
               {selectedStudent.atRisk ? (
-                <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
-                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="h-6 w-6 shrink-0 text-red-600" />
 
-                  <div>
-                    <p className="font-bold text-red-700 dark:text-red-400">
-                      Student is At Risk
-                    </p>
+                    <div>
+                      <p className="font-bold text-red-700 dark:text-red-400">
+                        Student is At Risk
+                      </p>
 
-                    <p className="text-xs text-red-600 dark:text-red-300">
-                      This student may need additional support.
-                    </p>
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-300">
+                        This student has reached the risk threshold.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between rounded-lg bg-white/70 p-3 text-sm dark:bg-black/20">
+                      <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                        <CalendarX size={16} />
+                        Absences
+                      </span>
+
+                      <strong className="text-red-600">
+                        {selectedStudent.risk?.absenceCount ||
+                          selectedStudent.risk?.attendanceIssues ||
+                          0}
+                      </strong>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg bg-white/70 p-3 text-sm dark:bg-black/20">
+                      <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                        <FileX size={16} />
+                        Missed Assignments
+                      </span>
+
+                      <strong className="text-red-600">
+                        {selectedStudent.risk?.missedAssignmentCount ||
+                          selectedStudent.risk?.assignmentIssues ||
+                          0}
+                      </strong>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -412,6 +473,10 @@ const MyStudents = () => {
                   <div>
                     <p className="font-bold text-green-700 dark:text-green-400">
                       Student is On Track
+                    </p>
+
+                    <p className="mt-1 text-xs text-green-600 dark:text-green-300">
+                      The student has not reached any at-risk threshold.
                     </p>
                   </div>
                 </div>
@@ -449,7 +514,7 @@ const MyStudents = () => {
             <button
               type="button"
               onClick={() => setSelectedStudent(null)}
-              className="mt-6 w-full rounded-xl bg-[#1A3D63] px-4 py-3 text-sm font-medium text-white hover:bg-[#4A7FA7]"
+              className="mt-6 w-full rounded-xl bg-[#1A3D63] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#4A7FA7]"
             >
               Close
             </button>

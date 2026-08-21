@@ -1,8 +1,53 @@
+import { useEffect, useState } from "react";
 import { ClipboardCheck, FileText, BarChart3, Megaphone } from "lucide-react";
 
-import StudentAtRiskNotification from "../../components/AtRiskNotification";
+import api from "../../utils/api";
 
 function StudentDashboard() {
+  // ============================================================
+  // STUDENT DATA
+  // ============================================================
+
+  const [student, setStudent] = useState(null);
+  const [atRisk, setAtRisk] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // ============================================================
+  // FETCH DATA FROM BACKEND
+  // ============================================================
+
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      try {
+        setLoading(true);
+
+        // Get logged-in student's profile
+        const profileResponse = await api.get("/users/profile");
+
+        if (profileResponse.data.success) {
+          setStudent(profileResponse.data.user);
+        }
+
+        // Get logged-in student's at-risk status
+        const riskResponse = await api.get("/users/my-risk-status");
+
+        if (riskResponse.data.success) {
+          setAtRisk(Boolean(riskResponse.data.atRisk));
+        }
+      } catch (error) {
+        console.error("Error fetching student dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentData();
+  }, []);
+
+  // ============================================================
+  // DASHBOARD STATS
+  // ============================================================
+
   const stats = [
     {
       title: "Attendance",
@@ -26,17 +71,65 @@ function StudentDashboard() {
     },
   ];
 
+  // ============================================================
+  // LOADING
+  // ============================================================
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F6FAFD]">
+        <p className="text-sm font-medium text-[#4A7FA7]">
+          Loading dashboard...
+        </p>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // STUDENT NAME
+  // ============================================================
+
+  const studentName = student
+    ? `${student.firstName || ""} ${student.lastName || ""}`.trim()
+    : "Student";
+
+  // ============================================================
+  // RETURN
+  // ============================================================
+
   return (
     <div className="min-h-screen bg-[#F6FAFD]">
-      {/* AT-RISK NOTIFICATION */}
-      <StudentAtRiskNotification />
+      {/* ========================================================
+          AT-RISK INDICATOR
+          NON-CLICKABLE
+      ======================================================== */}
 
-      {/* HEADER */}
+      {atRisk && (
+        <div className="mx-8 mt-6 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-5 py-4">
+          <div>
+            <p className="font-semibold text-red-700">At Risk</p>
+
+            <p className="mt-1 text-sm text-red-600">
+              Your current performance requires attention.
+            </p>
+          </div>
+
+          {/* NOT A BUTTON / NOT CLICKABLE */}
+          <div className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white">
+            At Risk
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          HEADER
+      ======================================================== */}
+
       <header className="border-b border-[#D6D6D6] bg-white px-8 py-6">
         <p className="text-sm font-medium text-[#4A7FA7]">Student Dashboard</p>
 
         <h1 className="mt-1 text-2xl font-bold text-[#0A1931]">
-          Welcome back, Student
+          Welcome back, {studentName}
         </h1>
 
         <p className="mt-1 text-sm text-gray-500">
@@ -44,9 +137,15 @@ function StudentDashboard() {
         </p>
       </header>
 
-      {/* CONTENT */}
+      {/* ========================================================
+          CONTENT
+      ======================================================== */}
+
       <div className="p-8">
-        {/* STATS */}
+        {/* ======================================================
+            STATS
+        ====================================================== */}
+
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {stats.map((stat) => {
             const Icon = stat.icon;
@@ -74,9 +173,15 @@ function StudentDashboard() {
           })}
         </div>
 
-        {/* PROGRESS + ANNOUNCEMENT */}
+        {/* ======================================================
+            PROGRESS + ANNOUNCEMENT
+        ====================================================== */}
+
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          {/* PROGRESS */}
+          {/* ====================================================
+              PROGRESS
+          ==================================================== */}
+
           <div className="rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
             <h2 className="text-lg font-bold text-[#0A1931]">Your Progress</h2>
 
@@ -99,7 +204,10 @@ function StudentDashboard() {
             </div>
           </div>
 
-          {/* ANNOUNCEMENT */}
+          {/* ====================================================
+              ANNOUNCEMENT
+          ==================================================== */}
+
           <div className="rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
             <div className="flex items-start gap-4">
               <div className="rounded-xl bg-[#B3CFE5]/40 p-3">
@@ -124,7 +232,10 @@ function StudentDashboard() {
           </div>
         </div>
 
-        {/* KEEP LEARNING */}
+        {/* ======================================================
+            KEEP LEARNING
+        ====================================================== */}
+
         <div className="mt-6 rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold text-[#0A1931]">Keep Learning</h2>
 
@@ -133,6 +244,8 @@ function StudentDashboard() {
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {/* ATTENDANCE */}
+
             <div className="rounded-xl bg-[#F6FAFD] p-5">
               <h3 className="font-semibold text-[#0A1931]">Attendance</h3>
 
@@ -141,6 +254,8 @@ function StudentDashboard() {
               </p>
             </div>
 
+            {/* ASSIGNMENTS */}
+
             <div className="rounded-xl bg-[#F6FAFD] p-5">
               <h3 className="font-semibold text-[#0A1931]">Assignments</h3>
 
@@ -148,6 +263,8 @@ function StudentDashboard() {
                 Complete your assignments and submit them on time.
               </p>
             </div>
+
+            {/* PROGRESS */}
 
             <div className="rounded-xl bg-[#F6FAFD] p-5">
               <h3 className="font-semibold text-[#0A1931]">Progress</h3>

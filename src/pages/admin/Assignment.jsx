@@ -55,10 +55,6 @@ const AdminAssignment = () => {
 
   const [replaceFiles, setReplaceFiles] = useState(false);
 
-  // ============================================================
-  // FETCH ASSIGNMENTS
-  // ============================================================
-
   const fetchAssignments = async () => {
     try {
       setLoading(true);
@@ -79,10 +75,6 @@ const AdminAssignment = () => {
     fetchAssignments();
   }, []);
 
-  // ============================================================
-  // FORM CHANGE
-  // ============================================================
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -91,10 +83,6 @@ const AdminAssignment = () => {
       [name]: value,
     }));
   };
-
-  // ============================================================
-  // RESET FORM
-  // ============================================================
 
   const resetForm = () => {
     setFormData({
@@ -110,10 +98,6 @@ const AdminAssignment = () => {
     setEditingAssignment(null);
     setReplaceFiles(false);
   };
-
-  // ============================================================
-  // FILE VALIDATION
-  // ============================================================
 
   const validateFile = (file) => {
     const extension = "." + file.name.split(".").pop().toLowerCase();
@@ -134,10 +118,6 @@ const AdminAssignment = () => {
 
     return true;
   };
-
-  // ============================================================
-  // FILE SELECT
-  // ============================================================
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
@@ -161,17 +141,9 @@ const AdminAssignment = () => {
     e.target.value = "";
   };
 
-  // ============================================================
-  // REMOVE SELECTED FILE
-  // ============================================================
-
   const removeSelectedFile = (index) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
-
-  // ============================================================
-  // FORMAT DATE FOR INPUT
-  // ============================================================
 
   const formatDateForInput = (date) => {
     if (!date) return "";
@@ -188,10 +160,6 @@ const AdminAssignment = () => {
 
     return `${year}-${month}-${day}`;
   };
-
-  // ============================================================
-  // CREATE / UPDATE
-  // ============================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -269,10 +237,6 @@ const AdminAssignment = () => {
     }
   };
 
-  // ============================================================
-  // START EDIT
-  // ============================================================
-
   const handleEdit = (assignment) => {
     setEditingAssignment(assignment);
 
@@ -293,10 +257,6 @@ const AdminAssignment = () => {
       behavior: "smooth",
     });
   };
-
-  // ============================================================
-  // DELETE
-  // ============================================================
 
   const handleDelete = async (id) => {
     if (!id) return;
@@ -324,10 +284,6 @@ const AdminAssignment = () => {
     }
   };
 
-  // ============================================================
-  // BATCH NAME
-  // ============================================================
-
   const getBatchName = (assignment) => {
     if (!assignment?.batch) {
       return "No batch";
@@ -340,19 +296,11 @@ const AdminAssignment = () => {
     return "Unknown batch";
   };
 
-  // ============================================================
-  // EXPIRED
-  // ============================================================
-
   const isExpired = (deadline) => {
     if (!deadline) return false;
 
     return new Date(deadline) < new Date();
   };
-
-  // ============================================================
-  // FILE SIZE
-  // ============================================================
 
   const formatFileSize = (bytes) => {
     if (!bytes) return "0 KB";
@@ -368,10 +316,6 @@ const AdminAssignment = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // ============================================================
-  // FILE URL
-  // ============================================================
-
   const getFileUrl = (fileUrl) => {
     if (!fileUrl) return "#";
 
@@ -386,17 +330,9 @@ const AdminAssignment = () => {
     return `${serverURL}${fileUrl}`;
   };
 
-  // ============================================================
-  // RENDER
-  // ============================================================
-
   return (
     <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-8">
       <div className="mx-auto max-w-6xl space-y-8">
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
-
         <div className="flex flex-col justify-between gap-5 rounded-3xl bg-[#0A1931] p-8 text-white shadow-lg md:flex-row md:items-center">
           <div className="flex items-center gap-5">
             <div className="rounded-2xl bg-[#1A3D63] p-4">
@@ -422,15 +358,7 @@ const AdminAssignment = () => {
           </div>
         </div>
 
-        {/* ======================================================
-            MAIN GRID
-        ====================================================== */}
-
         <div className="grid gap-8 lg:grid-cols-5">
-          {/* ====================================================
-              FORM
-          ==================================================== */}
-
           <div className="lg:col-span-2">
             <form
               onSubmit={handleSubmit}

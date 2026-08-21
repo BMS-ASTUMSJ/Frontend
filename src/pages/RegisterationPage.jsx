@@ -54,7 +54,6 @@ function RegisterationPage() {
       } catch (err) {
         console.error("Failed to fetch registration status:", err);
 
-        // Keep registration open if checking fails
         setIsRegistrationOpen(true);
 
         toast.error(
@@ -152,10 +151,8 @@ function RegisterationPage() {
 
       setSuccessMessage(message);
 
-      // Toast success
       toast.success("Application submitted successfully!");
 
-      // Keep your existing success modal
       setShowSuccessModal(true);
 
       setFormData({
@@ -385,7 +382,6 @@ function RegisterationPage() {
                 </div>
               </div>
 
-              {/* Coding Profiles */}
               <div className="space-y-4 rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD]/50 p-5">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-[#1A3D63]">
                   Coding & Competitive Profiles
@@ -441,7 +437,6 @@ function RegisterationPage() {
                 </div>
               </div>
 
-              {/* Experience */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
                   Experience Level <span className="text-red-500">*</span>

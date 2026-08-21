@@ -19,10 +19,6 @@ const ProfileForm = ({ role }) => {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  // ============================================================
-  // LOAD PROFILE
-  // ============================================================
-
   const loadProfile = async () => {
     try {
       setLoading(true);
@@ -59,10 +55,6 @@ const ProfileForm = ({ role }) => {
     loadProfile();
   }, []);
 
-  // ============================================================
-  // IMAGE SELECTION
-  // ============================================================
-
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
 
@@ -89,10 +81,6 @@ const ProfileForm = ({ role }) => {
 
     setPreview(imageUrl);
   };
-
-  // ============================================================
-  // SAVE PROFILE
-  // ============================================================
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -144,10 +132,6 @@ const ProfileForm = ({ role }) => {
     }
   };
 
-  // ============================================================
-  // REMOVE IMAGE
-  // ============================================================
-
   const handleRemoveImage = async () => {
     try {
       setRemoving(true);
@@ -179,10 +163,6 @@ const ProfileForm = ({ role }) => {
     }
   };
 
-  // ============================================================
-  // LOADING
-  // ============================================================
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -193,10 +173,6 @@ const ProfileForm = ({ role }) => {
       </div>
     );
   }
-
-  // ============================================================
-  // UI
-  // ============================================================
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">

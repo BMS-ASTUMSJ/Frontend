@@ -15,12 +15,7 @@ const StudentAssignment = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // true = updating an existing pending submission
   const [isUpdating, setIsUpdating] = useState(false);
-
-  // ============================================================
-  // LOAD DATA
-  // ============================================================
 
   const loadData = async () => {
     try {
@@ -47,10 +42,6 @@ const StudentAssignment = () => {
     loadData();
   }, []);
 
-  // ============================================================
-  // FIND SUBMISSION
-  // ============================================================
-
   const getSubmission = (assignmentId) => {
     return mySubmissions.find((submission) => {
       const submissionAssignment = submission.assignment;
@@ -63,28 +54,16 @@ const StudentAssignment = () => {
     });
   };
 
-  // ============================================================
-  // CHECK DEADLINE
-  // ============================================================
-
   const isExpired = (deadline) => {
     if (!deadline) return false;
 
     return new Date(deadline) < new Date();
   };
 
-  // ============================================================
-  // OPEN MODAL FOR NEW SUBMISSION
-  // ============================================================
-
   const openSubmissionModal = (assignment) => {
     const submission = getSubmission(assignment._id);
 
     setSelectedId(assignment._id);
-
-    // ----------------------------------------------------------
-    // RESUBMISSION REQUIRED
-    // ----------------------------------------------------------
 
     if (submission?.status === "Resubmission Required") {
       setGithubUrl(submission.githubUrl || "");
@@ -98,10 +77,6 @@ const StudentAssignment = () => {
       return;
     }
 
-    // ----------------------------------------------------------
-    // PENDING UPDATE
-    // ----------------------------------------------------------
-
     if (submission?.status === "Pending") {
       setGithubUrl(submission.githubUrl || "");
 
@@ -114,19 +89,11 @@ const StudentAssignment = () => {
       return;
     }
 
-    // ----------------------------------------------------------
-    // NEW SUBMISSION
-    // ----------------------------------------------------------
-
     setGithubUrl("");
     setLiveDemoUrl("");
     setNotes("");
     setIsUpdating(false);
   };
-
-  // ============================================================
-  // CLOSE MODAL
-  // ============================================================
 
   const closeModal = () => {
     if (submitting) return;
@@ -139,10 +106,6 @@ const StudentAssignment = () => {
 
     setIsUpdating(false);
   };
-
-  // ============================================================
-  // HANDLE SUBMIT / UPDATE / RESUBMIT
-  // ============================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -171,10 +134,6 @@ const StudentAssignment = () => {
 
     const isPendingUpdate = existingSubmission?.status === "Pending";
 
-    // ----------------------------------------------------------
-    // DEADLINE
-    // ----------------------------------------------------------
-
     if (isExpired(assignment.deadline) && !isResubmission) {
       toast.error("The deadline for this assignment has passed.");
 
@@ -191,10 +150,6 @@ const StudentAssignment = () => {
         notes: notes.trim(),
       };
 
-      // ========================================================
-      // UPDATE EXISTING PENDING SUBMISSION
-      // ========================================================
-
       if (isPendingUpdate) {
         const res = await api.put(`/submissions/${existingSubmission._id}`, {
           githubUrl: githubUrl.trim(),
@@ -210,10 +165,6 @@ const StudentAssignment = () => {
 
         return;
       }
-
-      // ========================================================
-      // FIRST SUBMISSION OR RESUBMISSION
-      // ========================================================
 
       const res = await api.post("/submissions", payload);
 
@@ -236,10 +187,6 @@ const StudentAssignment = () => {
     }
   };
 
-  // ============================================================
-  // LOADING
-  // ============================================================
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F6FAFD]">
@@ -250,17 +197,9 @@ const StudentAssignment = () => {
     );
   }
 
-  // ============================================================
-  // PAGE
-  // ============================================================
-
   return (
     <div className="min-h-screen bg-[#F6FAFD] p-6">
       <div className="mx-auto max-w-5xl">
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
-
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-[#0A1931]">
             Course Assignments
@@ -521,18 +460,12 @@ const StudentAssignment = () => {
         )}
       </div>
 
-      {/* ============================================================
-          SUBMISSION MODAL
-      ============================================================ */}
-
       {selectedId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <form
             onSubmit={handleSubmit}
             className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
           >
-            {/* TITLE */}
-
             <h3 className="mb-2 text-xl font-bold text-[#0A1931]">
               {isUpdating
                 ? "Update Submission"
@@ -548,8 +481,6 @@ const StudentAssignment = () => {
                   ? "Update your project and submit it again for mentor review."
                   : "Provide the links to your project."}
             </p>
-
-            {/* GITHUB */}
 
             <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
               GitHub Repository *

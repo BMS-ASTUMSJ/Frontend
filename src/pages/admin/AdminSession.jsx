@@ -9,18 +9,6 @@ import {
 } from "lucide-react";
 import api from "../../utils/api";
 
-// ============================================================
-// ADMIN SESSIONS
-// ============================================================
-//
-// Admins configure each week's sessions here — how many
-// lectures that week has (2, 4, or any number), plus the
-// Contest and Experience Sharing sessions, each with a date.
-//
-// Mentors never create sessions; they only see and mark
-// attendance against whatever is generated here.
-// ============================================================
-
 const AdminSessions = () => {
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState("");
@@ -35,10 +23,6 @@ const AdminSessions = () => {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  // ==========================================================
-  // LOAD BATCHES
-  // ==========================================================
 
   useEffect(() => {
     const fetchBatches = async () => {
@@ -62,10 +46,6 @@ const AdminSessions = () => {
     fetchBatches();
   }, []);
 
-  // ==========================================================
-  // LOAD SESSIONS FOR SELECTED BATCH
-  // ==========================================================
-
   const fetchSessions = async () => {
     if (!selectedBatch) return;
 
@@ -88,12 +68,7 @@ const AdminSessions = () => {
 
   useEffect(() => {
     fetchSessions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBatch]);
-
-  // ==========================================================
-  // GENERATE WEEK
-  // ==========================================================
 
   const handleGenerate = async () => {
     if (!selectedBatch) {
@@ -131,10 +106,6 @@ const AdminSessions = () => {
     }
   };
 
-  // ==========================================================
-  // DELETE SESSION
-  // ==========================================================
-
   const handleDelete = async (sessionId) => {
     try {
       await api.delete(`/sessions/${sessionId}`);
@@ -144,10 +115,6 @@ const AdminSessions = () => {
       setError(err.response?.data?.message || "Failed to delete session.");
     }
   };
-
-  // ==========================================================
-  // GROUP SESSIONS BY WEEK
-  // ==========================================================
 
   const sessionsByWeek = sessions.reduce((acc, session) => {
     acc[session.week] = acc[session.week] || [];
@@ -288,8 +255,6 @@ const AdminSessions = () => {
             Generate Week
           </button>
         </div>
-
-        {/* EXISTING SESSIONS */}
 
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
           <h2 className="mb-5 text-lg font-black text-gray-900">

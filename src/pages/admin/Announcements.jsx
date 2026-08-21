@@ -10,13 +10,13 @@ import {
   Bell,
   Loader2,
   AlertCircle,
-  Layers,
+  User,
 } from "lucide-react";
 
 function Announcements() {
   const storedUser = localStorage.getItem("user");
 
-  let user = { role: "student", batch: null };
+  let user = { role: "admin" };
 
   try {
     if (storedUser) {
@@ -26,26 +26,8 @@ function Announcements() {
     console.error("Invalid user data in localStorage:", error);
   }
 
-  const role = user?.role || "student";
+  const role = String(user?.role || "admin").toLowerCase();
   const isAdmin = role === "admin";
-
-  const [currentBatch, setCurrentBatch] = useState(null);
-  const [loadingBatch, setLoadingBatch] = useState(true);
-
-  const currentBatchId =
-    currentBatch?._id ||
-    currentBatch?.id ||
-    user?.batch?._id ||
-    user?.batch?.id ||
-    user?.batch ||
-    null;
-
-  const currentBatchName =
-    currentBatch?.name ||
-    (typeof user?.batch === "object"
-      ? user?.batch?.name || user?.batch?.title
-      : null) ||
-    "Current Batch";
 
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,79 +43,6 @@ function Announcements() {
   const [editBody, setEditBody] = useState("");
   const [editAudience, setEditAudience] = useState("all");
   const [isUpdating, setIsUpdating] = useState(false);
-
-  const loadCurrentBatch = async () => {
-    try {
-      setLoadingBatch(true);
-
-      const response = await api.get("/batches/my-batches");
-
-      const batchResults = Array.isArray(response.data?.batches)
-        ? response.data.batches
-        : [];
-
-      if (isAdmin) {
-        const activeResult = batchResults.find(
-          (item) => item?.batch?.status === "active",
-        );
-
-        if (activeResult?.batch) {
-          setCurrentBatch(activeResult.batch);
-          return;
-        }
-
-        if (batchResults[0]?.batch) {
-          setCurrentBatch(batchResults[0].batch);
-          return;
-        }
-      } else {
-        const currentResult =
-          batchResults.find(
-            (item) =>
-              item?.batch?._id &&
-              String(item.batch._id) ===
-                String(user?.batch?._id || user?.batch?.id || user?.batch),
-          ) || batchResults[0];
-
-        if (currentResult?.batch) {
-          setCurrentBatch(currentResult.batch);
-          return;
-        }
-      }
-
-      if (user?.batch) {
-        if (typeof user.batch === "object") {
-          setCurrentBatch(user.batch);
-        } else {
-          const batchResponse = await api.get(`/batches/${user.batch}`);
-
-          if (batchResponse.data?.batch) {
-            setCurrentBatch(batchResponse.data.batch);
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Failed to load current batch:", err);
-
-      try {
-        if (user?.batch) {
-          if (typeof user.batch === "object") {
-            setCurrentBatch(user.batch);
-          } else {
-            const response = await api.get(`/batches/${user.batch}`);
-
-            if (response.data?.batch) {
-              setCurrentBatch(response.data.batch);
-            }
-          }
-        }
-      } catch (fallbackError) {
-        console.error("Failed to load fallback batch:", fallbackError);
-      }
-    } finally {
-      setLoadingBatch(false);
-    }
-  };
 
   const loadAnnouncements = async () => {
     try {
@@ -163,7 +72,6 @@ function Announcements() {
   };
 
   useEffect(() => {
-    loadCurrentBatch();
     loadAnnouncements();
   }, []);
 
@@ -180,10 +88,8 @@ function Announcements() {
       return;
     }
 
-    if (!currentBatchId) {
-      toast.error(
-        "No batch is available. Please create or activate a batch first.",
-      );
+    if (!["all", "mentor"].includes(audience)) {
+      toast.error("Please select a valid audience.");
       return;
     }
 
@@ -195,7 +101,6 @@ function Announcements() {
         title: title.trim(),
         body: body.trim(),
         audience,
-        batch: currentBatchId,
       });
 
       if (!response.data?.success) {
@@ -317,8 +222,8 @@ function Announcements() {
       return;
     }
 
-    if (!currentBatchId) {
-      toast.error("No current batch is assigned.");
+    if (!["all", "mentor"].includes(editAudience)) {
+      toast.error("Please select a valid audience.");
       return;
     }
 
@@ -330,7 +235,6 @@ function Announcements() {
         title: editTitle.trim(),
         body: editBody.trim(),
         audience: editAudience,
-        batch: currentBatchId,
       });
 
       if (!response.data?.success) {
@@ -357,6 +261,9 @@ function Announcements() {
     }
   };
 
+  // =====================================================
+  // FORMAT DATE
+  // =====================================================
   const formatDate = (date) => {
     if (!date) return "";
 
@@ -378,7 +285,24 @@ function Announcements() {
       return "Mentors Only";
     }
 
+    if (announcementAudience === "assigned_students") {
+      return "Assigned Students";
+    }
+
     return announcementAudience;
+  };
+
+  const getCreatorName = (item) => {
+    if (!item?.createdBy) {
+      return "Unknown";
+    }
+
+    const firstName = item.createdBy.firstName || "";
+    const lastName = item.createdBy.lastName || "";
+
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    return fullName || "Unknown";
   };
 
   return (
@@ -396,9 +320,7 @@ function Announcements() {
               </h1>
 
               <p className="mt-1 text-sm font-medium text-[#B3CFE5]">
-                {isAdmin
-                  ? "Manage communication for the current batch"
-                  : "Latest updates from the administration"}
+                Manage announcements for students and mentors
               </p>
             </div>
           </div>
@@ -407,45 +329,22 @@ function Announcements() {
         {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-700">
             <AlertCircle size={20} />
+
             <span className="text-sm font-bold">{error}</span>
           </div>
         )}
 
         {isAdmin && (
           <div className="rounded-3xl border border-[#B3CFE5]/40 bg-white p-6 shadow-sm md:p-8">
-            <div className="mb-6 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-[#EAF3F9] p-2.5">
-                  <Bell className="h-5 w-5 text-[#1A3D63]" />
-                </div>
-
-                <h2 className="text-lg font-bold text-[#0A1931]">
-                  New Announcement
-                </h2>
+            <div className="mb-6 flex items-center gap-3">
+              <div className="rounded-xl bg-[#EAF3F9] p-2.5">
+                <Bell className="h-5 w-5 text-[#1A3D63]" />
               </div>
 
-              <div className="flex items-center gap-2 rounded-xl bg-[#F6FAFD] px-3 py-2 text-xs font-bold text-[#1A3D63]">
-                <Layers size={15} />
-
-                {loadingBatch ? (
-                  <span>Loading batch...</span>
-                ) : (
-                  currentBatchName
-                )}
-              </div>
+              <h2 className="text-lg font-bold text-[#0A1931]">
+                New Announcement
+              </h2>
             </div>
-
-            {!loadingBatch && !currentBatchId && (
-              <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3">
-                <p className="text-xs font-bold text-amber-700">
-                  No batch is currently available for this announcement.
-                </p>
-
-                <p className="mt-1 text-[11px] text-amber-600">
-                  Make sure you have an active batch.
-                </p>
-              </div>
-            )}
 
             <form onSubmit={handlePublish} className="space-y-5">
               <input
@@ -495,7 +394,7 @@ function Announcements() {
 
                 <button
                   type="submit"
-                  disabled={isPublishing || loadingBatch}
+                  disabled={isPublishing}
                   className="flex items-center justify-center gap-2 rounded-2xl bg-[#4A7FA7] px-10 py-3 text-sm font-bold text-white transition-all hover:bg-[#1A3D63] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isPublishing ? (
@@ -535,7 +434,7 @@ function Announcements() {
               <p className="font-bold text-[#0A1931]">No announcements yet.</p>
 
               <p className="mt-1 text-xs text-gray-400">
-                Check back later for important updates.
+                Create an announcement to share an update.
               </p>
             </div>
           ) : (
@@ -618,7 +517,7 @@ function Announcements() {
                         <Megaphone size={22} />
                       </div>
 
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-3">
                           <h3 className="text-lg font-extrabold text-[#0A1931]">
                             {item.title}
@@ -628,22 +527,43 @@ function Announcements() {
                             {getAudienceLabel(item.audience)}
                           </span>
 
-                          {item.batch?.name && (
-                            <span className="flex items-center gap-1 rounded border border-[#B3CFE5] bg-white px-2 py-0.5 text-[9px] font-black uppercase text-[#4A7FA7]">
-                              <Layers size={10} />
-                              {item.batch.name}
+                          {item.edited && (
+                            <span className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-black uppercase text-amber-600">
+                              Edited
                             </span>
                           )}
                         </div>
 
-                        <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tighter text-gray-400">
-                          <CalendarDays size={12} />
-                          {formatDate(item.createdAt)}
+                        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-tighter text-gray-400">
+                          <div className="flex items-center gap-1.5">
+                            <CalendarDays size={12} />
+
+                            {formatDate(item.createdAt)}
+                          </div>
+
+                          {item.createdBy && (
+                            <div className="flex items-center gap-1.5">
+                              <User size={12} />
+
+                              <span>
+                                Posted by{" "}
+                                <span className="text-[#1A3D63]">
+                                  {getCreatorName(item)}
+                                </span>
+                              </span>
+                            </div>
+                          )}
                         </div>
 
-                        <p className="mt-4 text-sm font-medium leading-relaxed text-slate-600">
+                        <p className="mt-4 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-600">
                           {item.body}
                         </p>
+
+                        {item.edited && item.updatedAt && (
+                          <p className="mt-2 text-[10px] font-semibold text-amber-500">
+                            Edited on {formatDate(item.updatedAt)}
+                          </p>
+                        )}
                       </div>
                     </div>
 

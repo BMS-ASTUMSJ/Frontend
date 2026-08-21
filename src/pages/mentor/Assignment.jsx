@@ -25,10 +25,6 @@ const MentorAssignment = () => {
 
   const [gradeData, setGradeData] = useState({});
 
-  // ============================================================
-  // FETCH ASSIGNMENTS
-  // ============================================================
-
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
@@ -51,10 +47,6 @@ const MentorAssignment = () => {
     fetchAssignments();
   }, []);
 
-  // ============================================================
-  // AUTOMATIC SUBMISSION STATUS
-  // ============================================================
-
   const getSubmissionStatus = (submission) => {
     if (submission?.status === "Graded") {
       return "Graded";
@@ -64,13 +56,8 @@ const MentorAssignment = () => {
       return "Resubmission Required";
     }
 
-    // If submitted but not graded yet
     return "Pending";
   };
-
-  // ============================================================
-  // LOAD SUBMISSIONS
-  // ============================================================
 
   const loadSubmissions = async (assignmentId) => {
     if (!assignmentId) {
@@ -115,10 +102,6 @@ const MentorAssignment = () => {
     }
   };
 
-  // ============================================================
-  // HANDLE INPUT CHANGE
-  // ============================================================
-
   const handleInputChange = (subId, field, value) => {
     setGradeData((prev) => ({
       ...prev,
@@ -128,10 +111,6 @@ const MentorAssignment = () => {
       },
     }));
   };
-
-  // ============================================================
-  // REQUEST RESUBMISSION
-  // ============================================================
 
   const requestResubmission = async (subId) => {
     const confirmed = window.confirm(
@@ -170,10 +149,6 @@ const MentorAssignment = () => {
     }
   };
 
-  // ============================================================
-  // SUBMIT GRADE
-  // ============================================================
-
   const submitGrade = async (subId) => {
     const currentGrade = gradeData[subId];
 
@@ -181,10 +156,6 @@ const MentorAssignment = () => {
       toast.error("Evaluation data not found.");
       return;
     }
-
-    // ----------------------------------------------------------
-    // SCORE REQUIRED
-    // ----------------------------------------------------------
 
     if (
       currentGrade.score === "" ||
@@ -207,10 +178,6 @@ const MentorAssignment = () => {
       return;
     }
 
-    // ----------------------------------------------------------
-    // GET ASSIGNMENT
-    // ----------------------------------------------------------
-
     const assignment = assignments.find((asm) => asm._id === selectedAsm);
 
     if (!assignment) {
@@ -224,10 +191,6 @@ const MentorAssignment = () => {
       toast.error(`Score cannot exceed ${maxScore}.`);
       return;
     }
-
-    // ----------------------------------------------------------
-    // GRADING ALWAYS MEANS GRADED
-    // ----------------------------------------------------------
 
     try {
       console.log("========== SENDING GRADE ==========");
@@ -245,7 +208,6 @@ const MentorAssignment = () => {
 
       toast.success("Evaluation saved successfully.");
 
-      // Reload so status becomes Graded automatically
       await loadSubmissions(selectedAsm);
     } catch (err) {
       console.error("GRADING FAILED:", err);
@@ -255,10 +217,6 @@ const MentorAssignment = () => {
       toast.error(err.response?.data?.message || "Grading failed");
     }
   };
-
-  // ============================================================
-  // LOADING PAGE
-  // ============================================================
 
   if (loading) {
     return (
@@ -374,7 +332,6 @@ const MentorAssignment = () => {
                   status: getSubmissionStatus(sub),
                 };
 
-                // AUTOMATIC STATUS
                 const status = currentGrade.status || getSubmissionStatus(sub);
 
                 const isPending = status === "Pending";
