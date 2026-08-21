@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
-  Search,
   RefreshCw,
   Check,
   X,
@@ -27,15 +26,18 @@ function ApplicantsPage() {
 
   const [error, setError] = useState("");
 
-  const [search, setSearch] = useState("");
+  // Filters
   const [gender, setGender] = useState("");
   const [status, setStatus] = useState("");
-  const [batchId, setBatchId] = useState("");
 
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [processingId, setProcessingId] = useState(null);
 
   const [approvalMessage, setApprovalMessage] = useState(null);
+
+  // ============================================================
+  // FETCH BATCHES
+  // ============================================================
 
   const fetchBatches = async () => {
     try {
@@ -53,6 +55,10 @@ function ApplicantsPage() {
     }
   };
 
+  // ============================================================
+  // FETCH APPLICANTS
+  // ============================================================
+
   const fetchApplicants = async (showLoader = true) => {
     try {
       if (showLoader) {
@@ -63,23 +69,10 @@ function ApplicantsPage() {
 
       setError("");
 
-      const params = new URLSearchParams();
-
-      if (gender) {
-        params.append("gender", gender);
-      }
-
-      if (status) {
-        params.append("status", status);
-      }
-
-      if (batchId) {
-        params.append("batchId", batchId);
-      }
-
-      const query = params.toString() ? `?${params.toString()}` : "";
-
-      const response = await api.get(`/applicants${query}`);
+      // Fetch all applicants.
+      // Gender and status filtering is handled below
+      // on the frontend.
+      const response = await api.get("/applicants");
 
       setApplicants(response.data?.applicants || []);
     } catch (err) {
@@ -96,31 +89,52 @@ function ApplicantsPage() {
     }
   };
 
+  // ============================================================
+  // INITIAL LOAD
+  // ============================================================
+
   useEffect(() => {
     fetchBatches();
+    fetchApplicants();
   }, []);
 
-  useEffect(() => {
-    fetchApplicants();
-  }, [gender, status, batchId]);
+  // ============================================================
+  // FRONTEND FILTERING
+  // ============================================================
 
   const filteredApplicants = useMemo(() => {
-    const value = search.trim().toLowerCase();
-
-    if (!value) {
-      return applicants;
-    }
-
     return applicants.filter((applicant) => {
-      return (
-        applicant.fullName?.toLowerCase().includes(value) ||
-        applicant.email?.toLowerCase().includes(value) ||
-        applicant.schoolId?.toLowerCase().includes(value) ||
-        applicant.department?.toLowerCase().includes(value) ||
-        getBatchName(applicant, batches)?.toLowerCase().includes(value)
-      );
+      // -----------------------------
+      // Gender
+      // -----------------------------
+
+      const applicantGender =
+        applicant.gender?.toString().trim().toLowerCase() || "";
+
+      const selectedGender = gender?.toString().trim().toLowerCase() || "";
+
+      const matchesGender =
+        !selectedGender || applicantGender === selectedGender;
+
+      // -----------------------------
+      // Status
+      // -----------------------------
+
+      const applicantStatus =
+        applicant.status?.toString().trim().toLowerCase() || "";
+
+      const selectedStatus = status?.toString().trim().toLowerCase() || "";
+
+      const matchesStatus =
+        !selectedStatus || applicantStatus === selectedStatus;
+
+      return matchesGender && matchesStatus;
     });
-  }, [applicants, search, batches]);
+  }, [applicants, gender, status]);
+
+  // ============================================================
+  // UPDATE STATUS
+  // ============================================================
 
   const updateStatus = async (applicantId, newStatus) => {
     try {
@@ -171,6 +185,10 @@ function ApplicantsPage() {
     }
   };
 
+  // ============================================================
+  // STATUS BADGE
+  // ============================================================
+
   const getStatusBadge = (value) => {
     switch (value) {
       case "passed":
@@ -199,6 +217,10 @@ function ApplicantsPage() {
     }
   };
 
+  // ============================================================
+  // GET BATCH NAME
+  // ============================================================
+
   const getBatchName = (applicant, batchList = batches) => {
     if (!applicant?.batch) {
       return "No batch";
@@ -213,6 +235,10 @@ function ApplicantsPage() {
     return batch?.name || "Unknown batch";
   };
 
+  // ============================================================
+  // GET BATCH STATUS
+  // ============================================================
+
   const getBatchStatus = (applicant) => {
     if (!applicant?.batch || typeof applicant.batch !== "object") {
       return null;
@@ -220,6 +246,10 @@ function ApplicantsPage() {
 
     return applicant.batch.status;
   };
+
+  // ============================================================
+  // FORMAT DATE
+  // ============================================================
 
   const formatDate = (date) => {
     if (!date) return "-";
@@ -233,11 +263,13 @@ function ApplicantsPage() {
     return parsedDate.toLocaleDateString();
   };
 
-  const clearFilters = () => {
-    setSearch("");
+  // ============================================================
+  // RESET FILTERS
+  // ============================================================
+
+  const resetFilters = () => {
     setGender("");
     setStatus("");
-    setBatchId("");
   };
 
   return (
@@ -256,6 +288,10 @@ function ApplicantsPage() {
 
       <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-8">
         <div className="mx-auto max-w-7xl space-y-6">
+          {/* ==================================================
+              HEADER
+          ================================================== */}
+
           <div className="rounded-3xl bg-[#0A1931] p-6 text-white shadow-sm md:p-8">
             <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
               <div className="flex items-center gap-4">
@@ -287,6 +323,10 @@ function ApplicantsPage() {
             </div>
           </div>
 
+          {/* ==================================================
+              ERROR
+          ================================================== */}
+
           {error && (
             <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               <AlertCircle size={20} />
@@ -303,77 +343,49 @@ function ApplicantsPage() {
             </div>
           )}
 
-          <div className="rounded-3xl border border-[#B3CFE5] bg-white p-5 shadow-sm">
-            <div className="grid gap-4 md:grid-cols-5">
-              <div className="relative">
-                <Search
-                  size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                />
+          {/* ==================================================
+              FILTERS
+          ================================================== */}
 
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search applicants..."
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] py-3 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-[#B3CFE5]"
-                />
-              </div>
+          <div className="rounded-3xl border border-[#B3CFE5] bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row">
+              {/* GENDER */}
 
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
-                className="rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none"
+                className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#B3CFE5] md:w-1/2"
               >
                 <option value="">All genders</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
               </select>
 
+              {/* STATUS */}
+
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none"
+                className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#B3CFE5] md:w-1/2"
               >
                 <option value="">All statuses</option>
                 <option value="pending">Pending</option>
                 <option value="passed">Approved</option>
                 <option value="rejected">Rejected</option>
               </select>
-
-              <select
-                value={batchId}
-                onChange={(e) => setBatchId(e.target.value)}
-                disabled={loadingBatches}
-                className="rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none disabled:bg-gray-100"
-              >
-                <option value="">
-                  {loadingBatches ? "Loading batches..." : "All batches"}
-                </option>
-
-                {batches.map((batch) => (
-                  <option key={batch._id} value={batch._id}>
-                    {batch.name}
-                  </option>
-                ))}
-              </select>
-
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="rounded-xl border border-[#B3CFE5] px-4 py-3 text-sm font-semibold text-[#1A3D63] transition hover:bg-[#F6FAFD]"
-              >
-                Clear Filters
-              </button>
             </div>
           </div>
+
+          {/* ==================================================
+              STATISTICS
+          ================================================== */}
 
           <div className="grid gap-4 md:grid-cols-4">
             <div className="rounded-2xl border border-[#B3CFE5] bg-white p-5">
               <p className="text-sm text-gray-500">Total</p>
 
               <p className="mt-1 text-3xl font-bold text-[#0A1931]">
-                {applicants.length}
+                {filteredApplicants.length}
               </p>
             </div>
 
@@ -381,7 +393,10 @@ function ApplicantsPage() {
               <p className="text-sm text-yellow-700">Pending</p>
 
               <p className="mt-1 text-3xl font-bold text-yellow-800">
-                {applicants.filter((a) => a.status === "pending").length}
+                {
+                  filteredApplicants.filter((a) => a.status === "pending")
+                    .length
+                }
               </p>
             </div>
 
@@ -389,7 +404,7 @@ function ApplicantsPage() {
               <p className="text-sm text-green-700">Approved</p>
 
               <p className="mt-1 text-3xl font-bold text-green-800">
-                {applicants.filter((a) => a.status === "passed").length}
+                {filteredApplicants.filter((a) => a.status === "passed").length}
               </p>
             </div>
 
@@ -397,10 +412,17 @@ function ApplicantsPage() {
               <p className="text-sm text-red-700">Rejected</p>
 
               <p className="mt-1 text-3xl font-bold text-red-800">
-                {applicants.filter((a) => a.status === "rejected").length}
+                {
+                  filteredApplicants.filter((a) => a.status === "rejected")
+                    .length
+                }
               </p>
             </div>
           </div>
+
+          {/* ==================================================
+              APPLICANT LIST
+          ================================================== */}
 
           <div className="overflow-hidden rounded-3xl border border-[#B3CFE5] bg-white shadow-sm">
             <div className="border-b border-[#B3CFE5] p-5">
@@ -425,8 +447,18 @@ function ApplicantsPage() {
                 </h3>
 
                 <p className="mt-1 text-sm text-gray-500">
-                  Try changing your filters or search.
+                  Try changing your filters.
                 </p>
+
+                {(gender || status) && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="mt-4 rounded-xl bg-[#0A1931] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1A3D63]"
+                  >
+                    Reset Filters
+                  </button>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -457,6 +489,8 @@ function ApplicantsPage() {
                         key={applicant._id}
                         className="border-b border-gray-100 last:border-0 hover:bg-[#F6FAFD]"
                       >
+                        {/* APPLICANT */}
+
                         <td className="px-5 py-4">
                           <div>
                             <p className="font-semibold text-[#0A1931]">
@@ -469,17 +503,25 @@ function ApplicantsPage() {
                           </div>
                         </td>
 
+                        {/* SCHOOL ID */}
+
                         <td className="px-5 py-4 text-sm">
                           {applicant.schoolId || "-"}
                         </td>
+
+                        {/* GENDER */}
 
                         <td className="px-5 py-4 text-sm capitalize">
                           {applicant.gender || "-"}
                         </td>
 
+                        {/* DEPARTMENT */}
+
                         <td className="px-5 py-4 text-sm">
                           {applicant.department || "-"}
                         </td>
+
+                        {/* BATCH */}
 
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-2">
@@ -501,16 +543,24 @@ function ApplicantsPage() {
                           </div>
                         </td>
 
+                        {/* EXPERIENCE */}
+
                         <td className="px-5 py-4 text-sm capitalize">
                           {applicant.experienceLevel || "-"}
                         </td>
+
+                        {/* STATUS */}
 
                         <td className="px-5 py-4">
                           {getStatusBadge(applicant.status)}
                         </td>
 
+                        {/* ACTION */}
+
                         <td className="px-5 py-4">
                           <div className="flex justify-end gap-2">
+                            {/* VIEW */}
+
                             <button
                               type="button"
                               onClick={() => setSelectedApplicant(applicant)}
@@ -519,6 +569,8 @@ function ApplicantsPage() {
                             >
                               <Eye size={17} />
                             </button>
+
+                            {/* APPROVE */}
 
                             {applicant.status !== "passed" && (
                               <button
@@ -537,6 +589,8 @@ function ApplicantsPage() {
                                 )}
                               </button>
                             )}
+
+                            {/* REJECT */}
 
                             {applicant.status !== "rejected" && (
                               <button
@@ -562,6 +616,10 @@ function ApplicantsPage() {
           </div>
         </div>
       </div>
+
+      {/* ======================================================
+          APPLICANT DETAILS MODAL
+      ====================================================== */}
 
       {selectedApplicant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -674,6 +732,10 @@ function ApplicantsPage() {
         </div>
       )}
 
+      {/* ======================================================
+          APPROVAL MESSAGE
+      ====================================================== */}
+
       {approvalMessage && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
@@ -716,6 +778,10 @@ function ApplicantsPage() {
     </>
   );
 }
+
+// ============================================================
+// DETAIL COMPONENT
+// ============================================================
 
 function Detail({ label, value }) {
   return (

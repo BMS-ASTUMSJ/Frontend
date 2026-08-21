@@ -5,6 +5,9 @@ import {
   Clock,
   AlertCircle,
   TrendingUp,
+  Code2,
+  Monitor,
+  Loader2,
 } from "lucide-react";
 
 import api from "../../utils/api";
@@ -13,6 +16,10 @@ const MentorProgress = () => {
   const [progress, setProgress] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // ============================================================
+  // LOAD MENTOR PROGRESS
+  // ============================================================
 
   useEffect(() => {
     loadMentorProgress();
@@ -25,17 +32,23 @@ const MentorProgress = () => {
 
       const response = await api.get("/progress/mentor/progress");
 
+      console.log("MENTOR PROGRESS RESPONSE:", response.data);
+
       const data = response?.data;
 
+      let progressData = [];
+
       if (Array.isArray(data)) {
-        setProgress(data);
+        progressData = data;
       } else if (Array.isArray(data?.data)) {
-        setProgress(data.data);
+        progressData = data.data;
       } else if (Array.isArray(data?.students)) {
-        setProgress(data.students);
-      } else {
-        setProgress([]);
+        progressData = data.students;
+      } else if (Array.isArray(data?.progress)) {
+        progressData = data.progress;
       }
+
+      setProgress(progressData);
     } catch (err) {
       console.error("Failed to load mentor progress:", err);
 
@@ -49,59 +62,192 @@ const MentorProgress = () => {
     }
   };
 
-  const getStatus = (student) => {
-    return student?.status || student?.progressStatus || "not_started";
+  // ============================================================
+  // HELPERS
+  // ============================================================
+
+  const getCpCompleted = (student) => {
+    return Number(student?.cp?.completed ?? student?.completed ?? 0);
   };
 
-  const getPercentage = (student) => {
-    const value =
-      student?.progressPercentage ?? student?.percentage ?? student?.progress;
+  const getCpTotal = (student) => {
+    return Number(student?.cp?.total ?? student?.total ?? 0);
+  };
 
-    if (typeof value === "number") {
-      return Math.min(Math.max(value, 0), 100);
+  const getCpCompletion = (student) => {
+    const completion = student?.cp?.completion ?? student?.completion;
+
+    if (completion !== undefined && completion !== null) {
+      return Math.min(Math.max(Number(completion), 0), 100);
     }
 
-    if (getStatus(student) === "done") {
-      return 100;
+    const completed = getCpCompleted(student);
+    const total = getCpTotal(student);
+
+    if (total > 0) {
+      return Math.min(Math.round((completed / total) * 100), 100);
     }
 
     return 0;
   };
 
+  const getDevCompleted = (student) => {
+    return Number(student?.dev?.completed ?? 0);
+  };
+
+  const getDevTotal = (student) => {
+    return Number(student?.dev?.total ?? 0);
+  };
+
+  const getDevCompletion = (student) => {
+    const completion = student?.dev?.completion;
+
+    if (completion !== undefined && completion !== null) {
+      return Math.min(Math.max(Number(completion), 0), 100);
+    }
+
+    const completed = getDevCompleted(student);
+    const total = getDevTotal(student);
+
+    if (total > 0) {
+      return Math.min(Math.round((completed / total) * 100), 100);
+    }
+
+    return 0;
+  };
+
+  const getOverallCompletion = (student) => {
+    const cpCompletion = getCpCompletion(student);
+    const devCompletion = getDevCompletion(student);
+
+    const cpTotal = getCpTotal(student);
+    const devTotal = getDevTotal(student);
+
+    if (cpTotal > 0 && devTotal > 0) {
+      return Math.round((cpCompletion + devCompletion) / 2);
+    }
+
+    if (cpTotal > 0) {
+      return cpCompletion;
+    }
+
+    if (devTotal > 0) {
+      return devCompletion;
+    }
+
+    return 0;
+  };
+
+  const getStudentName = (student) => {
+    return (
+      student?.student?.name ||
+      student?.student?.fullName ||
+      `${student?.student?.firstName || ""} ${
+        student?.student?.lastName || ""
+      }`.trim() ||
+      student?.name ||
+      student?.fullName ||
+      `${student?.firstName || ""} ${student?.lastName || ""}`.trim() ||
+      "Student"
+    );
+  };
+
+  const getStudentEmail = (student) => {
+    return student?.student?.email || student?.email || "";
+  };
+
+  const getStudentGender = (student) => {
+    return student?.student?.gender || student?.gender || "";
+  };
+
+  // ============================================================
+  // STATISTICS
+  // ============================================================
+
   const completed = progress.filter(
-    (student) => getStatus(student) === "done",
+    (student) => getOverallCompletion(student) >= 100,
   ).length;
 
-  const inProgress = progress.filter(
-    (student) => getStatus(student) === "in_progress",
-  ).length;
+  const inProgress = progress.filter((student) => {
+    const percentage = getOverallCompletion(student);
 
-  const needHelp = progress.filter(
-    (student) => getStatus(student) === "need_help",
-  ).length;
+    return percentage > 0 && percentage < 100;
+  }).length;
+
+  const needHelp = progress.filter((student) => {
+    const status =
+      student?.status || student?.progressStatus || student?.overallStatus;
+
+    return status === "need_help" || status === "needs_help";
+  }).length;
+
+  // ============================================================
+  // TOTALS
+  // ============================================================
+
+  const totalCpCompleted = progress.reduce(
+    (total, student) => total + getCpCompleted(student),
+    0,
+  );
+
+  const totalCpExpected = progress.reduce(
+    (total, student) => total + getCpTotal(student),
+    0,
+  );
+
+  const totalDevCompleted = progress.reduce(
+    (total, student) => total + getDevCompleted(student),
+    0,
+  );
+
+  const totalDevExpected = progress.reduce(
+    (total, student) => total + getDevTotal(student),
+    0,
+  );
+
+  const overallPercentage =
+    totalCpExpected + totalDevExpected > 0
+      ? Math.min(
+          Math.round(
+            ((totalCpCompleted + totalDevCompleted) /
+              (totalCpExpected + totalDevExpected)) *
+              100,
+          ),
+          100,
+        )
+      : 0;
+
+  // ============================================================
+  // LOADING
+  // ============================================================
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6 dark:bg-gray-950">
-        <div className="mx-auto max-w-7xl animate-pulse space-y-6">
-          <div className="h-10 w-64 rounded-lg bg-gray-200 dark:bg-gray-800" />
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="flex items-center justify-center py-32">
+            <div className="flex items-center gap-3 text-blue-600">
+              <Loader2 className="h-7 w-7 animate-spin" />
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="h-32 rounded-2xl bg-gray-200 dark:bg-gray-800" />
-            <div className="h-32 rounded-2xl bg-gray-200 dark:bg-gray-800" />
-            <div className="h-32 rounded-2xl bg-gray-200 dark:bg-gray-800" />
+              <span className="font-semibold">Loading student progress...</span>
+            </div>
           </div>
-
-          <div className="h-96 rounded-2xl bg-gray-200 dark:bg-gray-800" />
         </div>
       </div>
     );
   }
 
+  // ============================================================
+  // PAGE
+  // ============================================================
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-950 sm:p-6">
       <div className="mx-auto max-w-7xl space-y-6">
-        {/* HEADER */}
+        {/* ======================================================
+            HEADER
+        ====================================================== */}
+
         <div>
           <div className="flex items-center gap-3">
             <BarChart3 size={30} className="text-blue-600" />
@@ -116,16 +262,25 @@ const MentorProgress = () => {
           </p>
         </div>
 
-        {/* ERROR */}
+        {/* ======================================================
+            ERROR
+        ====================================================== */}
+
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+            <AlertCircle size={18} />
+
             {error}
           </div>
         )}
 
-        {/* STAT CARDS */}
+        {/* ======================================================
+            STAT CARDS
+        ====================================================== */}
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {/* COMPLETED */}
+
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -140,11 +295,12 @@ const MentorProgress = () => {
             </h2>
 
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Completed learning items
+              Students with 100% progress
             </p>
           </div>
 
           {/* IN PROGRESS */}
+
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -164,6 +320,7 @@ const MentorProgress = () => {
           </div>
 
           {/* NEED HELP */}
+
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -183,7 +340,95 @@ const MentorProgress = () => {
           </div>
         </div>
 
-        {/* STUDENTS */}
+        {/* ======================================================
+            OVERALL SUMMARY
+        ====================================================== */}
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Overall Progress
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Combined CP and Dev progress of your assigned students.
+              </p>
+            </div>
+
+            <div className="text-right">
+              <p className="text-3xl font-bold text-blue-600">
+                {overallPercentage}%
+              </p>
+
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Overall completion
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+            <div
+              className="h-full rounded-full bg-blue-600 transition-all"
+              style={{
+                width: `${overallPercentage}%`,
+              }}
+            />
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
+              <div className="flex items-center gap-2">
+                <Code2 size={16} className="text-blue-600" />
+
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  CP Solved
+                </span>
+              </div>
+
+              <p className="mt-1 font-bold text-gray-900 dark:text-white">
+                {totalCpCompleted} / {totalCpExpected}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
+              <div className="flex items-center gap-2">
+                <Monitor size={16} className="text-purple-600" />
+
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Dev Done
+                </span>
+              </div>
+
+              <p className="mt-1 font-bold text-gray-900 dark:text-white">
+                {totalDevCompleted} / {totalDevExpected}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Students
+              </span>
+
+              <p className="mt-1 font-bold text-gray-900 dark:text-white">
+                {progress.length}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Completed
+              </span>
+
+              <p className="mt-1 font-bold text-green-600">{completed}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ======================================================
+            STUDENTS
+        ====================================================== */}
+
         <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -204,32 +449,51 @@ const MentorProgress = () => {
               </h3>
 
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                No progress data is available for your students yet.
+                No progress data is available for your assigned students yet.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               {progress.map((student, index) => {
-                const percentage = getPercentage(student);
+                const studentName = getStudentName(student);
 
-                const status = getStatus(student);
+                const email = getStudentEmail(student);
 
-                const studentName =
-                  student?.student?.name ||
-                  student?.student?.fullName ||
-                  student?.name ||
-                  student?.fullName ||
-                  "Student";
+                const gender = getStudentGender(student);
 
-                const email = student?.student?.email || student?.email || "";
+                const cpCompleted = getCpCompleted(student);
+
+                const cpTotal = getCpTotal(student);
+
+                const cpCompletion = getCpCompletion(student);
+
+                const devCompleted = getDevCompleted(student);
+
+                const devTotal = getDevTotal(student);
+
+                const devCompletion = getDevCompletion(student);
+
+                const overall = getOverallCompletion(student);
+
+                const status =
+                  student?.status ||
+                  student?.progressStatus ||
+                  student?.overallStatus;
 
                 return (
                   <div
-                    key={student?._id || student?.student?._id || index}
+                    key={
+                      student?._id ||
+                      student?.student?._id ||
+                      student?.student?.id ||
+                      index
+                    }
                     className="rounded-xl border border-gray-200 p-5 dark:border-gray-800"
                   >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0 flex-1">
+                    {/* STUDENT HEADER */}
+
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="min-w-0">
                         <h3 className="font-semibold text-gray-900 dark:text-white">
                           {studentName}
                         </h3>
@@ -240,47 +504,124 @@ const MentorProgress = () => {
                           </p>
                         )}
 
-                        <div className="mt-4">
-                          <div className="mb-2 flex justify-between text-xs">
-                            <span className="text-gray-500 dark:text-gray-400">
-                              Progress
-                            </span>
-
-                            <span className="font-semibold text-gray-900 dark:text-white">
-                              {percentage}%
-                            </span>
-                          </div>
-
-                          <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
-                            <div
-                              className="h-full rounded-full bg-blue-600 transition-all"
-                              style={{
-                                width: `${percentage}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
+                        {gender && (
+                          <p className="mt-1 text-xs text-gray-400">{gender}</p>
+                        )}
                       </div>
 
-                      <span
-                        className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${
-                          status === "done"
-                            ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
-                            : status === "in_progress"
-                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400"
-                              : status === "need_help"
-                                ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400"
-                                : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                        }`}
-                      >
-                        {status === "done"
-                          ? "Completed"
-                          : status === "in_progress"
-                            ? "In Progress"
-                            : status === "need_help"
-                              ? "Need Help"
-                              : "Not Started"}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                          {overall}%
+                        </span>
+
+                        {overall >= 100 ? (
+                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-950/40 dark:text-green-400">
+                            Completed
+                          </span>
+                        ) : status === "need_help" ||
+                          status === "needs_help" ? (
+                          <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400">
+                            Need Help
+                          </span>
+                        ) : overall > 0 ? (
+                          <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400">
+                            In Progress
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                            Not Started
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* OVERALL BAR */}
+
+                    <div className="mt-5">
+                      <div className="mb-2 flex justify-between text-xs">
+                        <span className="text-gray-500 dark:text-gray-400">
+                          Overall Progress
+                        </span>
+
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {overall}%
+                        </span>
+                      </div>
+
+                      <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+                        <div
+                          className="h-full rounded-full bg-blue-600 transition-all"
+                          style={{
+                            width: `${overall}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* CP + DEV */}
+
+                    <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {/* CP */}
+
+                      <div className="rounded-xl bg-blue-50 p-4 dark:bg-blue-950/20">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Code2 size={18} className="text-blue-600" />
+
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                              CP Track
+                            </span>
+                          </div>
+
+                          <span className="text-sm font-bold text-blue-600">
+                            {cpCompletion}%
+                          </span>
+                        </div>
+
+                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-950/60">
+                          <div
+                            className="h-full rounded-full bg-blue-600 transition-all"
+                            style={{
+                              width: `${cpCompletion}%`,
+                            }}
+                          />
+                        </div>
+
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          {cpCompleted} / {cpTotal} questions solved
+                        </p>
+                      </div>
+
+                      {/* DEV */}
+
+                      <div className="rounded-xl bg-purple-50 p-4 dark:bg-purple-950/20">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Monitor size={18} className="text-purple-600" />
+
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                              Dev Track
+                            </span>
+                          </div>
+
+                          <span className="text-sm font-bold text-purple-600">
+                            {devCompletion}%
+                          </span>
+                        </div>
+
+                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-purple-100 dark:bg-purple-950/60">
+                          <div
+                            className="h-full rounded-full bg-purple-600 transition-all"
+                            style={{
+                              width: `${devCompletion}%`,
+                            }}
+                          />
+                        </div>
+
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          {devCompleted} / {devTotal} videos completed
+                        </p>
+                      </div>
                     </div>
                   </div>
                 );

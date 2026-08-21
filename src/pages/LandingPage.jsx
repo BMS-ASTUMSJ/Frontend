@@ -1,5 +1,15 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Code2, Users, Trophy, CheckCircle2 } from "lucide-react";
+
+import {
+  FaTelegramPlane,
+  FaFacebookF,
+  FaInstagram,
+  FaLinkedinIn,
+  FaGithub,
+  FaEnvelope,
+} from "react-icons/fa";
+
 import toast from "react-hot-toast";
 
 function LandingPage() {
@@ -9,10 +19,6 @@ function LandingPage() {
 
   const handleApply = () => {
     toast.success("Let's get started with your bootcamp application!");
-  };
-
-  const handleContact = () => {
-    toast.success("We're happy to hear from you!");
   };
 
   return (
@@ -25,6 +31,7 @@ function LandingPage() {
         className="relative overflow-hidden bg-[#0A1931] px-6 py-24 md:px-12 lg:px-20"
       >
         <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-2">
+          {/* Hero Text */}
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#1A3D63] px-4 py-2 text-sm font-medium text-[#B3CFE5]">
               <span className="h-2 w-2 rounded-full bg-[#B3CFE5]" />
@@ -40,8 +47,8 @@ function LandingPage() {
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-[#B3CFE5]">
               A practical bootcamp designed to help students develop real-world
-              software engineering skills through hands-on projects,
-              competitive programming, teamwork, and mentorship.
+              software engineering skills through hands-on projects, competitive
+              programming, teamwork, and mentorship.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
@@ -64,6 +71,7 @@ function LandingPage() {
             </div>
           </div>
 
+          {/* Hero Card */}
           <div className="relative">
             <div className="rounded-3xl bg-[#1A3D63] p-6 shadow-2xl">
               <div className="mb-5 flex items-center justify-between">
@@ -145,12 +153,13 @@ function LandingPage() {
             <p className="mt-5 text-lg leading-8 text-[#1A3D63]">
               Throughout the program, students are encouraged to improve their
               problem-solving abilities, strengthen their understanding of
-              software development, and develop the confidence needed to work
-              on real-world technology projects.
+              software development, and develop the confidence needed to work on
+              real-world technology projects.
             </p>
           </div>
 
           <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {/* Practical Learning */}
             <div className="rounded-3xl bg-[#4A7FA7] p-7">
               <Code2 className="h-8 w-8 text-[#0A1931]" />
 
@@ -164,6 +173,7 @@ function LandingPage() {
               </p>
             </div>
 
+            {/* Mentorship */}
             <div className="rounded-3xl bg-[#1A3D63] p-7 text-white">
               <Users className="h-8 w-8 text-white" />
 
@@ -175,6 +185,7 @@ function LandingPage() {
               </p>
             </div>
 
+            {/* Challenges */}
             <div className="rounded-3xl bg-[#0A1931] p-7 text-white">
               <Trophy className="h-8 w-8 text-[#B3CFE5]" />
 
@@ -213,6 +224,7 @@ function LandingPage() {
           </div>
 
           <div className="mt-12 grid gap-6 md:grid-cols-2">
+            {/* Full-Stack */}
             <div className="rounded-3xl bg-[#0A1931] p-8 text-white">
               <Code2 className="h-9 w-9 text-[#B3CFE5]" />
 
@@ -242,6 +254,7 @@ function LandingPage() {
               </div>
             </div>
 
+            {/* Competitive Programming */}
             <div className="rounded-3xl bg-[#4A7FA7] p-8 shadow-sm">
               <Trophy className="h-9 w-9 text-[#B3CFE5]" />
 
@@ -306,9 +319,9 @@ function LandingPage() {
                 </h3>
 
                 <p className="mt-3 leading-7 text-[#B3CFE5]">
-                  Mentorship is an important part of the bootcamp. Students
-                  have access to people who can provide technical feedback,
-                  project guidance, career advice, and support when they face
+                  Mentorship is an important part of the bootcamp. Students have
+                  access to people who can provide technical feedback, project
+                  guidance, career advice, and support when they face
                   challenges.
                 </p>
               </div>
@@ -341,6 +354,7 @@ function LandingPage() {
           </div>
 
           <div className="space-y-4">
+            {/* FAQ 1 */}
             <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#1A3D63]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-6 py-5">
                 <span className="font-semibold text-[#0A1931]">
@@ -361,6 +375,7 @@ function LandingPage() {
               </div>
             </details>
 
+            {/* FAQ 2 */}
             <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#1A3D63]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-6 py-5">
                 <span className="font-semibold text-[#0A1931]">
@@ -381,6 +396,7 @@ function LandingPage() {
               </div>
             </details>
 
+            {/* FAQ 3 */}
             <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#1A3D63]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-6 py-5">
                 <span className="font-semibold text-[#0A1931]">
@@ -394,12 +410,13 @@ function LandingPage() {
 
               <div className="border-t border-[#4A7FA7] px-6 py-5">
                 <p className="leading-7 text-slate-600">
-                  Students can explore tracks such as Full-Stack Web
-                  Development and Competitive Programming.
+                  Students can explore tracks such as Full-Stack Web Development
+                  and Competitive Programming.
                 </p>
               </div>
             </details>
 
+            {/* FAQ 4 */}
             <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#1A3D63]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-6 py-5">
                 <span className="font-semibold text-[#0A1931]">
@@ -420,6 +437,7 @@ function LandingPage() {
               </div>
             </details>
 
+            {/* FAQ 5 */}
             <details className="group rounded-2xl border border-[#B3CFE5] bg-[#B3CFE5] transition hover:border-[#1A3D63]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-6 py-5">
                 <span className="font-semibold text-[#0A1931]">
@@ -443,34 +461,99 @@ function LandingPage() {
       </section>
 
       {/* =========================
-          CONTACT
+          CONTACT / SOCIAL MEDIA
       ========================== */}
       <section
         id="contact"
-        className="bg-[#0A1931] px-6 py-24 md:px-12 lg:px-20"
+        className="bg-[#0A1931] px-6 py-20 md:px-12 lg:px-20"
       >
         <div className="mx-auto max-w-5xl text-center">
-          <h2 className="text-4xl font-black text-white md:text-5xl">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#4A7FA7]">
+            Contact Us
+          </p>
+
+          <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">
             Have a Question?
           </h2>
 
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#B3CFE5]">
             Take the next step in your software engineering journey and become
-            part of the ASTU MSJ Bootcamp.
+            part of the ASTU MSJ Bootcamp. Connect with us through our social
+            media platforms.
           </p>
 
-          <Link
-            to="/contactus"
-            onClick={handleContact}
-            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#4A7FA7] px-7 py-3 font-bold text-white transition hover:bg-[#1A3D63]"
-          >
-            Contact Us
-            <ArrowRight className="h-5 w-5" />
-          </Link>
+          {/* Social Media Links */}
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            {/* Telegram */}
+            <a
+              href="https://t.me/your_username"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl bg-[#229ED9] px-4 py-2.5 text-sm font-semibold text-white transition duration-300 hover:-translate-y-1 hover:bg-[#168ac0]"
+            >
+              <FaTelegramPlane className="h-4 w-4" />
+              <span>Telegram</span>
+            </a>
+
+            {/* Facebook */}
+            <a
+              href="https://facebook.com/your_page"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl bg-[#1877F2] px-4 py-2.5 text-sm font-semibold text-white transition duration-300 hover:-translate-y-1 hover:bg-[#0d65d9]"
+            >
+              <FaFacebookF className="h-4 w-4" />
+              <span>Facebook</span>
+            </a>
+
+            {/* Instagram */}
+            <a
+              href="https://instagram.com/your_username"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#833AB4] via-[#E1306C] to-[#F77737] px-4 py-2.5 text-sm font-semibold text-white transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+            >
+              <FaInstagram className="h-4 w-4" />
+              <span>Instagram</span>
+            </a>
+
+            {/* LinkedIn */}
+            <a
+              href="https://linkedin.com/company/your_company"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl bg-[#0A66C2] px-4 py-2.5 text-sm font-semibold text-white transition duration-300 hover:-translate-y-1 hover:bg-[#0859a8]"
+            >
+              <FaLinkedinIn className="h-4 w-4" />
+              <span>LinkedIn</span>
+            </a>
+
+            {/* GitHub */}
+            <a
+              href="https://github.com/your_username"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl bg-[#24292F] px-4 py-2.5 text-sm font-semibold text-white transition duration-300 hover:-translate-y-1 hover:bg-[#171a1d]"
+            >
+              <FaGithub className="h-4 w-4" />
+              <span>GitHub</span>
+            </a>
+
+            {/* Email */}
+            <a
+              href="mailto:your@email.com"
+              className="flex items-center gap-2 rounded-xl bg-[#4A7FA7] px-4 py-2.5 text-sm font-semibold text-white transition duration-300 hover:-translate-y-1 hover:bg-[#1A3D63]"
+            >
+              <FaEnvelope className="h-4 w-4" />
+              <span>Email</span>
+            </a>
+          </div>
         </div>
       </section>
 
-     
+      {/* =========================
+          FOOTER
+      ========================== */}
       <footer className="border-t border-[#1A3D63] bg-[#0A1931] px-6 py-8 text-center">
         <p className="text-sm text-[#B3CFE5]">
           © 2026 ASTU MSJ Bootcamp. All rights reserved.

@@ -6,7 +6,6 @@ import {
   Search,
   Mail,
   UserCircle,
-  BookOpen,
   X,
   AlertTriangle,
   CheckCircle,
@@ -24,7 +23,7 @@ const MyStudents = () => {
   const [error, setError] = useState("");
 
   // ============================================================
-  // FETCH ASSIGNED STUDENTS
+  // FETCH ONLY ASSIGNED STUDENTS
   // ============================================================
 
   useEffect(() => {
@@ -33,9 +32,11 @@ const MyStudents = () => {
         setLoading(true);
         setError("");
 
-        const response = await api.get("/users/my-students");
+        const response = await api.get("/at-risk/my-students");
 
-        setStudents(response.data?.students || []);
+        if (response.data.success) {
+          setStudents(response.data.students || []);
+        }
       } catch (err) {
         console.error("Fetch mentor students error:", err);
 
@@ -64,21 +65,18 @@ const MyStudents = () => {
       `${student.firstName || ""} ${student.lastName || ""}`.toLowerCase();
 
     const email = student.email?.toLowerCase() || "";
+    const schoolId = student.schoolId?.toLowerCase() || "";
 
-    return name.includes(searchValue) || email.includes(searchValue);
+    return (
+      name.includes(searchValue) ||
+      email.includes(searchValue) ||
+      schoolId.includes(searchValue)
+    );
   });
 
   // ============================================================
-  // CALCULATIONS
+  // AT-RISK COUNT
   // ============================================================
-
-  const averageProgress =
-    students.length > 0
-      ? Math.round(
-          students.reduce((sum, student) => sum + (student.progress || 0), 0) /
-            students.length,
-        )
-      : 0;
 
   const atRiskStudents = students.filter((student) => student.atRisk === true);
 
@@ -115,12 +113,14 @@ const MyStudents = () => {
           </h1>
 
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            View your assigned students and monitor their progress and risk
-            status.
+            View only your assigned students and monitor their attendance and
+            assignment status.
           </p>
         </div>
 
-        {/* ERROR */}
+        {/* =====================================================
+            ERROR
+        ===================================================== */}
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
@@ -132,14 +132,14 @@ const MyStudents = () => {
             SUMMARY
         ===================================================== */}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {/* ASSIGNED STUDENTS */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* TOTAL ASSIGNED */}
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Assigned Students
+                  My Assigned Students
                 </p>
 
                 <h2 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
@@ -149,29 +149,6 @@ const MyStudents = () => {
 
               <div className="rounded-xl bg-blue-100 p-3 dark:bg-blue-950">
                 <Users size={24} className="text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </div>
-
-          {/* AVERAGE PROGRESS */}
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Average Progress
-                </p>
-
-                <h2 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                  {averageProgress}%
-                </h2>
-              </div>
-
-              <div className="rounded-xl bg-green-100 p-3 dark:bg-green-950">
-                <BookOpen
-                  size={24}
-                  className="text-green-600 dark:text-green-400"
-                />
               </div>
             </div>
           </div>
@@ -201,7 +178,7 @@ const MyStudents = () => {
         </div>
 
         {/* =====================================================
-            STUDENTS
+            STUDENTS LIST
         ===================================================== */}
 
         <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -214,8 +191,8 @@ const MyStudents = () => {
               </h2>
 
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Students with 2 absences or 2 missed assignments are marked at
-                risk.
+                Students with 2 or more absences or 2 or more missed assignments
+                are marked at risk.
               </p>
             </div>
 
@@ -237,7 +214,9 @@ const MyStudents = () => {
             </div>
           </div>
 
-          {/* LIST */}
+          {/* ===================================================
+              LIST
+          =================================================== */}
 
           <div className="mt-6 space-y-3">
             {filteredStudents.length === 0 ? (
@@ -254,16 +233,14 @@ const MyStudents = () => {
               </div>
             ) : (
               filteredStudents.map((student) => {
-                const progress = student.progress || 0;
-
                 const absenceCount =
-                  student.risk?.absenceCount ||
-                  student.risk?.attendanceIssues ||
+                  student.risk?.absenceCount ??
+                  student.risk?.attendanceIssues ??
                   0;
 
                 const missedAssignmentCount =
-                  student.risk?.missedAssignmentCount ||
-                  student.risk?.assignmentIssues ||
+                  student.risk?.missedAssignmentCount ??
+                  student.risk?.assignmentIssues ??
                   0;
 
                 return (
@@ -271,7 +248,7 @@ const MyStudents = () => {
                     key={student._id}
                     className={`rounded-2xl border p-5 transition hover:shadow-sm ${
                       student.atRisk
-                        ? "border-red-300 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20"
+                        ? "border-red-300 bg-red-50/60 dark:border-red-900 dark:bg-red-950/20"
                         : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
                     }`}
                   >
@@ -318,13 +295,13 @@ const MyStudents = () => {
                               {student.email}
                             </span>
 
-                            <span>{student.gender}</span>
+                            {student.schoolId && (
+                              <span>ID: {student.schoolId}</span>
+                            )}
 
-                            <span>
-                              {student.batch?.name ||
-                                student.batch?.toString?.() ||
-                                "No batch"}
-                            </span>
+                            {student.batch?.name && (
+                              <span>{student.batch.name}</span>
+                            )}
                           </div>
 
                           {/* RISK DETAILS */}
@@ -349,38 +326,7 @@ const MyStudents = () => {
                         </div>
                       </div>
 
-                      {/* PROGRESS */}
-
-                      <div className="w-full lg:max-w-xs">
-                        <div className="mb-2 flex justify-between text-xs">
-                          <span className="text-gray-500 dark:text-gray-400">
-                            Progress
-                          </span>
-
-                          <span
-                            className={`font-semibold ${
-                              student.atRisk
-                                ? "text-red-600"
-                                : "text-gray-900 dark:text-white"
-                            }`}
-                          >
-                            {progress}%
-                          </span>
-                        </div>
-
-                        <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              student.atRisk ? "bg-red-500" : "bg-blue-600"
-                            }`}
-                            style={{
-                              width: `${Math.min(progress, 100)}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* BUTTON */}
+                      {/* VIEW STUDENT */}
 
                       <button
                         type="button"
@@ -405,6 +351,8 @@ const MyStudents = () => {
       {selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-900">
+            {/* MODAL HEADER */}
+
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Student Details
@@ -439,6 +387,8 @@ const MyStudents = () => {
                   </div>
 
                   <div className="mt-4 space-y-2">
+                    {/* ABSENCES */}
+
                     <div className="flex items-center justify-between rounded-lg bg-white/70 p-3 text-sm dark:bg-black/20">
                       <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                         <CalendarX size={16} />
@@ -446,11 +396,13 @@ const MyStudents = () => {
                       </span>
 
                       <strong className="text-red-600">
-                        {selectedStudent.risk?.absenceCount ||
-                          selectedStudent.risk?.attendanceIssues ||
+                        {selectedStudent.risk?.absenceCount ??
+                          selectedStudent.risk?.attendanceIssues ??
                           0}
                       </strong>
                     </div>
+
+                    {/* MISSED ASSIGNMENTS */}
 
                     <div className="flex items-center justify-between rounded-lg bg-white/70 p-3 text-sm dark:bg-black/20">
                       <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
@@ -459,8 +411,8 @@ const MyStudents = () => {
                       </span>
 
                       <strong className="text-red-600">
-                        {selectedStudent.risk?.missedAssignmentCount ||
-                          selectedStudent.risk?.assignmentIssues ||
+                        {selectedStudent.risk?.missedAssignmentCount ??
+                          selectedStudent.risk?.assignmentIssues ??
                           0}
                       </strong>
                     </div>
@@ -476,14 +428,14 @@ const MyStudents = () => {
                     </p>
 
                     <p className="mt-1 text-xs text-green-600 dark:text-green-300">
-                      The student has not reached any at-risk threshold.
+                      The student has not reached the at-risk threshold.
                     </p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* DETAILS */}
+            {/* STUDENT DETAILS */}
 
             <div className="mt-6 space-y-4">
               <div>
@@ -502,14 +454,30 @@ const MyStudents = () => {
                 </p>
               </div>
 
-              <div>
-                <p className="text-xs text-gray-500">Progress</p>
+              {selectedStudent.schoolId && (
+                <div>
+                  <p className="text-xs text-gray-500">Student ID</p>
 
-                <p className="font-semibold text-gray-900 dark:text-white">
-                  {selectedStudent.progress || 0}%
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {selectedStudent.schoolId}
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs text-gray-500">Risk Status</p>
+
+                <p
+                  className={`font-semibold ${
+                    selectedStudent.atRisk ? "text-red-600" : "text-green-600"
+                  }`}
+                >
+                  {selectedStudent.atRisk ? "At Risk" : "On Track"}
                 </p>
               </div>
             </div>
+
+            {/* CLOSE */}
 
             <button
               type="button"

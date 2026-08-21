@@ -1,19 +1,40 @@
 import { useEffect, useState } from "react";
-import { ClipboardCheck, FileText, BarChart3, Megaphone } from "lucide-react";
+import {
+  ClipboardCheck,
+  FileText,
+  BarChart3,
+  Megaphone,
+  AlertCircle,
+  CheckCircle2,
+  Clock3,
+} from "lucide-react";
 
 import api from "../../utils/api";
 
 function StudentDashboard() {
   // ============================================================
-  // STUDENT DATA
+  // STATE
   // ============================================================
 
   const [student, setStudent] = useState(null);
-  const [atRisk, setAtRisk] = useState(false);
+
+  const [risk, setRisk] = useState({
+    attendanceIssues: 0,
+    assignmentIssues: 0,
+    totalIssues: 0,
+    absenceCount: 0,
+    missedAssignmentCount: 0,
+    attendanceAtRisk: false,
+    assignmentAtRisk: false,
+    isAtRisk: false,
+    reason: [],
+    message: "Checking your current status...",
+  });
+
   const [loading, setLoading] = useState(true);
 
   // ============================================================
-  // FETCH DATA FROM BACKEND
+  // FETCH STUDENT PROFILE + RISK STATUS
   // ============================================================
 
   useEffect(() => {
@@ -21,18 +42,24 @@ function StudentDashboard() {
       try {
         setLoading(true);
 
-        // Get logged-in student's profile
+        // --------------------------------------------------------
+        // GET LOGGED-IN STUDENT PROFILE
+        // --------------------------------------------------------
+
         const profileResponse = await api.get("/users/profile");
 
         if (profileResponse.data.success) {
           setStudent(profileResponse.data.user);
         }
 
-        // Get logged-in student's at-risk status
-        const riskResponse = await api.get("/users/my-risk-status");
+        // --------------------------------------------------------
+        // GET STUDENT RISK STATUS
+        // --------------------------------------------------------
+
+        const riskResponse = await api.get("/at-risk/my-status");
 
         if (riskResponse.data.success) {
-          setAtRisk(Boolean(riskResponse.data.atRisk));
+          setRisk(riskResponse.data.risk);
         }
       } catch (error) {
         console.error("Error fetching student dashboard:", error);
@@ -45,29 +72,45 @@ function StudentDashboard() {
   }, []);
 
   // ============================================================
-  // DASHBOARD STATS
+  // STUDENT NAME
+  // ============================================================
+
+  const studentName = student
+    ? `${student.firstName || ""} ${student.lastName || ""}`.trim()
+    : "Student";
+
+  // ============================================================
+  // STATUS
+  // ============================================================
+
+  const isAtRisk = risk.isAtRisk;
+
+  const status = isAtRisk ? "Pending" : "On Track";
+
+  // ============================================================
+  // STATS
   // ============================================================
 
   const stats = [
     {
-      title: "Attendance",
-      value: "94%",
+      title: "Attendance Issues",
+      value: risk.attendanceIssues || 0,
       icon: ClipboardCheck,
     },
     {
-      title: "Assignments",
-      value: "12",
+      title: "Missed Assignments",
+      value: risk.assignmentIssues || 0,
       icon: FileText,
     },
     {
-      title: "Progress",
-      value: "78%",
+      title: "Total Issues",
+      value: risk.totalIssues || 0,
       icon: BarChart3,
     },
     {
-      title: "Announcements",
-      value: "4",
-      icon: Megaphone,
+      title: "Status",
+      value: status,
+      icon: isAtRisk ? Clock3 : CheckCircle2,
     },
   ];
 
@@ -86,37 +129,40 @@ function StudentDashboard() {
   }
 
   // ============================================================
-  // STUDENT NAME
-  // ============================================================
-
-  const studentName = student
-    ? `${student.firstName || ""} ${student.lastName || ""}`.trim()
-    : "Student";
-
-  // ============================================================
   // RETURN
   // ============================================================
 
   return (
     <div className="min-h-screen bg-[#F6FAFD]">
       {/* ========================================================
-          AT-RISK INDICATOR
-          NON-CLICKABLE
+          STATUS / PENDING INDICATOR
       ======================================================== */}
 
-      {atRisk && (
-        <div className="mx-8 mt-6 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-5 py-4">
-          <div>
-            <p className="font-semibold text-red-700">At Risk</p>
+      {isAtRisk && (
+        <div className="mx-8 mt-6 flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="rounded-xl bg-amber-100 p-2">
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+            </div>
 
-            <p className="mt-1 text-sm text-red-600">
-              Your current performance requires attention.
-            </p>
+            <div>
+              <p className="font-semibold text-amber-800">Status: Pending</p>
+
+              <p className="mt-1 text-sm text-amber-700">
+                Your current performance requires attention.
+              </p>
+
+              {risk.reason?.length > 0 && (
+                <p className="mt-1 text-sm text-amber-700">
+                  {risk.reason.join(" and ")}
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* NOT A BUTTON / NOT CLICKABLE */}
-          <div className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white">
-            At Risk
+          <div className="flex items-center gap-2 self-start rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white sm:self-auto">
+            <Clock3 className="h-4 w-4" />
+            Pending
           </div>
         </div>
       )}
@@ -153,19 +199,41 @@ function StudentDashboard() {
             return (
               <div
                 key={stat.title}
-                className="rounded-2xl border border-[#D6D6D6] bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                className={`rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md ${
+                  stat.title === "Status" && isAtRisk
+                    ? "border-amber-200"
+                    : "border-[#D6D6D6]"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500">{stat.title}</p>
 
-                    <h2 className="mt-3 text-3xl font-bold text-[#0A1931]">
+                    <h2
+                      className={`mt-3 text-2xl font-bold ${
+                        stat.title === "Status" && isAtRisk
+                          ? "text-amber-600"
+                          : "text-[#0A1931]"
+                      }`}
+                    >
                       {stat.value}
                     </h2>
                   </div>
 
-                  <div className="rounded-xl bg-[#B3CFE5]/40 p-3">
-                    <Icon className="h-5 w-5 text-[#1A3D63]" />
+                  <div
+                    className={`rounded-xl p-3 ${
+                      stat.title === "Status" && isAtRisk
+                        ? "bg-amber-100"
+                        : "bg-[#B3CFE5]/40"
+                    }`}
+                  >
+                    <Icon
+                      className={`h-5 w-5 ${
+                        stat.title === "Status" && isAtRisk
+                          ? "text-amber-600"
+                          : "text-[#1A3D63]"
+                      }`}
+                    />
                   </div>
                 </div>
               </div>
@@ -174,32 +242,94 @@ function StudentDashboard() {
         </div>
 
         {/* ======================================================
-            PROGRESS + ANNOUNCEMENT
+            RISK DETAILS
         ====================================================== */}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           {/* ====================================================
-              PROGRESS
+              PERFORMANCE STATUS
           ==================================================== */}
 
-          <div className="rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[#0A1931]">Your Progress</h2>
+          <div
+            className={`rounded-2xl border bg-white p-6 shadow-sm ${
+              isAtRisk ? "border-amber-200" : "border-[#D6D6D6]"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-[#0A1931]">
+                  Performance Status
+                </h2>
 
-            <p className="mt-1 text-sm text-gray-500">
-              Keep working toward completing the bootcamp.
-            </p>
-
-            <div className="mt-6">
-              <div className="mb-2 flex justify-between text-sm">
-                <span className="font-medium text-[#0A1931]">
-                  Overall Progress
-                </span>
-
-                <span className="font-semibold text-[#4A7FA7]">78%</span>
+                <p className="mt-1 text-sm text-gray-500">
+                  Your current bootcamp performance overview.
+                </p>
               </div>
 
-              <div className="h-3 overflow-hidden rounded-full bg-[#D6D6D6]">
-                <div className="h-full w-[78%] rounded-full bg-[#4A7FA7]" />
+              {isAtRisk ? (
+                <div className="rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-semibold text-amber-700">
+                  Pending
+                </div>
+              ) : (
+                <div className="rounded-lg bg-green-100 px-3 py-1.5 text-sm font-semibold text-green-700">
+                  On Track
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {/* ATTENDANCE */}
+
+              <div className="flex items-center justify-between rounded-xl bg-[#F6FAFD] p-4">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-[#B3CFE5]/40 p-2">
+                    <ClipboardCheck className="h-5 w-5 text-[#1A3D63]" />
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-[#0A1931]">
+                      Attendance Issues
+                    </p>
+
+                    <p className="text-xs text-gray-500">Absences recorded</p>
+                  </div>
+                </div>
+
+                <span
+                  className={`text-lg font-bold ${
+                    risk.attendanceAtRisk ? "text-amber-600" : "text-[#0A1931]"
+                  }`}
+                >
+                  {risk.attendanceIssues || 0}
+                </span>
+              </div>
+
+              {/* ASSIGNMENTS */}
+
+              <div className="flex items-center justify-between rounded-xl bg-[#F6FAFD] p-4">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-[#B3CFE5]/40 p-2">
+                    <FileText className="h-5 w-5 text-[#1A3D63]" />
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-[#0A1931]">
+                      Missed Assignments
+                    </p>
+
+                    <p className="text-xs text-gray-500">
+                      Past deadline without submission
+                    </p>
+                  </div>
+                </div>
+
+                <span
+                  className={`text-lg font-bold ${
+                    risk.assignmentAtRisk ? "text-amber-600" : "text-[#0A1931]"
+                  }`}
+                >
+                  {risk.assignmentIssues || 0}
+                </span>
               </div>
             </div>
           </div>
@@ -233,6 +363,63 @@ function StudentDashboard() {
         </div>
 
         {/* ======================================================
+            STATUS MESSAGE
+        ====================================================== */}
+
+        <div
+          className={`mt-6 rounded-2xl border p-6 shadow-sm ${
+            isAtRisk
+              ? "border-amber-200 bg-amber-50"
+              : "border-green-200 bg-green-50"
+          }`}
+        >
+          <div className="flex items-start gap-4">
+            <div
+              className={`rounded-xl p-3 ${
+                isAtRisk ? "bg-amber-100" : "bg-green-100"
+              }`}
+            >
+              {isAtRisk ? (
+                <AlertCircle className="h-6 w-6 text-amber-600" />
+              ) : (
+                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              )}
+            </div>
+
+            <div>
+              <h2
+                className={`text-lg font-bold ${
+                  isAtRisk ? "text-amber-800" : "text-green-800"
+                }`}
+              >
+                {isAtRisk ? "Your Status is Pending" : "You're On Track"}
+              </h2>
+
+              <p
+                className={`mt-2 text-sm leading-6 ${
+                  isAtRisk ? "text-amber-700" : "text-green-700"
+                }`}
+              >
+                {risk.message}
+              </p>
+
+              {isAtRisk && risk.reason?.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {risk.reason.map((item, index) => (
+                    <span
+                      key={index}
+                      className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-700 shadow-sm"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ======================================================
             KEEP LEARNING
         ====================================================== */}
 
@@ -260,17 +447,18 @@ function StudentDashboard() {
               <h3 className="font-semibold text-[#0A1931]">Assignments</h3>
 
               <p className="mt-2 text-sm leading-6 text-gray-500">
-                Complete your assignments and submit them on time.
+                Complete your assignments and submit them before the deadline.
               </p>
             </div>
 
             {/* PROGRESS */}
 
             <div className="rounded-xl bg-[#F6FAFD] p-5">
-              <h3 className="font-semibold text-[#0A1931]">Progress</h3>
+              <h3 className="font-semibold text-[#0A1931]">Stay Consistent</h3>
 
               <p className="mt-2 text-sm leading-6 text-gray-500">
-                Track your learning progress throughout the bootcamp.
+                Regular participation and timely submissions help you stay on
+                track.
               </p>
             </div>
           </div>
