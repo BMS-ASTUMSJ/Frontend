@@ -5,9 +5,9 @@ import {
   UserPlus,
   Loader2,
   UserRound,
-  AlertCircle,
-  CheckCircle2,
+  Pencil,
   Trash2,
+  X,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -18,11 +18,14 @@ function TeamManagement() {
   const [batches, setBatches] = useState([]);
 
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState("");
 
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingTeamId, setEditingTeamId] = useState(null);
+
+  // DELETE CONFIRMATION
+  const [deleteTeam, setDeleteTeam] = useState(null);
 
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
@@ -53,11 +56,6 @@ function TeamManagement() {
         api.get("/batches"),
       ]);
 
-      console.log("TEAMS:", teamsResponse.data);
-      console.log("STUDENTS:", studentsResponse.data);
-      console.log("MENTORS:", mentorsResponse.data);
-      console.log("BATCHES:", batchesResponse.data);
-
       setTeams(teamsResponse.data?.teams || []);
       setStudents(studentsResponse.data?.students || []);
       setMentors(mentorsResponse.data?.mentors || []);
@@ -65,12 +63,7 @@ function TeamManagement() {
     } catch (error) {
       console.error("Fetch team data error:", error);
 
-      const message =
-        error.response?.data?.message ||
-        "Failed to load teams, students, mentors, and batches.";
-
-      setFormError(message);
-      toast.error(message);
+      toast.error(error.response?.data?.message || "Failed to load team data.");
     } finally {
       setLoading(false);
     }
@@ -123,8 +116,37 @@ function TeamManagement() {
 
     const sameBatch = studentBatchId.toString() === batch.toString();
 
-    return sameGender && approved && sameBatch;
+    const alreadySelected = selectedStudents.includes(student._id);
+
+    const belongsToCurrentTeam = teams.some(
+      (team) =>
+        team._id === editingTeamId &&
+        team.students?.some((teamStudent) => teamStudent._id === student._id),
+    );
+
+    return (
+      sameGender &&
+      approved &&
+      sameBatch &&
+      (!student.teamId || alreadySelected || belongsToCurrentTeam)
+    );
   });
+
+  // ============================================================
+  // RESET FORM
+  // ============================================================
+
+  const resetForm = () => {
+    setName("");
+    setGender("");
+    setBatch("");
+    setMentor1("");
+    setMentor2("");
+    setSelectedStudents([]);
+
+    setIsEditing(false);
+    setEditingTeamId(null);
+  };
 
   // ============================================================
   // GENDER CHANGE
@@ -132,13 +154,9 @@ function TeamManagement() {
 
   const handleGenderChange = (value) => {
     setGender(value);
-
     setMentor1("");
     setMentor2("");
     setSelectedStudents([]);
-
-    setFormError("");
-    setFormSuccess("");
   };
 
   // ============================================================
@@ -147,13 +165,7 @@ function TeamManagement() {
 
   const handleBatchChange = (value) => {
     setBatch(value);
-
-    // Clear previously selected students because
-    // they may belong to another batch.
     setSelectedStudents([]);
-
-    setFormError("");
-    setFormSuccess("");
   };
 
   // ============================================================
@@ -168,134 +180,147 @@ function TeamManagement() {
 
       return [...previous, studentId];
     });
-
-    setFormError("");
-    setFormSuccess("");
   };
 
   // ============================================================
-  // CREATE TEAM
+  // CREATE / UPDATE TEAM
   // ============================================================
 
-  const handleCreateTeam = async (event) => {
+  const handleSaveTeam = async (event) => {
     event.preventDefault();
 
-    setFormError("");
-    setFormSuccess("");
-
-    const trimmedName = name.trim();
-
-    // ----------------------------------------------------------
-    // VALIDATION
-    // ----------------------------------------------------------
-
-    if (!trimmedName) {
-      const message = "Team name is required.";
-      setFormError(message);
-      toast.error(message);
+    if (!name.trim()) {
+      toast.error("Team name is required.");
       return;
     }
 
     if (!gender) {
-      const message = "Please select a team gender.";
-      setFormError(message);
-      toast.error(message);
+      toast.error("Please select a team gender.");
       return;
     }
 
     if (!batch) {
-      const message = "Please select a batch.";
-      setFormError(message);
-      toast.error(message);
+      toast.error("Please select a batch.");
       return;
     }
 
     if (!mentor1 || !mentor2) {
-      const message = "Please select exactly 2 mentors.";
-      setFormError(message);
-      toast.error(message);
+      toast.error("Please select exactly 2 mentors.");
       return;
     }
 
     if (mentor1 === mentor2) {
-      const message = "The two mentors must be different.";
-      setFormError(message);
-      toast.error(message);
+      toast.error("The two mentors must be different.");
       return;
     }
 
     if (selectedStudents.length === 0) {
-      const message = "Please select at least one student.";
-      setFormError(message);
-      toast.error(message);
+      toast.error("Please select at least one student.");
       return;
     }
 
-    // ----------------------------------------------------------
-    // CREATE
-    // ----------------------------------------------------------
-
     try {
-      setCreating(true);
+      setSaving(true);
 
-      const response = await api.post("/teams", {
-        name: trimmedName,
+      const payload = {
+        name: name.trim(),
         gender,
         batch,
         mentorIds: [mentor1, mentor2],
         studentIds: selectedStudents,
-      });
+      };
 
-      const message = response.data?.message || "Team created successfully.";
+      let response;
 
-      setFormSuccess(message);
-      toast.success(message);
+      if (isEditing) {
+        response = await api.put(`/teams/${editingTeamId}`, payload);
+      } else {
+        response = await api.post("/teams", payload);
+      }
 
-      // --------------------------------------------------------
-      // RESET FORM
-      // --------------------------------------------------------
+      toast.success(
+        response.data?.message ||
+          (isEditing
+            ? "Team updated successfully."
+            : "Team created successfully."),
+      );
 
-      setName("");
-      setGender("");
-      setBatch("");
-      setMentor1("");
-      setMentor2("");
-      setSelectedStudents([]);
+      resetForm();
 
       await fetchData();
     } catch (error) {
-      console.error("Create team error:", error);
+      console.error(
+        isEditing ? "Update team error:" : "Create team error:",
+        error,
+      );
 
-      const message = error.response?.data?.message || "Failed to create team.";
-
-      setFormError(message);
-      toast.error(message);
+      toast.error(
+        error.response?.data?.message ||
+          (isEditing ? "Failed to update team." : "Failed to create team."),
+      );
     } finally {
-      setCreating(false);
+      setSaving(false);
     }
   };
 
   // ============================================================
-  // DELETE TEAM
+  // EDIT TEAM
   // ============================================================
 
-  const handleDeleteTeam = async (teamId) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this team?",
+  const handleEditTeam = (team) => {
+    setIsEditing(true);
+    setEditingTeamId(team._id);
+
+    setName(team.name || "");
+    setGender(team.gender || "");
+
+    setBatch(
+      typeof team.batch === "object" ? team.batch?._id || "" : team.batch || "",
     );
 
-    if (!confirmed) {
-      return;
-    }
+    setMentor1(team.mentors?.[0]?._id || "");
+
+    setMentor2(team.mentors?.[1]?._id || "");
+
+    setSelectedStudents(team.students?.map((student) => student._id) || []);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  // ============================================================
+  // OPEN DELETE CONFIRMATION
+  // ============================================================
+
+  const handleDeleteTeam = (team) => {
+    setDeleteTeam(team);
+  };
+
+  // ============================================================
+  // CONFIRM DELETE
+  // ============================================================
+
+  const confirmDeleteTeam = async () => {
+    if (!deleteTeam) return;
 
     try {
-      setDeleting(teamId);
+      setDeleting(deleteTeam._id);
 
-      const response = await api.delete(`/teams/${teamId}`);
+      const response = await api.delete(`/teams/${deleteTeam._id}`);
 
       toast.success(response.data?.message || "Team deleted successfully.");
 
-      setTeams((previous) => previous.filter((team) => team._id !== teamId));
+      if (editingTeamId === deleteTeam._id) {
+        resetForm();
+      }
+
+      setTeams((previous) =>
+        previous.filter((team) => team._id !== deleteTeam._id),
+      );
+
+      setDeleteTeam(null);
     } catch (error) {
       console.error("Delete team error:", error);
 
@@ -322,11 +347,9 @@ function TeamManagement() {
   // ============================================================
 
   return (
-    <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-6">
+    <div className="relative min-h-screen bg-[#F6FAFD] p-4 md:p-6">
       <div className="mx-auto max-w-7xl space-y-6">
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
+        {/* HEADER */}
 
         <div className="flex flex-col justify-between gap-5 rounded-3xl bg-[#0A1931] p-6 text-white shadow-sm md:flex-row md:items-center md:p-8">
           <div className="flex items-center gap-4">
@@ -340,7 +363,7 @@ function TeamManagement() {
               </h1>
 
               <p className="mt-1 text-sm text-[#B3CFE5]">
-                Create teams with two mentors and multiple students.
+                Create and manage teams with two mentors and multiple students.
               </p>
             </div>
           </div>
@@ -355,56 +378,46 @@ function TeamManagement() {
           </div>
         </div>
 
-        {/* ======================================================
-            CONTENT
-        ====================================================== */}
+        {/* CONTENT */}
 
         <div className="grid gap-8 lg:grid-cols-3">
-          {/* ====================================================
-              CREATE TEAM
-          ==================================================== */}
+          {/* FORM */}
 
           <form
-            onSubmit={handleCreateTeam}
+            onSubmit={handleSaveTeam}
             className="h-fit space-y-5 rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm"
           >
-            {/* TITLE */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-[#EAF3F9] p-2">
+                  {isEditing ? (
+                    <Pencil size={20} className="text-[#1A3D63]" />
+                  ) : (
+                    <UserPlus size={20} className="text-[#1A3D63]" />
+                  )}
+                </div>
 
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-[#EAF3F9] p-2">
-                <UserPlus size={20} className="text-[#1A3D63]" />
+                <div>
+                  <h2 className="text-lg font-bold text-[#0A1931]">
+                    {isEditing ? "Update Team" : "Create New Team"}
+                  </h2>
+
+                  <p className="text-xs text-[#7A7F85]">
+                    Select a batch, 2 mentors and students
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <h2 className="text-lg font-bold text-[#0A1931]">
-                  Create New Team
-                </h2>
-
-                <p className="text-xs text-[#7A7F85]">
-                  Select a batch, 2 mentors and students
-                </p>
-              </div>
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="rounded-xl p-2 text-gray-500 hover:bg-gray-100"
+                >
+                  <X size={18} />
+                </button>
+              )}
             </div>
-
-            {/* ERROR */}
-
-            {formError && (
-              <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                <AlertCircle size={18} className="mt-0.5 shrink-0" />
-
-                <span>{formError}</span>
-              </div>
-            )}
-
-            {/* SUCCESS */}
-
-            {formSuccess && (
-              <div className="flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 p-3 text-sm font-semibold text-green-700">
-                <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
-
-                <span>{formSuccess}</span>
-              </div>
-            )}
 
             {/* TEAM NAME */}
 
@@ -416,12 +429,9 @@ function TeamManagement() {
               <input
                 type="text"
                 value={name}
-                onChange={(event) => {
-                  setName(event.target.value);
-                  setFormError("");
-                  setFormSuccess("");
-                }}
+                onChange={(event) => setName(event.target.value)}
                 placeholder="Enter team name"
+                disabled={saving}
                 className="w-full rounded-xl border border-[#B3CFE5] p-3 text-sm outline-none focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
               />
             </div>
@@ -436,6 +446,7 @@ function TeamManagement() {
               <select
                 value={gender}
                 onChange={(event) => handleGenderChange(event.target.value)}
+                disabled={saving}
                 className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
               >
                 <option value="">Select team gender</option>
@@ -456,6 +467,7 @@ function TeamManagement() {
               <select
                 value={batch}
                 onChange={(event) => handleBatchChange(event.target.value)}
+                disabled={saving}
                 className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
               >
                 <option value="">Select batch</option>
@@ -466,27 +478,13 @@ function TeamManagement() {
                   </option>
                 ))}
               </select>
-
-              {batches.length === 0 && (
-                <p className="mt-2 text-xs font-medium text-red-500">
-                  No batches available. Please create a batch first.
-                </p>
-              )}
             </div>
 
-            {/* FIRST MENTOR */}
+            {/* MENTOR 1 */}
 
             <div className="rounded-2xl border border-[#B3CFE5] bg-[#FAFCFE] p-4">
               <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-[#0A1931]">
-                    First Mentor
-                  </p>
-
-                  <p className="text-xs text-[#7A7F85]">
-                    Select the first mentor
-                  </p>
-                </div>
+                <p className="text-sm font-bold text-[#0A1931]">First Mentor</p>
 
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1A3D63] text-xs font-bold text-white">
                   1
@@ -495,12 +493,9 @@ function TeamManagement() {
 
               <select
                 value={mentor1}
-                onChange={(event) => {
-                  setMentor1(event.target.value);
-                  setFormError("");
-                }}
-                disabled={!gender}
-                className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none disabled:bg-gray-100 focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
+                onChange={(event) => setMentor1(event.target.value)}
+                disabled={!gender || saving}
+                className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none disabled:bg-gray-100"
               >
                 <option value="">
                   {gender ? "Select first mentor" : "Select gender first"}
@@ -516,27 +511,15 @@ function TeamManagement() {
                   </option>
                 ))}
               </select>
-
-              {gender && filteredMentors.length === 0 && (
-                <p className="mt-2 text-xs text-red-500">
-                  No approved {gender.toLowerCase()} mentors available.
-                </p>
-              )}
             </div>
 
-            {/* SECOND MENTOR */}
+            {/* MENTOR 2 */}
 
             <div className="rounded-2xl border border-[#B3CFE5] bg-[#FAFCFE] p-4">
               <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-[#0A1931]">
-                    Second Mentor
-                  </p>
-
-                  <p className="text-xs text-[#7A7F85]">
-                    Select the second mentor
-                  </p>
-                </div>
+                <p className="text-sm font-bold text-[#0A1931]">
+                  Second Mentor
+                </p>
 
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#4A7FA7] text-xs font-bold text-white">
                   2
@@ -545,12 +528,9 @@ function TeamManagement() {
 
               <select
                 value={mentor2}
-                onChange={(event) => {
-                  setMentor2(event.target.value);
-                  setFormError("");
-                }}
-                disabled={!gender}
-                className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none disabled:bg-gray-100 focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
+                onChange={(event) => setMentor2(event.target.value)}
+                disabled={!gender || saving}
+                className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none disabled:bg-gray-100"
               >
                 <option value="">
                   {gender ? "Select second mentor" : "Select gender first"}
@@ -593,7 +573,7 @@ function TeamManagement() {
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="rounded-xl bg-white p-4 text-center">
-                  <p className="text-sm text-red-600">
+                  <p className="text-sm text-[#7A7F85]">
                     No approved {gender.toLowerCase()} students are available in
                     this batch.
                   </p>
@@ -609,6 +589,7 @@ function TeamManagement() {
                         type="checkbox"
                         checked={selectedStudents.includes(student._id)}
                         onChange={() => handleStudentChange(student._id)}
+                        disabled={saving}
                         className="h-4 w-4"
                       />
 
@@ -625,12 +606,12 @@ function TeamManagement() {
               )}
             </div>
 
-            {/* CREATE BUTTON */}
+            {/* SAVE BUTTON */}
 
             <button
               type="submit"
               disabled={
-                creating ||
+                saving ||
                 !name.trim() ||
                 !gender ||
                 !batch ||
@@ -639,36 +620,36 @@ function TeamManagement() {
                 mentor1 === mentor2 ||
                 selectedStudents.length === 0
               }
-              className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 font-bold transition ${
-                creating ||
-                !name.trim() ||
-                !gender ||
-                !batch ||
-                !mentor1 ||
-                !mentor2 ||
-                mentor1 === mentor2 ||
-                selectedStudents.length === 0
-                  ? "cursor-not-allowed bg-gray-400 text-white"
-                  : "bg-[#1A3D63] text-white hover:bg-[#4A7FA7]"
-              }`}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1A3D63] py-3 font-bold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:bg-gray-400"
             >
-              {creating ? (
+              {saving ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  Creating Team...
+
+                  {isEditing ? "Updating Team..." : "Creating Team..."}
                 </>
               ) : (
                 <>
-                  <Users size={18} />
-                  Create Team
+                  {isEditing ? <Pencil size={18} /> : <Users size={18} />}
+
+                  {isEditing ? "Update Team" : "Create Team"}
                 </>
               )}
             </button>
+
+            {isEditing && (
+              <button
+                type="button"
+                onClick={resetForm}
+                disabled={saving}
+                className="w-full rounded-xl bg-gray-100 py-3 font-semibold text-gray-700 hover:bg-gray-200"
+              >
+                Cancel Update
+              </button>
+            )}
           </form>
 
-          {/* ====================================================
-              TEAM LIST
-          ==================================================== */}
+          {/* TEAM LIST */}
 
           <div className="grid gap-4 lg:col-span-2">
             {teams.length === 0 ? (
@@ -689,7 +670,7 @@ function TeamManagement() {
                   key={team._id}
                   className="rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm"
                 >
-                  {/* TEAM HEADER */}
+                  {/* HEADER */}
 
                   <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -711,9 +692,19 @@ function TeamManagement() {
 
                       <button
                         type="button"
-                        onClick={() => handleDeleteTeam(team._id)}
+                        onClick={() => handleEditTeam(team)}
+                        className="rounded-xl p-2 text-[#1A3D63] transition hover:bg-[#EAF3F9]"
+                        title="Edit team"
+                      >
+                        <Pencil size={18} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteTeam(team)}
                         disabled={deleting === team._id}
                         className="rounded-xl p-2 text-red-500 transition hover:bg-red-50 disabled:opacity-50"
+                        title="Delete team"
                       >
                         {deleting === team._id ? (
                           <Loader2 size={18} className="animate-spin" />
@@ -807,6 +798,76 @@ function TeamManagement() {
           </div>
         </div>
       </div>
+
+      {/* ========================================================
+          DELETE CONFIRMATION OVERLAY
+      ======================================================== */}
+
+      {deleteTeam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0A1931]/30 px-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDECEC]">
+                  <Trash2 size={19} className="text-red-500" />
+                </div>
+
+                <div>
+                  <h3 className="font-bold text-[#0A1931]">Delete Team</h3>
+
+                  <p className="text-xs text-[#7A7F85]">
+                    This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setDeleteTeam(null)}
+                disabled={deleting === deleteTeam._id}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="mb-5 text-sm text-gray-600">
+              Are you sure you want to delete{" "}
+              <span className="font-bold text-[#0A1931]">
+                {deleteTeam.name}
+              </span>
+              ?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteTeam(null)}
+                disabled={deleting === deleteTeam._id}
+                className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmDeleteTeam}
+                disabled={deleting === deleteTeam._id}
+                className="flex-1 rounded-xl bg-[#D9534F] py-2.5 text-sm font-semibold text-white transition hover:bg-[#C64541] disabled:opacity-60"
+              >
+                {deleting === deleteTeam._id ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    Deleting...
+                  </span>
+                ) : (
+                  "Delete"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

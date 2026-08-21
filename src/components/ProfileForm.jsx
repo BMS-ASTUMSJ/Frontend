@@ -243,10 +243,6 @@ const ProfileForm = ({ role }) => {
                   Profile Photo
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-500">
-                  Upload a professional profile photo.
-                </p>
-
                 <div className="mt-4 flex flex-wrap gap-3">
                   <label
                     htmlFor={`${role}-profile-image`}
@@ -274,10 +270,6 @@ const ProfileForm = ({ role }) => {
                     </button>
                   )}
                 </div>
-
-                <p className="mt-3 text-xs text-gray-400">
-                  JPG, PNG or WEBP. Maximum 5MB.
-                </p>
               </div>
             </div>
           </div>
