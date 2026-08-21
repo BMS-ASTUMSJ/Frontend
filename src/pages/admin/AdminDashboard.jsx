@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../utils/api";
-import { toast } from "react-hot-toast";
 
 import {
   Users,
@@ -27,23 +26,17 @@ function AdminDashboard() {
 
     const fetchDashboardStats = async () => {
       try {
-        setLoading(true);
-        setError("");
-
-        const response = await api.get("/batches/stats");
+        const response = await api.get("/batches/dashboard-stats");
 
         if (isMounted) {
           setStatsData(response.data);
         }
       } catch (err) {
-        console.error("Dashboard stats error:", err);
-
-        const errorMessage =
-          err.response?.data?.message || "Failed to load dashboard statistics.";
-
         if (isMounted) {
-          setError(errorMessage);
-          toast.error(errorMessage);
+          setError(
+            err.response?.data?.message ||
+              "Failed to load dashboard statistics."
+          );
         }
       } finally {
         if (isMounted) {
@@ -83,18 +76,14 @@ function AdminDashboard() {
     );
   }
 
-  const {
-    currentBatch = {},
-    previousBatches = [],
-    overallStats = {},
-  } = statsData || {};
-
-  const activeBatchInfo = currentBatch?.batch || {};
+  const currentBatch = statsData?.currentBatch || {};
+  const previousBatches = statsData?.previousBatches || [];
+  const overallStats = statsData?.overallStats || {};
+  const activeBatch = currentBatch?.batch || null;
 
   return (
     <div className="min-h-full bg-[#F6FAFD] p-6 sm:p-8">
       <div className="space-y-8">
-        {/* HEADER */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-[#4A7FA7]">
@@ -119,9 +108,7 @@ function AdminDashboard() {
           </Link>
         </div>
 
-        {/* STAT CARDS */}
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {/* TOTAL STUDENTS */}
           <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div>
               <p className="text-xs font-semibold text-[#7A7F85]">
@@ -132,7 +119,9 @@ function AdminDashboard() {
                 {overallStats?.totalStudentsAllTime || 0}
               </h2>
 
-              <p className="mt-1 text-xs text-[#7A7F85]">Registered students</p>
+              <p className="mt-1 text-xs text-[#7A7F85]">
+                Registered students
+              </p>
             </div>
 
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F1F8] text-[#1A3D63]">
@@ -140,7 +129,6 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* ACTIVE MENTORS */}
           <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div>
               <p className="text-xs font-semibold text-[#7A7F85]">
@@ -151,7 +139,9 @@ function AdminDashboard() {
                 {overallStats?.totalMentors || 0}
               </h2>
 
-              <p className="mt-1 text-xs text-[#7A7F85]">Currently active</p>
+              <p className="mt-1 text-xs text-[#7A7F85]">
+                Currently active
+              </p>
             </div>
 
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
@@ -159,7 +149,6 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* PENDING APPLICATIONS */}
           <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div>
               <p className="text-xs font-semibold text-[#7A7F85]">
@@ -170,7 +159,9 @@ function AdminDashboard() {
                 {currentBatch?.applicantCount || 0}
               </h2>
 
-              <p className="mt-1 text-xs text-[#7A7F85]">Waiting for review</p>
+              <p className="mt-1 text-xs text-[#7A7F85]">
+                Waiting for review
+              </p>
             </div>
 
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
@@ -178,7 +169,6 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* BATCHES */}
           <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div>
               <p className="text-xs font-semibold text-[#7A7F85]">
@@ -189,7 +179,9 @@ function AdminDashboard() {
                 {overallStats?.totalBatches || 0}
               </h2>
 
-              <p className="mt-1 text-xs text-[#7A7F85]">Published cohorts</p>
+              <p className="mt-1 text-xs text-[#7A7F85]">
+                Published cohorts
+              </p>
             </div>
 
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-700">
@@ -198,7 +190,6 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* CURRENT ACTIVE BATCH */}
         <div className="overflow-hidden rounded-3xl bg-linear-to-br from-[#0A1931] to-[#1A3D63] text-white shadow-xl">
           <div className="border-b border-white/10 p-6 sm:p-8">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -212,27 +203,39 @@ function AdminDashboard() {
                 </div>
 
                 <h2 className="mt-2 text-2xl font-bold sm:text-3xl">
-                  {activeBatchInfo?.name || "No Active Batch Selected"}
+                  {activeBatch?.name || "No Active Batch Selected"}
                 </h2>
 
                 <p className="mt-2 max-w-2xl text-sm text-gray-300">
-                  {activeBatchInfo?.description ||
-                    "Active summer bootcamp cohort operations."}
+                  {activeBatch?.description ||
+                    "No active bootcamp is currently selected."}
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <span
-                  className={`rounded-full px-4 py-2 text-xs font-bold ${
-                    activeBatchInfo?.isRegistrationOpen
-                      ? "border border-green-400/30 bg-green-500/20 text-green-300"
-                      : "border border-gray-400/30 bg-gray-500/20 text-gray-300"
-                  }`}
-                >
-                  {activeBatchInfo?.isRegistrationOpen
-                    ? "🟢 Registration OPEN"
-                    : "🔴 Registration CLOSED"}
-                </span>
+                {activeBatch ? (
+                  <span className="rounded-full border border-green-400/30 bg-green-500/20 px-4 py-2 text-xs font-bold text-green-300">
+                    ACTIVE
+                  </span>
+                ) : (
+                  <span className="rounded-full border border-gray-400/30 bg-gray-500/20 px-4 py-2 text-xs font-bold text-gray-300">
+                    NO ACTIVE BATCH
+                  </span>
+                )}
+
+                {activeBatch && (
+                  <span
+                    className={`rounded-full px-4 py-2 text-xs font-bold ${
+                      activeBatch?.isRegistrationOpen
+                        ? "border border-green-400/30 bg-green-500/20 text-green-300"
+                        : "border border-gray-400/30 bg-gray-500/20 text-gray-300"
+                    }`}
+                  >
+                    {activeBatch?.isRegistrationOpen
+                      ? "REGISTRATION OPEN"
+                      : "REGISTRATION CLOSED"}
+                  </span>
+                )}
 
                 <Link
                   to="/admin/batches"
@@ -244,70 +247,82 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* BATCH METRICS */}
-          <div className="grid gap-4 p-6 sm:grid-cols-2 sm:p-8 lg:grid-cols-4">
-            {/* STUDENTS */}
-            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
-                Enrolled Students
-              </p>
+          {activeBatch ? (
+            <div className="grid gap-4 p-6 sm:grid-cols-2 sm:p-8 lg:grid-cols-4">
+              <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
+                  Enrolled Students
+                </p>
 
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-3xl font-bold">
-                  {currentBatch?.studentCount || 0}
-                </span>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">
+                    {currentBatch?.studentCount || 0}
+                  </span>
 
-                <span className="text-xs text-gray-300">
-                  ({currentBatch?.femaleStudents || 0} female /{" "}
-                  {currentBatch?.maleStudents || 0} male)
-                </span>
-              </div>
-            </div>
-
-            {/* TEAMS */}
-            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
-                Active Teams
-              </p>
-
-              <div className="mt-2 text-3xl font-bold">
-                {currentBatch?.teamCount || 0}
+                  <span className="text-xs text-gray-300">
+                    ({currentBatch?.femaleStudents || 0} female /{" "}
+                    {currentBatch?.maleStudents || 0} male)
+                  </span>
+                </div>
               </div>
 
-              <p className="mt-1 text-xs text-gray-300">Teams formed</p>
-            </div>
+              <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
+                  Active Teams
+                </p>
 
-            {/* MENTORS */}
-            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
-                Available Mentors
-              </p>
+                <div className="mt-2 text-3xl font-bold">
+                  {currentBatch?.teamCount || 0}
+                </div>
 
-              <div className="mt-2 text-3xl font-bold">
-                {currentBatch?.mentorCount || 0}
+                <p className="mt-1 text-xs text-gray-300">
+                  Teams formed
+                </p>
               </div>
 
-              <p className="mt-1 text-xs text-gray-300">Active mentors</p>
-            </div>
+              <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
+                  Available Mentors
+                </p>
 
-            {/* APPLICANTS */}
-            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
-                Cohort Applicants
-              </p>
+                <div className="mt-2 text-3xl font-bold">
+                  {currentBatch?.mentorCount || 0}
+                </div>
 
-              <div className="mt-2 text-3xl font-bold">
-                {currentBatch?.applicantCount || 0}
+                <p className="mt-1 text-xs text-gray-300">
+                  Active mentors
+                </p>
               </div>
 
-              <p className="mt-1 text-xs text-gray-300">
-                Applications received
+              <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-[#B3CFE5]">
+                  Cohort Applicants
+                </p>
+
+                <div className="mt-2 text-3xl font-bold">
+                  {currentBatch?.applicantCount || 0}
+                </div>
+
+                <p className="mt-1 text-xs text-gray-300">
+                  Applications received
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 text-center">
+              <Layers className="mx-auto h-10 w-10 text-gray-400" />
+
+              <p className="mt-3 text-sm font-semibold text-gray-300">
+                No Active Batch Selected
+              </p>
+
+              <p className="mt-1 text-xs text-gray-400">
+                Activate a batch from Batch Management to see it here.
               </p>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* PREVIOUS BATCHES */}
         <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -405,10 +420,11 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* QUICK ACTIONS */}
         <div>
           <div className="mb-4">
-            <h2 className="text-lg font-bold text-[#0A1931]">Quick Actions</h2>
+            <h2 className="text-lg font-bold text-[#0A1931]">
+              Quick Actions
+            </h2>
 
             <p className="mt-1 text-xs text-[#7A7F85]">
               Quickly access the most important admin tools.
@@ -416,7 +432,6 @@ function AdminDashboard() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            {/* APPLICANTS */}
             <Link
               to="/admin/applicants"
               className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-[#4A7FA7] hover:shadow-md"
@@ -439,7 +454,6 @@ function AdminDashboard() {
               </p>
             </Link>
 
-            {/* TEAMS */}
             <Link
               to="/admin/teams"
               className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-[#4A7FA7] hover:shadow-md"
@@ -452,29 +466,30 @@ function AdminDashboard() {
                 <ArrowRight className="h-5 w-5 text-gray-400 transition group-hover:translate-x-1 group-hover:text-[#1A3D63]" />
               </div>
 
-              <h3 className="mt-4 font-bold text-[#0A1931]">Team Formations</h3>
+              <h3 className="mt-4 font-bold text-[#0A1931]">
+                Team Formations
+              </h3>
 
               <p className="mt-1 text-xs leading-5 text-[#7A7F85]">
                 Group students into teams and assign mentors.
               </p>
             </Link>
 
-            {/* BATCHES */}
             <Link
               to="/admin/batches"
               className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-[#4A7FA7] hover:shadow-md"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
-                  <Calendar className="h-5 w-5" />
-                </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                <Calendar className="h-5 w-5" />
+              </div>
+
+              <div className="mt-4 flex items-center justify-between">
+                <h3 className="font-bold text-[#0A1931]">
+                  Cohort Management
+                </h3>
 
                 <ArrowRight className="h-5 w-5 text-gray-400 transition group-hover:translate-x-1 group-hover:text-[#1A3D63]" />
               </div>
-
-              <h3 className="mt-4 font-bold text-[#0A1931]">
-                Cohort Management
-              </h3>
 
               <p className="mt-1 text-xs leading-5 text-[#7A7F85]">
                 Manage batches and control public registration.

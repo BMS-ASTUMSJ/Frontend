@@ -12,10 +12,8 @@ import {
 function BatchManagement() {
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
   const [actionId, setActionId] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -39,7 +37,7 @@ function BatchManagement() {
 
       setError(
         err.response?.data?.message ||
-          "Failed to fetch batches from the server.",
+          "Failed to fetch batches from the server."
       );
     } finally {
       setLoading(false);
@@ -121,11 +119,17 @@ function BatchManagement() {
       });
 
       setSuccess(
-        response.data?.message || "Batch status updated successfully.",
+        response.data?.message || "Batch status updated successfully."
       );
 
       if (response.data?.batches) {
         setBatches(response.data.batches);
+      } else if (response.data?.batch) {
+        setBatches((previousBatches) =>
+          previousBatches.map((item) =>
+            item._id === batchId ? response.data.batch : item
+          )
+        );
       } else {
         setBatches((previousBatches) =>
           previousBatches.map((item) =>
@@ -134,14 +138,16 @@ function BatchManagement() {
                   ...item,
                   status: newStatus,
                 }
-              : item,
-          ),
+              : item
+          )
         );
       }
     } catch (err) {
       console.error("Update batch status error:", err);
 
-      setError(err.response?.data?.message || "Failed to update batch status.");
+      setError(
+        err.response?.data?.message || "Failed to update batch status."
+      );
     } finally {
       setActionId(null);
     }
@@ -155,43 +161,34 @@ function BatchManagement() {
       setActionId(`registration-${batchId}`);
 
       const response = await api.patch(
-        `/batches/${batchId}/toggle-registration`,
+        `/batches/${batchId}/toggle-registration`
       );
 
-      /*
-       * If backend returns the updated batch
-       */
       if (response.data?.batch) {
         setBatches((previousBatches) =>
           previousBatches.map((batch) =>
-            batch._id === batchId ? response.data.batch : batch,
-          ),
+            batch._id === batchId ? response.data.batch : batch
+          )
         );
       }
 
-      /*
-       * If backend returns the complete batches list
-       */
       if (response.data?.batches) {
         setBatches(response.data.batches);
       }
 
-      /*
-       * If backend doesn't return the updated batch/list,
-       * fetch the latest data from the server.
-       */
       if (!response.data?.batch && !response.data?.batches) {
         await fetchBatches();
       }
 
       setSuccess(
-        response.data?.message || "Registration status updated successfully.",
+        response.data?.message || "Registration status updated successfully."
       );
     } catch (err) {
       console.error("Toggle registration error:", err);
 
       setError(
-        err.response?.data?.message || "Failed to update registration status.",
+        err.response?.data?.message ||
+          "Failed to update registration status."
       );
     } finally {
       setActionId(null);
@@ -216,25 +213,18 @@ function BatchManagement() {
       case "upcoming":
         return "border-blue-200 bg-blue-100 text-blue-700";
 
-      case "completed":
-        return "border-gray-200 bg-gray-100 text-gray-700";
-
       default:
         return "border-gray-200 bg-gray-100 text-gray-700";
     }
   };
 
   const hasOpenRegistration = batches.some(
-    (batch) => batch.isRegistrationOpen === true,
+    (batch) => batch.isRegistrationOpen === true
   );
 
   return (
     <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-8">
       <div className="mx-auto max-w-7xl space-y-8">
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
-
         <div className="rounded-3xl bg-[#0A1931] p-6 shadow-sm md:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4 text-white">
@@ -251,8 +241,6 @@ function BatchManagement() {
               </div>
             </div>
 
-            {/* REGISTRATION STATUS */}
-
             <div className="rounded-2xl bg-white/10 px-5 py-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-[#B3CFE5]">
                 Registration
@@ -266,40 +254,28 @@ function BatchManagement() {
                 />
 
                 <span className="text-sm font-bold text-white">
-                  {hasOpenRegistration ? "Currently Open" : "Currently Closed"}
+                  {hasOpenRegistration
+                    ? "Currently Open"
+                    : "Currently Closed"}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ======================================================
-            ERROR
-        ====================================================== */}
-
         {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">
             <AlertCircle className="h-5 w-5 shrink-0" />
-
             <p className="text-sm font-medium">{error}</p>
           </div>
         )}
 
-        {/* ======================================================
-            SUCCESS
-        ====================================================== */}
-
         {success && (
           <div className="flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 text-green-700">
             <CheckCircle2 className="h-5 w-5 shrink-0" />
-
             <p className="text-sm font-medium">{success}</p>
           </div>
         )}
-
-        {/* ======================================================
-            MAIN CONTENT
-        ====================================================== */}
 
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="h-fit rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm">
@@ -308,8 +284,6 @@ function BatchManagement() {
             </h2>
 
             <form onSubmit={handleCreateBatch} className="space-y-5">
-              {/* BATCH NAME */}
-
               <div>
                 <label className="text-sm font-semibold text-[#0A1931]">
                   Batch Name
@@ -329,8 +303,6 @@ function BatchManagement() {
                   className="mt-2 w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
                 />
               </div>
-
-              {/* DATES */}
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
@@ -370,8 +342,6 @@ function BatchManagement() {
                 </div>
               </div>
 
-              {/* DESCRIPTION */}
-
               <div>
                 <label className="text-sm font-semibold text-[#0A1931]">
                   Description
@@ -391,8 +361,6 @@ function BatchManagement() {
                 />
               </div>
 
-              {/* STATUS */}
-
               <div>
                 <label className="text-sm font-semibold text-[#0A1931]">
                   Initial Batch Status
@@ -410,11 +378,8 @@ function BatchManagement() {
                 >
                   <option value="upcoming">Upcoming</option>
                   <option value="active">Active</option>
-                  <option value="completed">Completed</option>
                 </select>
               </div>
-
-              {/* CREATE */}
 
               <button
                 type="submit"
@@ -426,14 +391,11 @@ function BatchManagement() {
                 ) : (
                   <Plus className="h-5 w-5" />
                 )}
+
                 Create Batch
               </button>
             </form>
           </div>
-
-          {/* ====================================================
-              BATCH LIST
-          ==================================================== */}
 
           <div className="space-y-4 lg:col-span-2">
             <div className="flex items-center justify-between">
@@ -449,15 +411,11 @@ function BatchManagement() {
               </div>
             </div>
 
-            {/* LOADING */}
-
             {loading ? (
               <div className="flex justify-center rounded-3xl bg-white p-12">
                 <Loader2 className="h-7 w-7 animate-spin text-[#1A3D63]" />
               </div>
             ) : batches.length === 0 ? (
-              /* EMPTY */
-
               <div className="rounded-3xl border border-dashed border-[#B3CFE5] bg-white p-12 text-center">
                 <ClipboardList className="mx-auto h-10 w-10 text-[#B3CFE5]" />
 
@@ -470,16 +428,12 @@ function BatchManagement() {
                 </p>
               </div>
             ) : (
-              /* BATCHES */
-
               batches.map((batch) => (
                 <div
                   key={batch._id}
                   className="rounded-3xl border border-[#B3CFE5] bg-white p-6 shadow-sm transition hover:shadow-md"
                 >
                   <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                    {/* BATCH INFORMATION */}
-
                     <div className="flex items-start gap-4">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F6FAFD] text-[#1A3D63]">
                         <ClipboardList className="h-5 w-5" />
@@ -493,7 +447,7 @@ function BatchManagement() {
 
                           <span
                             className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase ${getStatusStyle(
-                              batch.status,
+                              batch.status
                             )}`}
                           >
                             {batch.status || "unknown"}
@@ -518,13 +472,7 @@ function BatchManagement() {
                       </div>
                     </div>
 
-                    {/* ==================================================
-                        RIGHT SIDE
-                    ================================================== */}
-
                     <div className="flex flex-wrap items-center gap-3">
-                      {/* STATUS SELECTOR */}
-
                       <div className="flex items-center gap-2">
                         <select
                           value={batch.status || "upcoming"}
@@ -533,7 +481,7 @@ function BatchManagement() {
                           }
                           disabled={actionId === batch._id}
                           className={`rounded-xl border px-3 py-2 text-xs font-bold outline-none transition ${getStatusStyle(
-                            batch.status,
+                            batch.status
                           )} ${
                             actionId === batch._id
                               ? "cursor-not-allowed opacity-50"
@@ -541,10 +489,7 @@ function BatchManagement() {
                           }`}
                         >
                           <option value="upcoming">Upcoming</option>
-
                           <option value="active">Active</option>
-
-                          <option value="completed">Completed</option>
                         </select>
 
                         {actionId === batch._id && (
@@ -552,12 +497,12 @@ function BatchManagement() {
                         )}
                       </div>
 
-                      {/* REGISTRATION OPEN / CLOSE BUTTON */}
-
                       <button
                         type="button"
                         onClick={() => handleToggleRegistration(batch._id)}
-                        disabled={actionId === `registration-${batch._id}`}
+                        disabled={
+                          actionId === `registration-${batch._id}`
+                        }
                         className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                           batch.isRegistrationOpen
                             ? "bg-green-100 text-green-700 hover:bg-green-200"
