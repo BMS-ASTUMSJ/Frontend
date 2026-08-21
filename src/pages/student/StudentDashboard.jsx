@@ -1,283 +1,216 @@
-import { useEffect, useState } from "react";
-import { ClipboardCheck, FileText, BarChart3, Megaphone } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-import api from "../../utils/api";
-
-function StudentDashboard() {
-  // ============================================================
-  // STUDENT DATA
-  // ============================================================
-
-  const [student, setStudent] = useState(null);
-  const [atRisk, setAtRisk] = useState(false);
+const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
-
-  // ============================================================
-  // FETCH DATA FROM BACKEND
-  // ============================================================
+  const [error, setError] = useState(null);
+  const [studentName, setStudentName] = useState("");
+  const [metrics, setMetrics] = useState({
+    attendanceRate: 0,
+    assignmentCount: 0,
+    progressRate: 0,
+    announcementCount: 0,
+  });
 
   useEffect(() => {
-    const fetchStudentData = async () => {
+    const fetchRealDashboardData = async () => {
       try {
         setLoading(true);
+        setError(null);
 
-        // Get logged-in student's profile
-        const profileResponse = await api.get("/users/profile");
+        const token = localStorage.getItem("token");
+        const response = await axios.get("/api/dashboard/student/metrics", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-        if (profileResponse.data.success) {
-          setStudent(profileResponse.data.user);
+        if (response.data.success) {
+          setStudentName(response.data.student.fullName);
+          setMetrics(response.data.metrics);
         }
-
-        // Get logged-in student's at-risk status
-        const riskResponse = await api.get("/users/my-risk-status");
-
-        if (riskResponse.data.success) {
-          setAtRisk(Boolean(riskResponse.data.atRisk));
-        }
-      } catch (error) {
-        console.error("Error fetching student dashboard:", error);
+      } catch (err) {
+        console.error("Dashboard Fetch Error:", err);
+        setError(
+          err.response?.data?.message || "Failed to connect to backend server.",
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStudentData();
+    fetchRealDashboardData();
   }, []);
-
-  // ============================================================
-  // DASHBOARD STATS
-  // ============================================================
-
-  const stats = [
-    {
-      title: "Attendance",
-      value: "94%",
-      icon: ClipboardCheck,
-    },
-    {
-      title: "Assignments",
-      value: "12",
-      icon: FileText,
-    },
-    {
-      title: "Progress",
-      value: "78%",
-      icon: BarChart3,
-    },
-    {
-      title: "Announcements",
-      value: "4",
-      icon: Megaphone,
-    },
-  ];
-
-  // ============================================================
-  // LOADING
-  // ============================================================
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F6FAFD]">
-        <p className="text-sm font-medium text-[#4A7FA7]">
-          Loading dashboard...
-        </p>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50 text-slate-600 font-medium">
+        Loading real-time student data...
       </div>
     );
   }
 
-  // ============================================================
-  // STUDENT NAME
-  // ============================================================
-
-  const studentName = student
-    ? `${student.firstName || ""} ${student.lastName || ""}`.trim()
-    : "Student";
-
-  // ============================================================
-  // RETURN
-  // ============================================================
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50 text-red-500 font-medium">
+        {error}
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#F6FAFD]">
-      {/* ========================================================
-          AT-RISK INDICATOR
-          NON-CLICKABLE
-      ======================================================== */}
-
-      {atRisk && (
-        <div className="mx-8 mt-6 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-5 py-4">
-          <div>
-            <p className="font-semibold text-red-700">At Risk</p>
-
-            <p className="mt-1 text-sm text-red-600">
-              Your current performance requires attention.
-            </p>
-          </div>
-
-          {/* NOT A BUTTON / NOT CLICKABLE */}
-          <div className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white">
-            At Risk
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================
-          HEADER
-      ======================================================== */}
-
-      <header className="border-b border-[#D6D6D6] bg-white px-8 py-6">
-        <p className="text-sm font-medium text-[#4A7FA7]">Student Dashboard</p>
-
-        <h1 className="mt-1 text-2xl font-bold text-[#0A1931]">
-          Welcome back, {studentName}
+    <div className="p-8 bg-slate-50 min-h-screen">
+      {/* Dynamic Welcome Header */}
+      <div className="mb-8">
+        <p className="text-sm font-medium text-sky-600">Student Dashboard</p>
+        <h1 className="text-3xl font-bold text-slate-800">
+          Welcome back, {studentName || "Student"}
         </h1>
-
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="text-slate-500 mt-1">
           Keep learning, complete your assignments and track your progress.
         </p>
-      </header>
+      </div>
 
-      {/* ========================================================
-          CONTENT
-      ======================================================== */}
-
-      <div className="p-8">
-        {/* ======================================================
-            STATS
-        ====================================================== */}
-
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-
-            return (
-              <div
-                key={stat.title}
-                className="rounded-2xl border border-[#D6D6D6] bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">{stat.title}</p>
-
-                    <h2 className="mt-3 text-3xl font-bold text-[#0A1931]">
-                      {stat.value}
-                    </h2>
-                  </div>
-
-                  <div className="rounded-xl bg-[#B3CFE5]/40 p-3">
-                    <Icon className="h-5 w-5 text-[#1A3D63]" />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* ======================================================
-            PROGRESS + ANNOUNCEMENT
-        ====================================================== */}
-
-        <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          {/* ====================================================
-              PROGRESS
-          ==================================================== */}
-
-          <div className="rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[#0A1931]">Your Progress</h2>
-
-            <p className="mt-1 text-sm text-gray-500">
-              Keep working toward completing the bootcamp.
-            </p>
-
-            <div className="mt-6">
-              <div className="mb-2 flex justify-between text-sm">
-                <span className="font-medium text-[#0A1931]">
-                  Overall Progress
-                </span>
-
-                <span className="font-semibold text-[#4A7FA7]">78%</span>
-              </div>
-
-              <div className="h-3 overflow-hidden rounded-full bg-[#D6D6D6]">
-                <div className="h-full w-[78%] rounded-full bg-[#4A7FA7]" />
-              </div>
-            </div>
+      {/* Metrics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* Attendance Metric */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-500">Attendance</p>
+            <h2 className="text-3xl font-bold text-slate-800 mt-2">
+              {metrics.attendanceRate}%
+            </h2>
           </div>
-
-          {/* ====================================================
-              ANNOUNCEMENT
-          ==================================================== */}
-
-          <div className="rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
-            <div className="flex items-start gap-4">
-              <div className="rounded-xl bg-[#B3CFE5]/40 p-3">
-                <Megaphone className="h-5 w-5 text-[#1A3D63]" />
-              </div>
-
-              <div>
-                <h2 className="text-lg font-bold text-[#0A1931]">
-                  Latest Announcement
-                </h2>
-
-                <p className="mt-2 text-sm leading-6 text-gray-500">
-                  Check the announcements section regularly for important
-                  updates from the bootcamp administration.
-                </p>
-
-                <button className="mt-4 rounded-xl bg-[#0A1931] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1A3D63]">
-                  View Announcements
-                </button>
-              </div>
-            </div>
+          <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
           </div>
         </div>
 
-        {/* ======================================================
-            KEEP LEARNING
-        ====================================================== */}
+        {/* Assignments Metric */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-500">Assignments</p>
+            <h2 className="text-3xl font-bold text-slate-800 mt-2">
+              {metrics.assignmentCount}
+            </h2>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+          </div>
+        </div>
 
-        <div className="mt-6 rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-[#0A1931]">Keep Learning</h2>
+        {/* Progress Metric */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-500">Progress</p>
+            <h2 className="text-3xl font-bold text-slate-800 mt-2">
+              {metrics.progressRate}%
+            </h2>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
+            </svg>
+          </div>
+        </div>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Stay consistent with your bootcamp activities.
+        {/* Announcements Metric */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-500">Announcements</p>
+            <h2 className="text-3xl font-bold text-slate-800 mt-2">
+              {metrics.announcementCount}
+            </h2>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M11 5.882T19.24 3 22 4.12V17g-11-11.118L2 10v4l9 4.12"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Card Detail */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-800">Your Progress</h3>
+          <p className="text-sm text-slate-500 mb-4">
+            Keep working toward completing the bootcamp.
           </p>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {/* ATTENDANCE */}
-
-            <div className="rounded-xl bg-[#F6FAFD] p-5">
-              <h3 className="font-semibold text-[#0A1931]">Attendance</h3>
-
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                Attend sessions regularly to maintain good progress.
-              </p>
-            </div>
-
-            {/* ASSIGNMENTS */}
-
-            <div className="rounded-xl bg-[#F6FAFD] p-5">
-              <h3 className="font-semibold text-[#0A1931]">Assignments</h3>
-
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                Complete your assignments and submit them on time.
-              </p>
-            </div>
-
-            {/* PROGRESS */}
-
-            <div className="rounded-xl bg-[#F6FAFD] p-5">
-              <h3 className="font-semibold text-[#0A1931]">Progress</h3>
-
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                Track your learning progress throughout the bootcamp.
-              </p>
-            </div>
+          <div className="flex justify-between items-center text-sm font-semibold mb-2">
+            <span className="text-slate-700">Overall Progress</span>
+            <span className="text-sky-600">{metrics.progressRate}%</span>
           </div>
+          <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+            <div
+              className="bg-sky-600 h-full transition-all duration-300"
+              style={{ width: `${metrics.progressRate}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Announcements Action Box */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 mb-1">
+              Latest Announcement
+            </h3>
+            <p className="text-sm text-slate-500">
+              Check the announcements section regularly for important updates
+              from the bootcamp administration.
+            </p>
+          </div>
+          <button className="mt-6 w-max px-5 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-slate-800 transition-colors">
+            View Announcements
+          </button>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default StudentDashboard;

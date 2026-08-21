@@ -40,8 +40,8 @@ function LandingPage() {
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-[#B3CFE5]">
               A practical bootcamp designed to help students develop real-world
-              software engineering skills through hands-on projects,
-              competitive programming, teamwork, and mentorship.
+              software engineering skills through hands-on projects, competitive
+              programming, teamwork, and mentorship.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
@@ -145,8 +145,8 @@ function LandingPage() {
             <p className="mt-5 text-lg leading-8 text-[#1A3D63]">
               Throughout the program, students are encouraged to improve their
               problem-solving abilities, strengthen their understanding of
-              software development, and develop the confidence needed to work
-              on real-world technology projects.
+              software development, and develop the confidence needed to work on
+              real-world technology projects.
             </p>
           </div>
 
@@ -306,9 +306,9 @@ function LandingPage() {
                 </h3>
 
                 <p className="mt-3 leading-7 text-[#B3CFE5]">
-                  Mentorship is an important part of the bootcamp. Students
-                  have access to people who can provide technical feedback,
-                  project guidance, career advice, and support when they face
+                  Mentorship is an important part of the bootcamp. Students have
+                  access to people who can provide technical feedback, project
+                  guidance, career advice, and support when they face
                   challenges.
                 </p>
               </div>
@@ -394,8 +394,8 @@ function LandingPage() {
 
               <div className="border-t border-[#4A7FA7] px-6 py-5">
                 <p className="leading-7 text-slate-600">
-                  Students can explore tracks such as Full-Stack Web
-                  Development and Competitive Programming.
+                  Students can explore tracks such as Full-Stack Web Development
+                  and Competitive Programming.
                 </p>
               </div>
             </details>
@@ -470,7 +470,6 @@ function LandingPage() {
         </div>
       </section>
 
-     
       <footer className="border-t border-[#1A3D63] bg-[#0A1931] px-6 py-8 text-center">
         <p className="text-sm text-[#B3CFE5]">
           © 2026 ASTU MSJ Bootcamp. All rights reserved.
