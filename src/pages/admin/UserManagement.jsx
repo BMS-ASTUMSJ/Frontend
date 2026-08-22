@@ -15,7 +15,15 @@ import {
   Shield,
   GraduationCap,
   X,
+  Sparkles,
+  Users,
+  RotateCcw,
+  UserCheck,
+  CalendarDays,
+  KeyRound,
+  Check,
 } from "lucide-react";
+import toast, { Toaster } from "react-hot-toast";
 
 function UserManagement() {
   const [activeTab, setActiveTab] = useState("students");
@@ -72,7 +80,6 @@ function UserManagement() {
       }
 
       const queryString = params.length > 0 ? `?${params.join("&")}` : "";
-
       const response = await api.get(`${endpoint}${queryString}`);
 
       if (activeTab === "students") {
@@ -82,7 +89,6 @@ function UserManagement() {
       }
     } catch (err) {
       console.error("Fetch users error:", err);
-
       setError(err.response?.data?.message || "Failed to load users.");
     } finally {
       setLoading(false);
@@ -107,7 +113,6 @@ function UserManagement() {
         }
 
         const queryString = params.length > 0 ? `?${params.join("&")}` : "";
-
         const response = await api.get(`${endpoint}${queryString}`);
 
         if (!isMounted) return;
@@ -119,7 +124,6 @@ function UserManagement() {
         }
       } catch (err) {
         console.error("Fetch users error:", err);
-
         if (isMounted) {
           setError(err.response?.data?.message || "Failed to load users.");
         }
@@ -153,14 +157,15 @@ function UserManagement() {
       });
 
       setSuccess(
-        response.data?.message || `User status updated to ${newStatus}.`,
+        response.data?.message || `User status updated to ${newStatus}.`
       );
+      toast.success(`User status updated to ${newStatus}.`);
 
       await refreshUsers();
     } catch (err) {
       console.error("Status update error:", err);
-
       setError(err.response?.data?.message || "Failed to update user status.");
+      toast.error(err.response?.data?.message || "Failed to update status.");
     } finally {
       setActionId(null);
     }
@@ -178,12 +183,13 @@ function UserManagement() {
       const response = await api.delete(`/users/${userId}`);
 
       setSuccess(response.data?.message || "User deleted successfully.");
+      toast.success("User removed successfully.");
 
       await refreshUsers();
     } catch (err) {
       console.error("Delete user error:", err);
-
       setError(err.response?.data?.message || "Failed to delete user.");
+      toast.error(err.response?.data?.message || "Failed to delete user.");
     } finally {
       setActionId(null);
     }
@@ -195,7 +201,6 @@ function UserManagement() {
 
   const handleCreateMentor = async (e) => {
     e.preventDefault();
-
     clearMessages();
 
     const firstName = newMentor.firstName.trim();
@@ -223,6 +228,7 @@ function UserManagement() {
       const createdUser = response.data?.user;
 
       setSuccess(response.data?.message || "Mentor created successfully!");
+      toast.success("Mentor created successfully!");
 
       setIsAddMentorOpen(false);
 
@@ -247,8 +253,8 @@ function UserManagement() {
       await refreshUsers();
     } catch (err) {
       console.error("Create mentor error:", err);
-
       setError(err.response?.data?.message || "Failed to create mentor.");
+      toast.error(err.response?.data?.message || "Failed to create mentor.");
     } finally {
       setCreatingMentor(false);
     }
@@ -282,7 +288,6 @@ function UserManagement() {
     if (creatingMentor) return;
 
     setIsAddMentorOpen(false);
-
     setNewMentor({
       firstName: "",
       lastName: "",
@@ -304,663 +309,651 @@ function UserManagement() {
     clearMessages();
   };
 
-  // ============================================================
-  // UI
-  // ============================================================
-
   return (
-    <div className="min-h-screen bg-[#F6FAFD] p-6 sm:p-8">
-      <div className="mx-auto max-w-7xl">
-        {/* ========================================================
-            HEADER
-        ======================================================== */}
+    <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            borderRadius: "14px",
+            background: "#FAF4EB",
+            color: "#16344E",
+            border: "1px solid #E8DCB8",
+            fontWeight: "600",
+          },
+        }}
+      />
 
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-[#0A1931]">
-              User Management
-            </h1>
+      {/* ============================================================
+          ANIMATION STYLES
+      ============================================================ */}
+      <style>{`
+        @keyframes pageEnter {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulseGlow {
+          0%, 100% { opacity: 0.45; transform: scale(1); }
+          50% { opacity: 0.75; transform: scale(1.06); }
+        }
+        @keyframes floatSlow {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-7px); }
+        }
+        @keyframes modalEnter {
+          from { opacity: 0; transform: scale(0.96) translateY(8px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .page-enter { animation: pageEnter 0.6s cubic-bezier(.2,.8,.2,1) both; }
+        .pulse-glow { animation: pulseGlow 4s ease-in-out infinite; }
+        .float-slow { animation: floatSlow 5s ease-in-out infinite; }
+        .modal-enter { animation: modalEnter 0.22s cubic-bezier(.2,.8,.2,1) both; }
+        .smooth-transition { transition: all 220ms ease; }
+        
+        .hide-scrollbar::-webkit-scrollbar { height: 6px; }
+        .hide-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .hide-scrollbar::-webkit-scrollbar-thumb { background: rgba(226, 109, 44, 0.3); border-radius: 999px; }
+      `}</style>
 
-            <p className="mt-1 text-sm text-[#7A7F85]">
-              Manage students and mentors with account controls.
-            </p>
-          </div>
+      {/* ============================================================
+          MAIN CONTAINER (Ice-Blue -> Cream -> Sunset Peach Gradient)
+      ============================================================ */}
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#BDDCF2] via-[#F4E9D8] via-[#F8DECA] to-[#F7C9A4] p-4 text-[#16344E] selection:bg-[#E26D2C] selection:text-white md:p-6 lg:p-8">
 
-          {activeTab === "mentors" && (
-            <button
-              type="button"
-              onClick={() => {
-                clearMessages();
-                setIsAddMentorOpen(true);
-              }}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1A3D63] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7]"
-            >
-              <Plus className="h-4 w-4" />
-              Add New Mentor
-            </button>
-          )}
+        {/* Ambient Moving Glows */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="pulse-glow absolute -top-36 left-1/4 h-[480px] w-[600px] rounded-full bg-[#5FB8F2]/30 blur-[130px]" />
+          <div className="absolute top-1/3 -right-20 h-[480px] w-[480px] rounded-full bg-[#F38744]/30 blur-[140px]" />
+          <div className="float-slow absolute -bottom-20 left-1/3 h-[500px] w-[500px] rounded-full bg-[#F5A36C]/35 blur-[150px]" />
         </div>
 
-        {/* ========================================================
-            NOTIFICATIONS
-        ======================================================== */}
+        <div className="page-enter relative z-10 mx-auto max-w-[1500px] space-y-7">
 
-        {success && (
-          <div className="mb-5 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-            <CheckCircle2 className="h-5 w-5 shrink-0" />
+          {/* ======================================================
+              1. TOP HEADER BANNER
+          ====================================================== */}
+          <header className="relative overflow-hidden rounded-[28px] border border-white/60 bg-gradient-to-r from-[#173854] via-[#1A3E5E] to-[#224A6D] px-6 py-7 shadow-[0_20px_50px_rgba(23,56,84,0.22)] backdrop-blur-2xl md:px-8">
+            <div className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full bg-[#F38744]/35 blur-[70px]" />
+            <div className="pointer-events-none absolute bottom-[-50px] left-1/3 h-52 w-52 rounded-full bg-[#7EC8F5]/25 blur-[60px]" />
 
-            <span>{success}</span>
+            <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-center">
+              <div className="flex items-center gap-5">
+                <div className="float-slow relative flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border border-white/20 bg-white/10 text-white shadow-xl backdrop-blur-md">
+                  <UserCheck size={28} strokeWidth={1.9} />
+                  <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-[#F38744] shadow-[0_0_12px_#F38744]" />
+                </div>
 
-            <button
-              type="button"
-              onClick={() => setSuccess("")}
-              className="ml-auto rounded-lg p-1 hover:bg-green-100"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+                <div>
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <span className="h-1.5 w-5 rounded-full bg-[#F38744]" />
+                    <Sparkles size={14} className="text-[#F38744]" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#FCD8BF]">
+                      Account Directory
+                    </span>
+                  </div>
 
-        {error && (
-          <div className="mb-5 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            <AlertCircle className="h-5 w-5 shrink-0" />
+                  <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
+                    User Management
+                  </h1>
 
-            <span>{error}</span>
+                  <p className="mt-1 text-sm text-[#D7E8F7]">
+                    Oversee student registrations, assign mentors, and enforce security policies.
+                  </p>
+                </div>
+              </div>
 
-            <button
-              type="button"
-              onClick={() => setError("")}
-              className="ml-auto rounded-lg p-1 hover:bg-red-100"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+              {activeTab === "mentors" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearMessages();
+                    setIsAddMentorOpen(true);
+                  }}
+                  className="smooth-transition inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#DE7E4A] via-[#E26D2C] to-[#BA6137] px-6 py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                  <Plus size={16} />
+                  <span>Add New Mentor</span>
+                </button>
+              )}
+            </div>
+          </header>
 
-        {/* ========================================================
-            ROLE TABS
-        ======================================================== */}
-
-        <div className="mb-6 flex border-b border-[#DCE8F0]">
-          <button
-            type="button"
-            onClick={() => handleTabChange("students")}
-            className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-bold transition ${
-              activeTab === "students"
-                ? "border-[#1A3D63] text-[#1A3D63]"
-                : "border-transparent text-[#7A7F85] hover:text-[#0A1931]"
-            }`}
-          >
-            <GraduationCap className="h-4 w-4" />
-            Students
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("mentors")}
-            className={`flex items-center gap-2 border-b-2 px-6 py-3 text-sm font-bold transition ${
-              activeTab === "mentors"
-                ? "border-[#1A3D63] text-[#1A3D63]"
-                : "border-transparent text-[#7A7F85] hover:text-[#0A1931]"
-            }`}
-          >
-            <Shield className="h-4 w-4" />
-            Mentors
-          </button>
-        </div>
-
-        {/* ========================================================
-            FILTERS
-        ======================================================== */}
-
-        <div className="mb-6 flex flex-col gap-4 border-b border-[#DCE8F0] pb-5 lg:flex-row lg:items-center lg:justify-between">
-          {/* GENDER FILTER */}
-
-          <div className="flex w-fit overflow-x-auto rounded-xl bg-gray-100 p-1">
-            {["All", "Female", "Male"].map((gender) => (
+          {/* ======================================================
+              ALERTS
+          ====================================================== */}
+          {success && (
+            <div className="flex items-start gap-3 rounded-2xl border border-emerald-300 bg-emerald-100/90 p-4 text-sm text-emerald-800 shadow-sm backdrop-blur-md">
+              <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-600" />
+              <div className="flex-1 font-bold">{success}</div>
               <button
                 type="button"
-                key={gender}
-                onClick={() => setGenderFilter(gender)}
-                className={`whitespace-nowrap rounded-lg px-4 py-1.5 text-xs font-bold transition ${
-                  genderFilter === gender
-                    ? "bg-white text-[#1A3D63] shadow-sm"
-                    : "text-[#7A7F85] hover:text-[#0A1931]"
+                onClick={() => setSuccess("")}
+                className="rounded-lg p-1 text-emerald-800 hover:bg-emerald-200"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex items-start gap-3 rounded-2xl border border-rose-300 bg-rose-100/90 p-4 text-sm text-rose-800 shadow-sm backdrop-blur-md">
+              <AlertCircle size={18} className="mt-0.5 shrink-0 text-rose-600" />
+              <div className="flex-1 font-bold">{error}</div>
+              <button
+                type="button"
+                onClick={() => setError("")}
+                className="rounded-lg p-1 text-rose-800 hover:bg-rose-200"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          )}
+
+          {/* ======================================================
+              2. ROLE TABS & FILTER BAR (Creamy Glass Card)
+          ====================================================== */}
+          <div className="space-y-4">
+            
+            {/* ROLE TABS (Students vs Mentors) */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleTabChange("students")}
+                className={`smooth-transition inline-flex items-center gap-2.5 rounded-2xl px-6 py-3 text-xs font-black uppercase tracking-wider ${
+                  activeTab === "students"
+                    ? "bg-[#173854] text-white shadow-md"
+                    : "border border-[#DFCBB5] bg-[#FAF4EB]/80 text-[#16344E] hover:bg-[#FFFDF9]"
                 }`}
               >
-                {gender === "Female" && "👩 "}
-                {gender === "Male" && "👨 "}
-
-                {gender === "All"
-                  ? `All ${activeTab}`
-                  : `${gender} ${activeTab}`}
+                <GraduationCap size={16} />
+                <span>Students</span>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] ${activeTab === "students" ? "bg-white/20 text-white" : "bg-[#EBDCC8] text-[#16344E]"}`}>
+                  {activeTab === "students" ? filteredUsers.length : ""}
+                </span>
               </button>
-            ))}
-          </div>
 
-          {/* SEARCH */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("mentors")}
+                className={`smooth-transition inline-flex items-center gap-2.5 rounded-2xl px-6 py-3 text-xs font-black uppercase tracking-wider ${
+                  activeTab === "mentors"
+                    ? "bg-[#173854] text-white shadow-md"
+                    : "border border-[#DFCBB5] bg-[#FAF4EB]/80 text-[#16344E] hover:bg-[#FFFDF9]"
+                }`}
+              >
+                <Shield size={16} />
+                <span>Mentors</span>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] ${activeTab === "mentors" ? "bg-white/20 text-white" : "bg-[#EBDCC8] text-[#16344E]"}`}>
+                  {activeTab === "mentors" ? filteredUsers.length : ""}
+                </span>
+              </button>
+            </div>
 
-          <div className="relative w-full lg:max-w-md">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            {/* FILTERS & SEARCH ROW */}
+            <div className="flex flex-col gap-4 rounded-[26px] border border-[#E8DCB8] bg-[#FAF4EB]/90 p-4 shadow-[0_12px_35px_rgba(23,56,84,0.08)] backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
+              {/* GENDER FILTER PILLS */}
+              <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-[#DFCBB5] bg-[#F5ECE0]/80 p-1.5">
+                {["All", "Female", "Male"].map((gender) => (
+                  <button
+                    type="button"
+                    key={gender}
+                    onClick={() => setGenderFilter(gender)}
+                    className={`smooth-transition rounded-xl px-4 py-2 text-xs font-bold ${
+                      genderFilter === gender
+                        ? "bg-[#173854] text-white shadow-sm"
+                        : "text-[#16344E] hover:bg-[#FFFDF9]"
+                    }`}
+                  >
+                    {gender === "Female" && "👩 "}
+                    {gender === "Male" && "👨 "}
+                    {gender === "All" ? `All ${activeTab}` : `${gender} ${activeTab}`}
+                  </button>
+                ))}
+              </div>
 
-            <input
-              type="text"
-              placeholder={`Search ${activeTab} by name, email...`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-xs outline-none transition focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-            />
-          </div>
-        </div>
-
-        {/* ========================================================
-            RESULTS COUNT
-        ======================================================== */}
-
-        {!loading && (
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-[#7A7F85]">
-              Showing{" "}
-              <span className="font-bold text-[#0A1931]">
-                {filteredUsers.length}
-              </span>{" "}
-              {activeTab}
-            </p>
-
-            <button
-              type="button"
-              onClick={refreshUsers}
-              className="inline-flex items-center gap-2 text-xs font-semibold text-[#1A3D63] transition hover:text-[#4A7FA7]"
-            >
-              <Loader2
-                className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </button>
-          </div>
-        )}
-
-        {/* ========================================================
-            USERS TABLE
-        ======================================================== */}
-
-        {loading ? (
-          <div className="flex h-60 items-center justify-center">
-            <div className="flex items-center gap-3 text-[#1A3D63]">
-              <Loader2 className="h-6 w-6 animate-spin" />
-
-              <span className="text-sm font-medium">
-                Loading {activeTab}...
-              </span>
+              {/* SEARCH INPUT */}
+              <div className="relative w-full lg:max-w-md">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder={`Search ${activeTab} by name, email, phone...`}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-11 w-full rounded-2xl border border-[#DFCBB5] bg-[#FFFDF9] pl-10 pr-4 text-xs font-semibold text-[#16344E] placeholder-slate-400 outline-none transition focus:border-[#E26D2C]"
+                />
+              </div>
             </div>
           </div>
-        ) : filteredUsers.length === 0 ? (
-          <div className="rounded-2xl border-2 border-dashed border-[#B3CFE5] p-12 text-center">
-            {activeTab === "students" ? (
-              <GraduationCap className="mx-auto h-10 w-10 text-[#B3CFE5]" />
+
+          {/* ======================================================
+              3. USERS DIRECTORY TABLE (Creamy Alabaster)
+          ====================================================== */}
+          <section className="overflow-hidden rounded-[30px] border border-[#E8DCB8] bg-[#FAF4EB]/90 shadow-[0_20px_50px_rgba(23,56,84,0.1)] backdrop-blur-xl">
+            
+            {/* Top Table Summary Bar */}
+            <div className="flex items-center justify-between border-b border-[#EBDCC8] px-6 py-4.5">
+              <p className="text-xs font-semibold text-slate-600">
+                Showing <span className="font-black text-[#16344E]">{filteredUsers.length}</span> active {activeTab}
+              </p>
+
+              <button
+                type="button"
+                onClick={refreshUsers}
+                disabled={loading}
+                className="smooth-transition inline-flex items-center gap-1.5 rounded-xl border border-[#DFCBB5] bg-[#F5ECE0] px-3.5 py-1.5 text-xs font-bold text-[#16344E] hover:bg-[#FFFDF9]"
+              >
+                <RotateCcw size={13} className={loading ? "animate-spin" : ""} />
+                <span>Refresh List</span>
+              </button>
+            </div>
+
+            {/* Content Display */}
+            {loading ? (
+              <div className="flex h-64 flex-col items-center justify-center">
+                <Loader2 size={32} className="animate-spin text-[#E26D2C]" />
+                <p className="mt-3 text-xs font-bold text-slate-500">Loading {activeTab}...</p>
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="p-12 text-center">
+                {activeTab === "students" ? (
+                  <GraduationCap className="mx-auto h-12 w-12 text-[#DE7E4A]" />
+                ) : (
+                  <Shield className="mx-auto h-12 w-12 text-[#DE7E4A]" />
+                )}
+                <h3 className="mt-4 text-base font-black text-[#16344E]">No {activeTab} found</h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  No {activeTab} match your current filter criteria or search.
+                </p>
+              </div>
             ) : (
-              <Shield className="mx-auto h-10 w-10 text-[#B3CFE5]" />
-            )}
-
-            <h3 className="mt-4 text-lg font-bold text-[#0A1931]">
-              No {activeTab} Found
-            </h3>
-
-            <p className="mt-1 text-sm text-[#7A7F85]">
-              No {activeTab} match the current search or gender filter.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-2xl border border-[#DCE8F0] bg-white">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-237.5 border-collapse">
-                {/* TABLE HEADER */}
-
-                <thead>
-                  <tr className="border-b border-[#DCE8F0] bg-[#F6FAFD]">
-                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                      User
-                    </th>
-
-                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                      Gender
-                    </th>
-
-                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                      Contact
-                    </th>
-
-                    {activeTab === "students" && (
-                      <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                        Mentors
+              <div className="hide-scrollbar overflow-x-auto">
+                <table className="w-full min-w-[1050px]">
+                  <thead>
+                    <tr className="border-b border-[#EBDCC8] bg-[#EFE2CE]/95 text-left">
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                        User Info
                       </th>
-                    )}
-
-                    {activeTab === "mentors" && (
-                      <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                        Role
+                      <th className="px-5 py-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                        Gender
                       </th>
-                    )}
-
-                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                      Status
-                    </th>
-
-                    <th className="px-5 py-4 text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-
-                {/* TABLE BODY */}
-
-                <tbody>
-                  {filteredUsers.map((user) => (
-                    <tr
-                      key={user._id}
-                      className="border-b border-[#EDF2F5] transition last:border-b-0 hover:bg-[#FAFCFE]"
-                    >
-                      {/* USER */}
-
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EAF3F9] text-sm font-bold text-[#1A3D63]">
-                            {user.firstName?.charAt(0)?.toUpperCase()}
-                            {user.lastName?.charAt(0)?.toUpperCase()}
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-[#0A1931]">
-                              {user.firstName} {user.lastName}
-                            </p>
-
-                            {user.batch?.name && (
-                              <p className="mt-0.5 text-xs font-medium text-[#4A7FA7]">
-                                {user.batch.name}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* GENDER */}
-
-                      <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${
-                            user.gender?.toLowerCase() === "female"
-                              ? "border-pink-200 bg-pink-50 text-pink-700"
-                              : "border-blue-200 bg-blue-50 text-blue-700"
-                          }`}
-                        >
-                          {user.gender?.toLowerCase() === "female"
-                            ? "Female"
-                            : "Male"}
-                        </span>
-                      </td>
-
-                      {/* CONTACT */}
-
-                      <td className="px-5 py-4">
-                        <div className="space-y-1">
-                          <div className="flex max-w-57.5 items-center gap-2">
-                            <Mail className="h-3.5 w-3.5 shrink-0 text-[#7A7F85]" />
-
-                            <span className="truncate text-xs text-[#4A5560]">
-                              {user.email || "-"}
-                            </span>
-                          </div>
-
-                          {user.phone && (
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-3.5 w-3.5 shrink-0 text-[#7A7F85]" />
-
-                              <span className="text-xs text-[#4A5560]">
-                                {user.phone}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* STUDENT MENTORS */}
-
+                      <th className="px-5 py-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                        Contact Details
+                      </th>
                       {activeTab === "students" && (
-                        <td className="px-5 py-4">
-                          {user.assignedMentors?.length > 0 ? (
-                            <div className="flex max-w-57.5 flex-wrap gap-1.5">
-                              {user.assignedMentors.map((mentor) => (
-                                <span
-                                  key={mentor._id}
-                                  className="rounded-lg bg-[#EAF3F9] px-2 py-1 text-xs font-semibold text-[#1A3D63]"
-                                >
-                                  {mentor.firstName
-                                    ? `${mentor.firstName} ${
-                                        mentor.lastName || ""
-                                      }`
-                                    : "Mentor"}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="text-xs italic text-[#9CA3AF]">
-                              No mentors assigned
-                            </span>
-                          )}
-                        </td>
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                          Assigned Mentors
+                        </th>
                       )}
-
-                      {/* MENTOR ROLE */}
-
                       {activeTab === "mentors" && (
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4 text-[#1A3D63]" />
+                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                          System Role
+                        </th>
+                      )}
+                      <th className="px-5 py-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                        Account Status
+                      </th>
+                      <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
 
-                            <span className="text-xs font-semibold text-[#1A3D63]">
-                              Mentor
-                            </span>
+                  <tbody>
+                    {filteredUsers.map((user) => (
+                      <tr
+                        key={user._id}
+                        className="smooth-transition border-b border-[#EBDCC8] bg-[#FDF8F0]/75 last:border-b-0 hover:bg-[#EAE0D0]"
+                      >
+                        {/* USER AVATAR & NAME */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E0F0FA] to-[#D0E6F7] text-xs font-black text-[#173854]">
+                              {user.firstName?.charAt(0)?.toUpperCase()}
+                              {user.lastName?.charAt(0)?.toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-[#16344E]">
+                                {user.firstName} {user.lastName}
+                              </p>
+                              {user.batch?.name && (
+                                <p className="text-[10px] font-bold text-[#E26D2C]">
+                                  {user.batch.name}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </td>
-                      )}
 
-                      {/* STATUS */}
-
-                      <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
-                            user.status === "approved"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
+                        {/* GENDER */}
+                        <td className="px-5 py-4">
                           <span
-                            className={`h-1.5 w-1.5 rounded-full ${
-                              user.status === "approved"
-                                ? "bg-green-500"
-                                : "bg-red-500"
-                            }`}
-                          />
-
-                          {(user.status || "approved").toUpperCase()}
-                        </span>
-                      </td>
-
-                      {/* ACTIONS */}
-
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-end gap-4">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleToggleStatus(user._id, user.status)
-                            }
-                            disabled={actionId === user._id}
-                            className={`inline-flex items-center gap-1.5 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                              user.status === "approved"
-                                ? "text-amber-600 hover:text-amber-700"
-                                : "text-green-600 hover:text-green-700"
+                            className={`inline-flex rounded-lg border px-2.5 py-0.5 text-xs font-bold ${
+                              user.gender?.toLowerCase() === "female"
+                                ? "border-rose-200 bg-rose-50 text-rose-700"
+                                : "border-blue-200 bg-blue-50 text-blue-700"
                             }`}
                           >
-                            {actionId === user._id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : user.status === "approved" ? (
-                              <Ban className="h-3.5 w-3.5" />
-                            ) : (
-                              <CheckCircle className="h-3.5 w-3.5" />
+                            {user.gender?.toLowerCase() === "female" ? "Female" : "Male"}
+                          </span>
+                        </td>
+
+                        {/* CONTACT */}
+                        <td className="px-5 py-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700">
+                              <Mail size={12} className="text-slate-400" />
+                              <span className="truncate max-w-[200px]">{user.email || "-"}</span>
+                            </div>
+                            {user.phone && (
+                              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+                                <Phone size={12} className="text-slate-400" />
+                                <span>{user.phone}</span>
+                              </div>
                             )}
+                          </div>
+                        </td>
 
-                            {user.status === "approved" ? "Suspend" : "Approve"}
-                          </button>
+                        {/* STUDENT'S MENTORS */}
+                        {activeTab === "students" && (
+                          <td className="px-5 py-4">
+                            {user.assignedMentors?.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5 max-w-xs">
+                                {user.assignedMentors.map((m) => (
+                                  <span
+                                    key={m._id}
+                                    className="rounded-lg border border-[#DFCBB5] bg-[#FFFDF9] px-2 py-0.5 text-[10px] font-bold text-[#16344E]"
+                                  >
+                                    {m.firstName} {m.lastName || ""}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-xs italic text-slate-400">
+                                No mentors assigned
+                              </span>
+                            )}
+                          </td>
+                        )}
 
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteUser(user._id)}
-                            disabled={actionId === user._id}
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 transition hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        {/* MENTOR ROLE */}
+                        {activeTab === "mentors" && (
+                          <td className="px-5 py-4">
+                            <div className="inline-flex items-center gap-1.5 rounded-lg border border-[#DFCBB5] bg-[#FFFDF9] px-2.5 py-1 text-xs font-bold text-[#173854]">
+                              <Shield size={13} className="text-[#DE7E4A]" />
+                              <span>Bootcamp Mentor</span>
+                            </div>
+                          </td>
+                        )}
+
+                        {/* STATUS */}
+                        <td className="px-5 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                              user.status === "approved"
+                                ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+                                : "border-rose-300 bg-rose-100 text-rose-800"
+                            }`}
                           >
-                            {actionId === user._id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3.5 w-3.5" />
-                            )}
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                user.status === "approved"
+                                  ? "bg-emerald-600 animate-pulse"
+                                  : "bg-rose-600"
+                              }`}
+                            />
+                            {(user.status || "approved").toUpperCase()}
+                          </span>
+                        </td>
+
+                        {/* ACTIONS */}
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2.5">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStatus(user._id, user.status)}
+                              disabled={actionId === user._id}
+                              className={`smooth-transition inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold ${
+                                user.status === "approved"
+                                  ? "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                                  : "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                              }`}
+                            >
+                              {actionId === user._id ? (
+                                <Loader2 size={13} className="animate-spin" />
+                              ) : user.status === "approved" ? (
+                                <Ban size={13} />
+                              ) : (
+                                <CheckCircle size={13} />
+                              )}
+                              <span>{user.status === "approved" ? "Suspend" : "Approve"}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUser(user._id)}
+                              disabled={actionId === user._id}
+                              className="smooth-transition inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                              title="Delete user"
+                            >
+                              {actionId === user._id ? (
+                                <Loader2 size={13} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={13} />
+                              )}
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+        </div>
+      </div>
+
+      {/* ========================================================
+          ADD MENTOR MODAL (Creamy Glass)
+      ======================================================== */}
+      {isAddMentorOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#173854]/50 p-4 backdrop-blur-md"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeMentorModal();
+          }}
+        >
+          <div className="modal-enter w-full max-w-lg overflow-hidden rounded-[30px] border border-[#E8DCB8] bg-[#FAF4EB] shadow-[0_30px_90px_rgba(23,56,84,0.3)]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[#EBDCC8] bg-[#F5ECE0] px-6 py-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDE2D2] text-[#E26D2C]">
+                  <Shield size={20} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-[#16344E]">
+                    Add New Mentor
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    A secure temporary password will be issued upon creation.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeMentorModal}
+                disabled={creatingMentor}
+                className="rounded-xl border border-[#DFCBB5] bg-[#FAF4EB] p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600"
+              >
+                <X size={17} />
+              </button>
             </div>
-          </div>
-        )}
 
-        {/* ========================================================
-            ADD MENTOR MODAL
-        ======================================================== */}
+            {/* Form */}
+            <form onSubmit={handleCreateMentor} className="p-6 sm:p-7 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-[#16344E]">
+                    First Name <span className="text-[#E26D2C]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Sara"
+                    value={newMentor.firstName}
+                    onChange={(e) =>
+                      setNewMentor({ ...newMentor, firstName: e.target.value })
+                    }
+                    className="h-10.5 w-full rounded-xl border border-[#DFCBB5] bg-[#FFFDF9] px-3.5 text-xs font-semibold outline-none focus:border-[#E26D2C]"
+                  />
+                </div>
 
-        {isAddMentorOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-[#0A1931]">
-                  Add New Mentor
-                </h2>
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-[#16344E]">
+                    Last Name <span className="text-[#E26D2C]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Bekele"
+                    value={newMentor.lastName}
+                    onChange={(e) =>
+                      setNewMentor({ ...newMentor, lastName: e.target.value })
+                    }
+                    className="h-10.5 w-full rounded-xl border border-[#DFCBB5] bg-[#FFFDF9] px-3.5 text-xs font-semibold outline-none focus:border-[#E26D2C]"
+                  />
+                </div>
+              </div>
 
+              <div>
+                <label className="mb-1.5 block text-xs font-bold text-[#16344E]">
+                  Email Address <span className="text-[#E26D2C]">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="mentor@example.com"
+                  value={newMentor.email}
+                  onChange={(e) =>
+                    setNewMentor({ ...newMentor, email: e.target.value })
+                  }
+                  className="h-10.5 w-full rounded-xl border border-[#DFCBB5] bg-[#FFFDF9] px-3.5 text-xs font-semibold outline-none focus:border-[#E26D2C]"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-[#16344E]">
+                    Gender <span className="text-[#E26D2C]">*</span>
+                  </label>
+                  <select
+                    value={newMentor.gender}
+                    onChange={(e) =>
+                      setNewMentor({ ...newMentor, gender: e.target.value })
+                    }
+                    className="h-10.5 w-full rounded-xl border border-[#DFCBB5] bg-[#FFFDF9] px-3 text-xs font-semibold outline-none focus:border-[#E26D2C]"
+                  >
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-[#16344E]">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="09xxxxxxxx"
+                    value={newMentor.phone}
+                    onChange={(e) =>
+                      setNewMentor({ ...newMentor, phone: e.target.value })
+                    }
+                    className="h-10.5 w-full rounded-xl border border-[#DFCBB5] bg-[#FFFDF9] px-3.5 text-xs font-semibold outline-none focus:border-[#E26D2C]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 border-t border-[#EBDCC8] pt-5 mt-5">
                 <button
                   type="button"
                   onClick={closeMentorModal}
                   disabled={creatingMentor}
-                  className="rounded-lg p-2 hover:bg-gray-100 disabled:opacity-50"
+                  className="rounded-xl border border-[#DFCBB5] bg-[#F5ECE0] px-5 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-[#E5D7C4]"
                 >
-                  <X className="h-5 w-5 text-gray-400" />
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={creatingMentor}
+                  className="smooth-transition inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#DE7E4A] via-[#E26D2C] to-[#BA6137] px-6 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
+                >
+                  {creatingMentor && <Loader2 size={14} className="animate-spin" />}
+                  <span>{creatingMentor ? "Registering..." : "Create Mentor"}</span>
                 </button>
               </div>
-
-              <p className="text-xs text-[#7A7F85]">
-                Create a mentor account directly. A temporary password will be
-                generated automatically.
-              </p>
-
-              <form onSubmit={handleCreateMentor} className="mt-6 space-y-4">
-                {/* NAMES */}
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-[#0A1931]">
-                      First Name *
-                    </label>
-
-                    <input
-                      type="text"
-                      required
-                      placeholder="First name"
-                      value={newMentor.firstName}
-                      onChange={(e) =>
-                        setNewMentor({
-                          ...newMentor,
-                          firstName: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-[#0A1931]">
-                      Last Name *
-                    </label>
-
-                    <input
-                      type="text"
-                      required
-                      placeholder="Last name"
-                      value={newMentor.lastName}
-                      onChange={(e) =>
-                        setNewMentor({
-                          ...newMentor,
-                          lastName: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                    />
-                  </div>
-                </div>
-
-                {/* EMAIL */}
-
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-[#0A1931]">
-                    Email *
-                  </label>
-
-                  <input
-                    type="email"
-                    required
-                    placeholder="mentor@example.com"
-                    value={newMentor.email}
-                    onChange={(e) =>
-                      setNewMentor({
-                        ...newMentor,
-                        email: e.target.value,
-                      })
-                    }
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                  />
-                </div>
-
-                {/* GENDER + PHONE */}
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-[#0A1931]">
-                      Gender *
-                    </label>
-
-                    <select
-                      value={newMentor.gender}
-                      onChange={(e) =>
-                        setNewMentor({
-                          ...newMentor,
-                          gender: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                    >
-                      <option value="Female">Female</option>
-                      <option value="Male">Male</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-[#0A1931]">
-                      Phone
-                    </label>
-
-                    <input
-                      type="tel"
-                      placeholder="09xxxxxxxx"
-                      value={newMentor.phone}
-                      onChange={(e) =>
-                        setNewMentor({
-                          ...newMentor,
-                          phone: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                    />
-                  </div>
-                </div>
-
-                {/* FOOTER */}
-
-                <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeMentorModal}
-                    disabled={creatingMentor}
-                    className="rounded-xl px-4 py-2.5 text-xs font-semibold text-[#7A7F85] hover:bg-gray-100 disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={creatingMentor}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#1A3D63] px-5 py-2.5 text-xs font-semibold text-white hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {creatingMentor && (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    )}
-
-                    {creatingMentor ? "Creating..." : "Create Mentor"}
-                  </button>
-                </div>
-              </form>
-            </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ========================================================
-            CREATED MENTOR CREDENTIALS
-        ======================================================== */}
-
-        {createdMentorCredentials && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
-                <CheckCircle2 className="h-8 w-8 text-green-600" />
-              </div>
-
-              <h2 className="text-center text-xl font-bold text-[#0A1931]">
-                Mentor Account Created
-              </h2>
-
-              <p className="mt-2 text-center text-sm text-[#7A7F85]">
-                The mentor account was created successfully.
-              </p>
-
-              <div className="mt-6 space-y-4 rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD] p-5">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[#7A7F85]">
-                    Name
-                  </p>
-
-                  <p className="mt-1 font-semibold text-[#0A1931]">
-                    {createdMentorCredentials.firstName}{" "}
-                    {createdMentorCredentials.lastName}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[#7A7F85]">
-                    Email
-                  </p>
-
-                  <p className="mt-1 break-all font-semibold text-[#0A1931]">
-                    {createdMentorCredentials.email}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
-                <strong>Important:</strong> The temporary password has been sent
-                to the mentor's email.
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setCreatedMentorCredentials(null)}
-                className="mt-6 w-full rounded-xl bg-[#0A1931] py-3 text-sm font-bold text-white transition hover:bg-[#1A3D63]"
-              >
-                Done
-              </button>
+      {/* ========================================================
+          CREATED MENTOR CREDENTIALS MODAL
+      ======================================================== */}
+      {createdMentorCredentials && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-[#173854]/60 p-4 backdrop-blur-md">
+          <div className="modal-enter w-full max-w-md overflow-hidden rounded-[30px] border border-[#E8DCB8] bg-[#FAF4EB] p-7 shadow-[0_30px_90px_rgba(23,56,84,0.3)]">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
+              <KeyRound size={32} />
             </div>
+
+            <h2 className="text-center text-xl font-black text-[#16344E]">
+              Mentor Created Successfully
+            </h2>
+
+            <p className="mt-1 text-center text-xs text-slate-500">
+              Account provisioned with an initial temporary password.
+            </p>
+
+            <div className="mt-6 space-y-3 rounded-2xl border border-[#EBDCC8] bg-[#FFFDF9] p-4.5">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Mentor Name
+                </p>
+                <p className="text-sm font-black text-[#16344E]">
+                  {createdMentorCredentials.firstName} {createdMentorCredentials.lastName}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Email
+                </p>
+                <p className="text-xs font-bold text-[#1E6FA3] break-all">
+                  {createdMentorCredentials.email}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs font-medium text-amber-900">
+              <strong>Notice:</strong> The login credentials and instructions have been automatically dispatched to the mentor's inbox.
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setCreatedMentorCredentials(null)}
+              className="mt-6 w-full rounded-2xl bg-[#173854] py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg transition hover:bg-[#1f4a70]"
+            >
+              Done / Dismiss
+            </button>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 

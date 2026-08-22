@@ -10,8 +10,14 @@ import {
   Pencil,
   Trash2,
   User,
+  Sparkles,
+  CheckCircle2,
+  MessageSquare,
+  Users,
+  RotateCcw,
+  Volume2,
 } from "lucide-react";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 
 function Announcements() {
   const [announcements, setAnnouncements] = useState([]);
@@ -51,18 +57,15 @@ function Announcements() {
       } else {
         const message =
           response.data?.message || "Failed to load announcements.";
-
         setAnnouncements([]);
         setError(message);
         toast.error(message);
       }
     } catch (err) {
       console.error("Fetch mentor announcements error:", err);
-
       const message =
         err.response?.data?.message ||
         "Failed to load announcements. Please refresh the page.";
-
       setAnnouncements([]);
       setError(message);
       toast.error(message);
@@ -83,7 +86,7 @@ function Announcements() {
     e.preventDefault();
 
     if (!title.trim()) {
-      toast.error("Title is required.");
+      toast.error("Subject title is required.");
       return;
     }
 
@@ -104,23 +107,20 @@ function Announcements() {
 
       if (!response.data?.success) {
         throw new Error(
-          response.data?.message || "Failed to publish announcement.",
+          response.data?.message || "Failed to publish announcement."
         );
       }
 
       setTitle("");
       setBody("");
-
-      toast.success("Announcement sent to your assigned students.");
-
+      toast.success("Broadcast dispatched to assigned students!");
       await loadAnnouncements();
     } catch (err) {
       console.error("Publish mentor announcement error:", err);
-
       toast.error(
         err.response?.data?.message ||
           err.message ||
-          "Failed to publish announcement.",
+          "Failed to publish announcement."
       );
     } finally {
       setIsPublishing(false);
@@ -128,7 +128,7 @@ function Announcements() {
   };
 
   // =====================================================
-  // START EDIT
+  // EDIT HANDLERS
   // =====================================================
 
   const startEdit = (item) => {
@@ -138,28 +138,15 @@ function Announcements() {
     setError("");
   };
 
-  // =====================================================
-  // CANCEL EDIT
-  // =====================================================
-
   const cancelEdit = () => {
     setEditingId(null);
     setEditTitle("");
     setEditBody("");
   };
 
-  // =====================================================
-  // UPDATE ANNOUNCEMENT
-  // =====================================================
-
   const handleUpdate = async (id) => {
-    if (!editTitle.trim()) {
-      toast.error("Title is required.");
-      return;
-    }
-
-    if (!editBody.trim()) {
-      toast.error("Announcement message is required.");
+    if (!editTitle.trim() || !editBody.trim()) {
+      toast.error("Title and message are required.");
       return;
     }
 
@@ -175,22 +162,19 @@ function Announcements() {
 
       if (!response.data?.success) {
         throw new Error(
-          response.data?.message || "Failed to update announcement.",
+          response.data?.message || "Failed to update announcement."
         );
       }
 
       cancelEdit();
-
       toast.success("Announcement updated successfully.");
-
       await loadAnnouncements();
     } catch (err) {
       console.error("Update mentor announcement error:", err);
-
       toast.error(
         err.response?.data?.message ||
           err.message ||
-          "Failed to update announcement.",
+          "Failed to update announcement."
       );
     } finally {
       setIsUpdating(false);
@@ -199,7 +183,6 @@ function Announcements() {
 
   // =====================================================
   // DELETE ANNOUNCEMENT
-  // NO CONFIRMATION POPUP
   // =====================================================
 
   const handleDelete = async (id) => {
@@ -207,41 +190,34 @@ function Announcements() {
 
     try {
       setError("");
-
       const response = await api.delete(`/announcements/${id}`);
 
       if (!response.data?.success) {
         throw new Error(
-          response.data?.message || "Failed to delete announcement.",
+          response.data?.message || "Failed to delete announcement."
         );
       }
 
       toast.success("Announcement deleted successfully.");
-
       await loadAnnouncements();
     } catch (err) {
       console.error("Delete mentor announcement error:", err);
-
       toast.error(
         err.response?.data?.message ||
           err.message ||
-          "Failed to delete announcement.",
+          "Failed to delete announcement."
       );
     }
   };
 
   // =====================================================
-  // FORMAT DATE
+  // HELPERS
   // =====================================================
 
   const formatDate = (date) => {
     if (!date) return "";
-
     const parsedDate = new Date(date);
-
-    if (Number.isNaN(parsedDate.getTime())) {
-      return "";
-    }
+    if (Number.isNaN(parsedDate.getTime())) return "";
 
     return parsedDate.toLocaleString(undefined, {
       dateStyle: "medium",
@@ -249,434 +225,425 @@ function Announcements() {
     });
   };
 
-  // =====================================================
-  // AUDIENCE LABEL
-  // =====================================================
-
   const getAudienceLabel = (audience) => {
-    if (audience === "all") {
-      return "Everyone";
-    }
-
-    if (audience === "mentor") {
-      return "Mentors Only";
-    }
-
-    if (audience === "assigned_students") {
-      return "Assigned Students";
-    }
-
+    if (audience === "all") return "Everyone";
+    if (audience === "mentor") return "Mentors Only";
+    if (audience === "assigned_students") return "Assigned Students";
     return audience;
   };
 
-  // =====================================================
-  // CREATOR NAME
-  // =====================================================
-
   const getCreatorName = (item) => {
-    if (!item?.createdBy) {
-      return "Unknown";
-    }
-
+    if (!item?.createdBy) return "Unknown";
     const firstName = item.createdBy.firstName || "";
     const lastName = item.createdBy.lastName || "";
-
     const fullName = `${firstName} ${lastName}`.trim();
-
-    return fullName || "Unknown";
+    return fullName || "Team Lead";
   };
-
-  // =====================================================
-  // CHECK ANNOUNCEMENT OWNER
-  // =====================================================
 
   const isOwnAnnouncement = (item) => {
     const storedUser = localStorage.getItem("user");
-
-    if (!storedUser || !item?.createdBy) {
-      return false;
-    }
+    if (!storedUser || !item?.createdBy) return false;
 
     try {
       const user = JSON.parse(storedUser);
-
       const userId = user?._id || user?.id || user?.userId;
-
       const creatorId =
         typeof item.createdBy === "object"
           ? item.createdBy?._id
           : item.createdBy;
 
-      if (!userId || !creatorId) {
-        return false;
-      }
-
       return String(userId) === String(creatorId);
     } catch (error) {
-      console.error("Failed to check announcement ownership:", error);
-
       return false;
     }
   };
 
-  // =====================================================
-  // UI
-  // =====================================================
-
   return (
-    <div className="min-h-full bg-[#F6FAFD] p-4 md:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl space-y-8">
-        {/* =====================================================
-            HEADER
-        ===================================================== */}
+    <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            borderRadius: "14px",
+            background: "#FAF4EB",
+            color: "#16344E",
+            border: "1px solid #E8DCB8",
+            fontWeight: "600",
+          },
+        }}
+      />
 
-        <div className="rounded-3xl bg-[#0A1931] p-6 shadow-xl md:p-8">
-          <div className="flex items-center gap-5">
-            <div className="rounded-2xl border border-white/5 bg-[#1A3D63] p-4 shadow-inner">
-              <Megaphone className="h-7 w-7 text-white" />
-            </div>
+      <style>{`
+        @keyframes pageEnter {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulseGlow {
+          0%, 100% { opacity: 0.45; transform: scale(1); }
+          50% { opacity: 0.75; transform: scale(1.06); }
+        }
+        @keyframes floatSlow {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-7px); }
+        }
+        .page-enter { animation: pageEnter 0.6s cubic-bezier(.2,.8,.2,1) both; }
+        .pulse-glow { animation: pulseGlow 4s ease-in-out infinite; }
+        .float-slow { animation: floatSlow 5s ease-in-out infinite; }
+        .smooth-transition { transition: all 220ms ease; }
+        
+        .heading-gradient {
+          background: linear-gradient(90deg, #FFFFFF 0%, #FCD8BF 50%, #7EC8F5 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
 
-            <div>
-              <h1 className="text-3xl font-black tracking-tight text-white">
-                Announcements
-              </h1>
+        .hide-scrollbar::-webkit-scrollbar { height: 6px; }
+        .hide-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .hide-scrollbar::-webkit-scrollbar-thumb { background: rgba(226, 109, 44, 0.3); border-radius: 999px; }
+      `}</style>
 
-              <p className="mt-1 text-sm font-medium text-[#B3CFE5]">
-                Stay updated and communicate with your assigned students
-              </p>
-            </div>
-          </div>
+      {/* ============================================================
+          MAIN CONTAINER (Ice-Blue -> Cream -> Sunset Peach Gradient)
+      ============================================================ */}
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#BDDCF2] via-[#F4E9D8] via-[#F8DECA] to-[#F7C9A4] p-4 text-[#16344E] selection:bg-[#E26D2C] selection:text-white md:p-6 lg:p-8">
+
+        {/* Ambient Moving Glows */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="pulse-glow absolute -top-36 left-1/4 h-[480px] w-[600px] rounded-full bg-[#5FB8F2]/30 blur-[130px]" />
+          <div className="absolute top-1/3 -right-20 h-[480px] w-[480px] rounded-full bg-[#F38744]/30 blur-[140px]" />
+          <div className="float-slow absolute -bottom-20 left-1/3 h-[500px] w-[500px] rounded-full bg-[#F5A36C]/35 blur-[150px]" />
         </div>
 
-        {/* =====================================================
-            ERROR
-        ===================================================== */}
+        <div className="page-enter relative z-10 mx-auto max-w-[1500px] space-y-8">
 
-        {error && (
-          <div className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-700">
-            <AlertCircle size={20} />
+          {/* ======================================================
+              1. TOP HEADER BANNER WITH GRADIENT TEXT
+          ====================================================== */}
+          <header className="relative overflow-hidden rounded-[28px] border border-white/60 bg-gradient-to-r from-[#173854] via-[#1A3E5E] to-[#224A6D] px-6 py-7 shadow-[0_20px_50px_rgba(23,56,84,0.22)] backdrop-blur-2xl md:px-8">
+            <div className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full bg-[#F38744]/35 blur-[70px]" />
+            <div className="pointer-events-none absolute bottom-[-50px] left-1/3 h-52 w-52 rounded-full bg-[#7EC8F5]/25 blur-[60px]" />
 
-            <span className="text-sm font-bold">{error}</span>
-          </div>
-        )}
+            <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-center">
+              <div className="flex items-center gap-5">
+                <div className="float-slow relative flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border border-white/20 bg-white/10 text-white shadow-xl backdrop-blur-md">
+                  <Megaphone size={28} className="text-[#F38744]" strokeWidth={1.9} />
+                  <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-[#F38744] shadow-[0_0_12px_#F38744]" />
+                </div>
 
-        {/* =====================================================
-            CREATE ANNOUNCEMENT
-        ===================================================== */}
+                <div>
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <span className="h-1.5 w-5 rounded-full bg-gradient-to-r from-[#F38744] to-[#7EC8F5]" />
+                    <Sparkles size={14} className="text-[#F38744]" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#FCD8BF]">
+                      Broadcast Central
+                    </span>
+                  </div>
 
-        {/* =====================================================
-    CREATE ANNOUNCEMENT
-===================================================== */}
+                  <h1 className="text-3xl sm:text-4xl font-black tracking-tight heading-gradient">
+                    Announcements & Broadcasts
+                  </h1>
 
-        <div className="px-2">
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-[#EAF3F9] p-2.5">
-                <Bell className="h-5 w-5 text-[#1A3D63]" />
+                  <p className="mt-1 text-sm text-[#D7E8F7]">
+                    Broadcast milestones, schedule updates, and urgent communications to your students.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={loadAnnouncements}
+                  disabled={loading}
+                  className="smooth-transition flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold text-white shadow-lg backdrop-blur-md hover:-translate-y-0.5 hover:bg-white/20 disabled:opacity-50"
+                >
+                  <RotateCcw size={16} className={`text-[#F38744] ${loading ? "animate-spin" : ""}`} />
+                  <span>Refresh Feed</span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* ======================================================
+              ALERTS
+          ====================================================== */}
+          {error && (
+            <div className="flex items-start gap-3.5 rounded-2xl border border-rose-300 bg-rose-100/90 p-4.5 text-sm text-rose-800 shadow-sm backdrop-blur-md">
+              <AlertCircle size={20} className="mt-0.5 shrink-0 text-rose-600" />
+              <p className="font-bold">{error}</p>
+            </div>
+          )}
+
+          {/* ======================================================
+              2. CREATE ANNOUNCEMENT (Creamy Glass Card)
+          ====================================================== */}
+          <div className="overflow-hidden rounded-[30px] border border-[#E8DCB8] bg-[#FAF4EB]/90 p-6 shadow-[0_20px_50px_rgba(23,56,84,0.1)] backdrop-blur-xl sm:p-8">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#EBDCC8] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDE2D2] text-[#E26D2C]">
+                  <Bell size={19} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-[#16344E]">
+                    Create New Announcement
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    This notification will be dispatched to your assigned students.
+                  </p>
+                </div>
+              </div>
+
+              <span className="rounded-full border border-[#DFCBB5] bg-[#F5ECE0] px-3.5 py-1 text-xs font-bold text-[#E26D2C]">
+                Audience: Assigned Students
+              </span>
+            </div>
+
+            <form onSubmit={handlePublish} className="space-y-4">
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-[#16344E]">
+                  Subject Title <span className="text-[#E26D2C]">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Mandatory Review for Sprint #3"
+                  className="h-12 w-full rounded-2xl border border-[#DFCBB5] bg-[#F5ECE0]/90 px-4 text-xs font-semibold text-[#16344E] placeholder-slate-400 outline-none transition focus:border-[#E26D2C] focus:bg-[#FFFDF9] focus:ring-4 focus:ring-[#E26D2C]/15"
+                />
               </div>
 
               <div>
-                <h2 className="text-lg font-bold text-[#0A1931]">
-                  New Announcement
-                </h2>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-[#16344E]">
+                  Message Body <span className="text-[#E26D2C]">*</span>
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder="Type the full message details here..."
+                  className="w-full resize-none rounded-2xl border border-[#DFCBB5] bg-[#F5ECE0]/90 p-4 text-xs font-semibold text-[#16344E] placeholder-slate-400 outline-none transition focus:border-[#E26D2C] focus:bg-[#FFFDF9] focus:ring-4 focus:ring-[#E26D2C]/15"
+                />
+              </div>
 
-                <p className="mt-0.5 text-xs font-medium text-gray-400">
-                  This announcement will be sent to your assigned students.
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={isPublishing}
+                  className="smooth-transition inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#DE7E4A] via-[#E26D2C] to-[#BA6137] px-8 py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isPublishing ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Send size={16} />
+                  )}
+                  <span>{isPublishing ? "Broadcasting..." : "Dispatch Announcement"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* ======================================================
+              3. RECENT ANNOUNCEMENTS DIRECTORY (Creamy Alabaster)
+          ====================================================== */}
+          <section className="overflow-hidden rounded-[30px] border border-[#E8DCB8] bg-[#FAF4EB]/90 shadow-[0_20px_50px_rgba(23,56,84,0.1)] backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-[#EBDCC8] p-6">
+              <div>
+                <h2 className="text-xl font-black text-[#16344E]">
+                  Recent Broadcasts Feed
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Chronological history of dispatches and broadcast communications
                 </p>
               </div>
+
+              <span className="rounded-2xl border border-[#DFCBB5] bg-[#F5ECE0] px-4 py-2 text-xs font-black text-[#173854]">
+                Total: {announcements.length}
+              </span>
             </div>
 
-            <span className="rounded-xl bg-[#EAF3F9] px-3 py-2 text-[10px] font-black uppercase text-[#1A3D63]">
-              Assigned Students
-            </span>
-          </div>
+            {loading ? (
+              <div className="flex min-h-60 flex-col items-center justify-center p-12">
+                <Loader2 size={32} className="animate-spin text-[#E26D2C]" />
+                <p className="mt-3 text-xs font-bold text-slate-500">Fetching announcements...</p>
+              </div>
+            ) : announcements.length === 0 ? (
+              <div className="p-12 text-center">
+                <Megaphone className="mx-auto h-12 w-12 text-[#DE7E4A]" />
+                <h3 className="mt-4 text-base font-black text-[#16344E]">No announcements yet</h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  Publish your first update using the composer form above.
+                </p>
+              </div>
+            ) : (
+              <div className="hide-scrollbar overflow-x-auto">
+                <table className="w-full min-w-[950px] text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-[#EBDCC8] bg-[#EFE2CE]/95">
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                        Announcement Content
+                      </th>
+                      <th className="px-5 py-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                        Target Audience
+                      </th>
+                      <th className="px-5 py-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                        Author
+                      </th>
+                      <th className="px-5 py-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                        Posted Date
+                      </th>
+                      <th className="px-5 py-4 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                        Status
+                      </th>
+                      <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-[0.16em] text-[#4E6173]">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
 
-          <form onSubmit={handlePublish} className="space-y-5">
-            <input
-              type="text"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Subject Title"
-              className="w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm font-semibold outline-none transition-all focus:border-[#4A7FA7] focus:ring-4 focus:ring-[#B3CFE5]/20"
-            />
+                  <tbody>
+                    {announcements.map((item) => {
+                      const ownAnnouncement = isOwnAnnouncement(item);
 
-            <textarea
-              rows={4}
-              required
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="Type your message here..."
-              className="w-full resize-none rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm outline-none transition-all focus:border-[#4A7FA7]"
-            />
-
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={isPublishing}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-[#4A7FA7] px-10 py-3 text-sm font-bold text-white transition-all hover:bg-[#1A3D63] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isPublishing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-
-                {isPublishing ? "Publishing..." : "Send to Assigned Students"}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* =====================================================
-            RECENT ANNOUNCEMENTS HEADER
-        ===================================================== */}
-
-        <div className="flex items-center justify-between px-2">
-          <h2 className="text-xl font-black text-[#0A1931]">
-            Recent Announcements
-          </h2>
-
-          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-            Total: {announcements.length}
-          </span>
-        </div>
-
-        {/* =====================================================
-            LOADING
-        ===================================================== */}
-
-        {loading ? (
-          <div className="rounded-2xl border border-[#B3CFE5]/30 bg-white py-20 text-center">
-            <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#1A3D63]" />
-
-            <p className="mt-4 text-xs font-bold text-gray-400">
-              Fetching Updates...
-            </p>
-          </div>
-        ) : announcements.length === 0 ? (
-          /* =====================================================
-             EMPTY STATE
-          ===================================================== */
-
-          <div className="rounded-2xl border-2 border-dashed border-[#B3CFE5] bg-white p-16 text-center">
-            <Megaphone className="mx-auto mb-4 h-12 w-12 text-[#B3CFE5]" />
-
-            <p className="font-bold text-[#0A1931]">No announcements yet.</p>
-
-            <p className="mt-1 text-xs text-gray-400">
-              Check back later for important updates.
-            </p>
-          </div>
-        ) : (
-          /* =====================================================
-             ANNOUNCEMENTS TABLE
-          ===================================================== */
-
-          <div className="overflow-hidden rounded-2xl border border-[#B3CFE5]/40 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px] border-collapse">
-                {/* TABLE HEADER */}
-
-                <thead>
-                  <tr className="border-b border-[#DCE8F0] bg-[#F6FAFD]">
-                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                      Announcement
-                    </th>
-
-                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                      Audience
-                    </th>
-
-                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                      Posted By
-                    </th>
-
-                    <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                      Date
-                    </th>
-
-                    <th className="px-5 py-4 text-center text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                      Status
-                    </th>
-
-                    <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide text-[#7A7F85]">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-
-                {/* TABLE BODY */}
-
-                <tbody>
-                  {announcements.map((item) => {
-                    const ownAnnouncement = isOwnAnnouncement(item);
-
-                    return (
-                      <tr
-                        key={item._id}
-                        className="border-b border-[#EDF2F5] transition last:border-b-0 hover:bg-[#FAFCFE]"
-                      >
-                        {/* ANNOUNCEMENT */}
-
-                        <td className="px-5 py-4">
-                          {editingId === item._id ? (
-                            <div className="min-w-[350px] space-y-3">
-                              <input
-                                type="text"
-                                value={editTitle}
-                                onChange={(e) => setEditTitle(e.target.value)}
-                                className="w-full rounded-lg border border-[#B3CFE5] px-3 py-2 text-sm font-bold outline-none focus:border-[#4A7FA7]"
-                              />
-
-                              <textarea
-                                rows={3}
-                                value={editBody}
-                                onChange={(e) => setEditBody(e.target.value)}
-                                className="w-full resize-none rounded-lg border border-[#B3CFE5] px-3 py-2 text-sm outline-none focus:border-[#4A7FA7]"
-                              />
-
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  onClick={cancelEdit}
-                                  disabled={isUpdating}
-                                  className="rounded-lg px-3 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100"
-                                >
-                                  Cancel
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdate(item._id)}
-                                  disabled={isUpdating}
-                                  className="flex items-center gap-2 rounded-lg bg-[#0A1931] px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
-                                >
-                                  {isUpdating && (
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  )}
-                                  Save
-                                </button>
+                      return (
+                        <tr
+                          key={item._id}
+                          className="smooth-transition border-b border-[#EBDCC8] bg-[#FDF8F0]/75 last:border-b-0 hover:bg-[#EAE0D0]"
+                        >
+                          {/* ANNOUNCEMENT SUBJECT & BODY */}
+                          <td className="px-6 py-4.5">
+                            {editingId === item._id ? (
+                              <div className="min-w-[360px] space-y-2.5">
+                                <input
+                                  type="text"
+                                  value={editTitle}
+                                  onChange={(e) => setEditTitle(e.target.value)}
+                                  className="h-10 w-full rounded-xl border border-[#DFCBB5] bg-[#FFFDF9] px-3.5 text-xs font-bold text-[#16344E] outline-none focus:border-[#E26D2C]"
+                                />
+                                <textarea
+                                  rows={3}
+                                  value={editBody}
+                                  onChange={(e) => setEditBody(e.target.value)}
+                                  className="w-full resize-none rounded-xl border border-[#DFCBB5] bg-[#FFFDF9] p-3 text-xs font-medium text-[#16344E] outline-none focus:border-[#E26D2C]"
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={cancelEdit}
+                                    disabled={isUpdating}
+                                    className="rounded-xl border border-[#DFCBB5] bg-[#F5ECE0] px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-[#E5D7C4]"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdate(item._id)}
+                                    disabled={isUpdating}
+                                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#173854] px-4 py-1.5 text-xs font-bold text-white shadow-sm"
+                                  >
+                                    {isUpdating && <Loader2 size={13} className="animate-spin" />}
+                                    <span>Save Edit</span>
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="max-w-[400px]">
-                              <div className="flex items-center gap-2">
-                                <Megaphone className="h-4 w-4 shrink-0 text-[#1A3D63]" />
-
-                                <p className="truncate text-sm font-bold text-[#0A1931]">
-                                  {item.title}
+                            ) : (
+                              <div className="max-w-[420px]">
+                                <div className="flex items-center gap-2">
+                                  <Volume2 size={15} className="text-[#E26D2C] shrink-0" />
+                                  <p className="truncate text-sm font-black text-[#16344E]">
+                                    {item.title}
+                                  </p>
+                                </div>
+                                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
+                                  {item.body}
                                 </p>
                               </div>
+                            )}
+                          </td>
 
-                              <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
-                                {item.body}
-                              </p>
+                          {/* AUDIENCE */}
+                          <td className="px-5 py-4.5">
+                            <span
+                              className={`inline-flex rounded-lg border px-2.5 py-1 text-[11px] font-bold ${
+                                item.audience === "mentor"
+                                  ? "border-blue-200 bg-blue-50 text-blue-800"
+                                  : item.audience === "assigned_students"
+                                  ? "border-[#FDE2D2] bg-[#FDE2D2] text-[#E26D2C]"
+                                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                              }`}
+                            >
+                              {getAudienceLabel(item.audience)}
+                            </span>
+                          </td>
+
+                          {/* AUTHOR */}
+                          <td className="px-5 py-4.5">
+                            <div className="flex items-center gap-2 text-xs font-bold text-[#16344E]">
+                              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#E0F0FA] text-[#173854]">
+                                <User size={13} />
+                              </div>
+                              <span>{getCreatorName(item)}</span>
                             </div>
-                          )}
-                        </td>
+                          </td>
 
-                        {/* AUDIENCE */}
+                          {/* DATE */}
+                          <td className="px-5 py-4.5">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                              <CalendarDays size={13} className="text-[#E26D2C]" />
+                              <span>{formatDate(item.createdAt)}</span>
+                            </div>
+                          </td>
 
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold ${
-                              item.audience === "mentor"
-                                ? "border-blue-200 bg-blue-50 text-blue-700"
-                                : item.audience === "assigned_students"
-                                  ? "border-green-200 bg-green-50 text-green-700"
-                                  : "border-[#B3CFE5] bg-[#EAF3F9] text-[#1A3D63]"
-                            }`}
-                          >
-                            {getAudienceLabel(item.audience)}
-                          </span>
-                        </td>
-
-                        {/* POSTED BY */}
-
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-[#7A7F85]" />
-
-                            <span className="text-xs font-semibold text-[#1A3D63]">
-                              {getCreatorName(item)}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* DATE */}
-
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-2">
-                            <CalendarDays className="h-4 w-4 text-[#7A7F85]" />
-
-                            <span className="whitespace-nowrap text-xs text-slate-500">
-                              {formatDate(item.createdAt)}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* STATUS */}
-
-                        <td className="px-5 py-4 text-center">
-                          {item.edited ? (
-                            <>
-                              <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-bold text-amber-600">
+                          {/* STATUS */}
+                          <td className="px-5 py-4.5 text-center">
+                            {item.edited ? (
+                              <span className="inline-flex rounded-full border border-amber-300 bg-amber-100 px-2.5 py-0.5 text-[10px] font-black uppercase text-amber-800">
                                 Edited
                               </span>
+                            ) : (
+                              <span className="inline-flex rounded-full border border-emerald-300 bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black uppercase text-emerald-800">
+                                Active
+                              </span>
+                            )}
+                          </td>
 
-                              {item.updatedAt && (
-                                <p className="mt-1 text-[9px] text-amber-500">
-                                  {formatDate(item.updatedAt)}
-                                </p>
-                              )}
-                            </>
-                          ) : (
-                            <span className="inline-flex rounded-full bg-green-50 px-3 py-1 text-[10px] font-bold text-green-700">
-                              Published
-                            </span>
-                          )}
-                        </td>
+                          {/* ACTIONS */}
+                          <td className="px-6 py-4.5 text-right">
+                            {ownAnnouncement && editingId !== item._id ? (
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => startEdit(item)}
+                                  className="rounded-xl border border-[#DFCBB5] bg-[#FAF4EB] p-2 text-[#173854] transition hover:bg-[#FFFDF9]"
+                                  title="Edit broadcast"
+                                >
+                                  <Pencil size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(item._id)}
+                                  className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-rose-600 transition hover:bg-rose-100"
+                                  title="Delete broadcast"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            ) : editingId !== item._id ? (
+                              <span className="text-slate-400 text-xs">—</span>
+                            ) : null}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
-                        {/* ACTIONS */}
-
-                        <td className="px-5 py-4">
-                          {ownAnnouncement && editingId !== item._id ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => startEdit(item)}
-                                className="rounded-lg p-2 text-blue-500 transition hover:bg-blue-50"
-                                title="Edit announcement"
-                              >
-                                <Pencil size={17} />
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(item._id)}
-                                className="rounded-lg p-2 text-red-500 transition hover:bg-red-50"
-                                title="Delete announcement"
-                              >
-                                <Trash2 size={17} />
-                              </button>
-                            </div>
-                          ) : editingId !== item._id ? (
-                            <span className="block text-right text-xs text-gray-300">
-                              —
-                            </span>
-                          ) : null}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
