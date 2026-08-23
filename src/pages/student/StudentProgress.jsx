@@ -416,20 +416,6 @@ function StudentProgress() {
                   </button>
                 ))}
               </div>
-
-              <select
-                value={selectedWeek}
-                onChange={(event) => setSelectedWeek(event.target.value)}
-                className="rounded-xl border border-gray-200 px-3 text-xs font-bold"
-              >
-                <option value="all">All Weeks</option>
-
-                {uniqueWeeks.map((week) => (
-                  <option key={week} value={week}>
-                    Week {week}
-                  </option>
-                ))}
-              </select>
             </div>
           </div>
 

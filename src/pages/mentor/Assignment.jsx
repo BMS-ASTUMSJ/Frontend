@@ -18,6 +18,8 @@ import {
   Loader2,
   Clock,
   Users,
+  Save,
+  RotateCcw,
 } from "lucide-react";
 
 const Assignment = () => {
@@ -33,8 +35,12 @@ const Assignment = () => {
 
   const [loading, setLoading] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [grading, setGrading] = useState(false);
 
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+
+  const [score, setScore] = useState("");
+  const [feedback, setFeedback] = useState("");
 
   // ============================================================
   // GET ASSIGNMENTS
@@ -61,7 +67,7 @@ const Assignment = () => {
   };
 
   // ============================================================
-  // GET SUBMISSIONS FOR ASSIGNMENT
+  // GET SUBMISSIONS
   // ============================================================
 
   const fetchSubmissions = async (assignmentId) => {
@@ -125,16 +131,135 @@ const Assignment = () => {
 
   const handleViewSubmission = (submission) => {
     setSelectedSubmission(submission);
+
+    setScore(
+      submission.score !== null && submission.score !== undefined
+        ? submission.score
+        : "",
+    );
+
+    setFeedback(submission.feedback || "");
+
     setShowSubmissionModal(true);
   };
 
   // ============================================================
-  // CLOSE SUBMISSION MODAL
+  // CLOSE MODAL
   // ============================================================
 
   const closeSubmissionModal = () => {
+    if (grading) return;
+
     setShowSubmissionModal(false);
     setSelectedSubmission(null);
+    setScore("");
+    setFeedback("");
+  };
+
+  // ============================================================
+  // GRADE / REQUEST RESUBMISSION
+  // ============================================================
+
+  const handleGradeSubmission = async (status = "Graded") => {
+    if (!selectedSubmission) {
+      toast.error("No submission selected.");
+      return;
+    }
+
+    if (score === "" || score === null || score === undefined) {
+      toast.error("Please enter a score.");
+      return;
+    }
+
+    const numericScore = Number(score);
+
+    if (!Number.isFinite(numericScore)) {
+      toast.error("Score must be a valid number.");
+      return;
+    }
+
+    if (numericScore < 0) {
+      toast.error("Score cannot be negative.");
+      return;
+    }
+
+    const maxScore = Number(
+      selectedAssignment?.maxScore ||
+        selectedSubmission.assignment?.maxScore ||
+        100,
+    );
+
+    if (numericScore > maxScore) {
+      toast.error(`Score cannot exceed ${maxScore}.`);
+      return;
+    }
+
+    try {
+      setGrading(true);
+
+      /*
+       * IMPORTANT:
+       *
+       * Backend route:
+       * PUT /submissions/grade/:id
+       *
+       * Therefore the frontend must use:
+       * PUT /submissions/grade/${id}
+       */
+
+      const response = await api.put(
+        `/submissions/grade/${selectedSubmission._id}`,
+        {
+          score: numericScore,
+          feedback: feedback.trim(),
+          status,
+        },
+      );
+
+      console.log("GRADE RESPONSE:", response.data);
+
+      if (!response.data.success) {
+        toast.error(response.data.message || "Failed to update submission.");
+        return;
+      }
+
+      const updatedSubmission = response.data.submission;
+
+      // Update table immediately
+      setSubmissions((prev) =>
+        prev.map((submission) =>
+          submission._id === updatedSubmission._id
+            ? updatedSubmission
+            : submission,
+        ),
+      );
+
+      // Update modal immediately
+      setSelectedSubmission(updatedSubmission);
+
+      setScore(
+        updatedSubmission.score !== null &&
+          updatedSubmission.score !== undefined
+          ? updatedSubmission.score
+          : "",
+      );
+
+      setFeedback(updatedSubmission.feedback || "");
+
+      toast.success(
+        status === "Graded"
+          ? "Submission graded successfully."
+          : "Resubmission requested successfully.",
+      );
+    } catch (error) {
+      console.error("GRADE SUBMISSION ERROR:", error);
+
+      toast.error(
+        error.response?.data?.message || "Failed to update submission.",
+      );
+    } finally {
+      setGrading(false);
+    }
   };
 
   // ============================================================
@@ -146,7 +271,7 @@ const Assignment = () => {
   }, []);
 
   // ============================================================
-  // STATUS UI
+  // STATUS BADGE
   // ============================================================
 
   const getStatusBadge = (status) => {
@@ -382,9 +507,7 @@ const Assignment = () => {
       {selectedAssignment && (
         <div className="max-w-7xl mx-auto mt-8">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            {/* ==================================================
-                TABLE HEADER
-            ================================================== */}
+            {/* HEADER */}
 
             <div className="px-6 py-5 border-b border-gray-200">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -407,9 +530,7 @@ const Assignment = () => {
               </div>
             </div>
 
-            {/* ==================================================
-                LOADING
-            ================================================== */}
+            {/* LOADING */}
 
             {loadingSubmissions ? (
               <div className="py-16 flex flex-col items-center justify-center">
@@ -432,10 +553,6 @@ const Assignment = () => {
                 </p>
               </div>
             ) : (
-              /* ==================================================
-                 SUBMISSIONS TABLE
-              ================================================== */
-
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[900px]">
                   <thead className="bg-[#F6FAFD] border-b border-gray-200">
@@ -541,7 +658,7 @@ const Assignment = () => {
                             )}
                           </td>
 
-                          {/* DATE */}
+                          {/* SUBMITTED */}
 
                           <td className="px-6 py-4">
                             <span className="text-sm text-gray-600">
@@ -597,15 +714,22 @@ const Assignment = () => {
       )}
 
       {/* ========================================================
-          SUBMISSION DETAILS MODAL
+          SUBMISSION / GRADING MODAL
       ======================================================== */}
 
       {showSubmissionModal && selectedSubmission && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !grading) {
+              closeSubmissionModal();
+            }
+          }}
+        >
           <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
             {/* MODAL HEADER */}
 
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 sticky top-0 bg-white z-10">
               <div>
                 <h2 className="text-xl font-bold text-[#0A1931]">
                   Submission Details
@@ -619,13 +743,14 @@ const Assignment = () => {
 
               <button
                 onClick={closeSubmissionModal}
-                className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-gray-100 transition"
+                disabled={grading}
+                className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-gray-100 transition disabled:opacity-50"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
-            {/* MODAL CONTENT */}
+            {/* CONTENT */}
 
             <div className="p-6 space-y-6">
               {/* STUDENT */}
@@ -647,7 +772,7 @@ const Assignment = () => {
                 </div>
               </div>
 
-              {/* STATUS */}
+              {/* CURRENT STATUS */}
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
@@ -655,23 +780,6 @@ const Assignment = () => {
                 </p>
 
                 {getStatusBadge(selectedSubmission.status)}
-              </div>
-
-              {/* SCORE */}
-
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-                  Score
-                </p>
-
-                <div className="text-lg font-bold text-[#0A1931]">
-                  {selectedSubmission.score !== null &&
-                  selectedSubmission.score !== undefined
-                    ? `${selectedSubmission.score} / ${
-                        selectedAssignment?.maxScore || 100
-                      }`
-                    : "Not graded"}
-                </div>
               </div>
 
               {/* GITHUB */}
@@ -693,6 +801,8 @@ const Assignment = () => {
                     <span className="text-sm">
                       {selectedSubmission.githubUrl}
                     </span>
+
+                    <ExternalLink className="w-4 h-4 ml-auto flex-shrink-0" />
                   </a>
                 ) : (
                   <p className="text-sm text-gray-400">No GitHub URL</p>
@@ -738,32 +848,149 @@ const Assignment = () => {
                 </div>
               </div>
 
-              {/* FEEDBACK */}
+              {/* ==================================================
+                  GRADING
+              ================================================== */}
 
-              {selectedSubmission.feedback && (
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-                    Mentor Feedback
-                  </p>
+              <div className="border-t border-gray-200 pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-[#0A1931]">
+                      Grade Submission
+                    </h3>
 
-                  <div className="p-4 rounded-lg bg-[#F6FAFD] border border-[#B3CFE5]">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {selectedSubmission.feedback}
+                    <p className="text-sm text-gray-500 mt-1">
+                      Enter score and feedback for the student.
                     </p>
                   </div>
+
+                  <div className="px-3 py-1.5 rounded-lg bg-[#F6FAFD] text-[#1A3D63] text-sm font-bold">
+                    Max:{" "}
+                    {selectedAssignment?.maxScore ||
+                      selectedSubmission.assignment?.maxScore ||
+                      100}
+                  </div>
+                </div>
+
+                {/* SCORE */}
+
+                <div className="mb-5">
+                  <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+                    Score
+                  </label>
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="0"
+                      max={
+                        selectedAssignment?.maxScore ||
+                        selectedSubmission.assignment?.maxScore ||
+                        100
+                      }
+                      step="0.01"
+                      value={score}
+                      onChange={(event) => setScore(event.target.value)}
+                      disabled={grading}
+                      placeholder="Enter score"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-[#1A3D63]/20 focus:border-[#1A3D63] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    />
+
+                    <span className="text-gray-500 font-semibold whitespace-nowrap">
+                      /{" "}
+                      {selectedAssignment?.maxScore ||
+                        selectedSubmission.assignment?.maxScore ||
+                        100}
+                    </span>
+                  </div>
+                </div>
+
+                {/* FEEDBACK */}
+
+                <div>
+                  <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+                    Mentor Feedback
+                  </label>
+
+                  <textarea
+                    value={feedback}
+                    onChange={(event) => setFeedback(event.target.value)}
+                    disabled={grading}
+                    rows={5}
+                    placeholder="Write feedback for the student..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none outline-none focus:ring-2 focus:ring-[#1A3D63]/20 focus:border-[#1A3D63] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* EXISTING GRADE INFORMATION */}
+
+              {selectedSubmission.gradedBy && (
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                    Graded By
+                  </p>
+
+                  <p className="text-sm font-medium text-[#0A1931]">
+                    {selectedSubmission.gradedBy.firstName || ""}{" "}
+                    {selectedSubmission.gradedBy.lastName || ""}
+                  </p>
+
+                  {selectedSubmission.gradedAt && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Graded on {formatDate(selectedSubmission.gradedAt)}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* FOOTER */}
+            {/* ==================================================
+                FOOTER
+            ================================================== */}
 
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <button
                 onClick={closeSubmissionModal}
-                className="px-5 py-2.5 rounded-lg bg-[#1A3D63] text-white text-sm font-semibold hover:bg-[#0A1931] transition"
+                disabled={grading}
+                className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Close
               </button>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* REQUEST RESUBMISSION */}
+
+                <button
+                  onClick={() => handleGradeSubmission("Resubmission Required")}
+                  disabled={grading}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {grading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-4 h-4" />
+                  )}
+
+                  {grading ? "Saving..." : "Request Resubmission"}
+                </button>
+
+                {/* SAVE GRADE */}
+
+                <button
+                  onClick={() => handleGradeSubmission("Graded")}
+                  disabled={grading}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#1A3D63] text-white text-sm font-semibold hover:bg-[#0A1931] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {grading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+
+                  {grading ? "Saving..." : "Save Grade"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

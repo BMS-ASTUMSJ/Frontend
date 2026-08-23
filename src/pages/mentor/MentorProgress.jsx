@@ -273,63 +273,9 @@ const MentorProgress = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {/* COMPLETED */}
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Completed
-              </p>
-
-              <CheckCircle size={24} className="text-green-600" />
-            </div>
-
-            <h2 className="mt-3 text-3xl font-bold text-gray-900 dark:text-white">
-              {completed}
-            </h2>
-
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Students with 100% progress
-            </p>
-          </div>
-
           {/* IN PROGRESS */}
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                In Progress
-              </p>
-
-              <Clock size={24} className="text-yellow-600" />
-            </div>
-
-            <h2 className="mt-3 text-3xl font-bold text-gray-900 dark:text-white">
-              {inProgress}
-            </h2>
-
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Currently learning
-            </p>
-          </div>
-
           {/* NEED HELP */}
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Need Help
-              </p>
-
-              <AlertCircle size={24} className="text-red-600" />
-            </div>
-
-            <h2 className="mt-3 text-3xl font-bold text-gray-900 dark:text-white">
-              {needHelp}
-            </h2>
-
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Students needing assistance
-            </p>
-          </div>
         </div>
 
         {/* OVERALL SUMMARY */}

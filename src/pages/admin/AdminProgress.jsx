@@ -554,13 +554,8 @@ function AdminProgress() {
           </div>
 
           <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-[#0A1931] sm:text-3xl">
-            Curriculum & Performance Radar
+            Progress
           </h1>
-
-          <p className="text-xs text-[#7A7F85] sm:text-sm">
-            Publish weekly CP problems and Dev lectures, track milestones, and
-            monitor student progress.
-          </p>
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
@@ -1043,24 +1038,6 @@ function AdminProgress() {
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((week) => (
                   <option key={week} value={week}>
                     Week {week}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-[11px] font-bold text-[#0A1931]">
-                Topic
-              </label>
-
-              <select
-                value={cpTopic}
-                onChange={(e) => setCpTopic(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold outline-none focus:border-[#4A7FA7]"
-              >
-                {TOPICS.map((topic) => (
-                  <option key={topic} value={topic}>
-                    {topic}
                   </option>
                 ))}
               </select>
