@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import {
   ClipboardList,
   Calendar,
-  Trophy,
   CheckCircle,
   AlertTriangle,
   FileX,
@@ -20,41 +19,102 @@ import {
   Users,
   Save,
   RotateCcw,
+  Plus,
+  MessageSquare,
 } from "lucide-react";
 
 const Assignment = () => {
   // ============================================================
-  // STATE
+  // ASSIGNMENTS
   // ============================================================
 
   const [assignments, setAssignments] = useState([]);
-  const [submissions, setSubmissions] = useState([]);
-
   const [selectedAssignment, setSelectedAssignment] = useState(null);
+
+  // "admin" = normal admin assignment
+  // "mentor" = assignment created by the current mentor
+  const [selectedAssignmentType, setSelectedAssignmentType] = useState("admin");
+
+  // ============================================================
+  // SUBMISSIONS
+  // ============================================================
+
+  const [submissions, setSubmissions] = useState([]);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+
+  // ============================================================
+  // LOADING
+  // ============================================================
 
   const [loading, setLoading] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [grading, setGrading] = useState(false);
+  const [feedbackSaving, setFeedbackSaving] = useState(false);
+
+  // ============================================================
+  // MODALS
+  // ============================================================
 
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // ============================================================
+  // CREATE MENTOR ASSIGNMENT
+  // ============================================================
+
+  const [creatingAssignment, setCreatingAssignment] = useState(false);
+
+  const [createForm, setCreateForm] = useState({
+    title: "",
+    description: "",
+    instructorName: "",
+    deadline: "",
+    maxScore: "100",
+    link: "",
+  });
+
+  const [createFile, setCreateFile] = useState(null);
+
+  // ============================================================
+  // ADMIN ASSIGNMENT GRADING
+  // ============================================================
 
   const [score, setScore] = useState("");
   const [feedback, setFeedback] = useState("");
 
   // ============================================================
-  // GET ASSIGNMENTS
+  // FETCH ASSIGNMENTS
   // ============================================================
 
   const fetchAssignments = async () => {
     try {
       setLoading(true);
 
-      const response = await api.get("/assignments");
+      const adminResponse = await api.get("/assignments");
 
-      console.log("ASSIGNMENTS API RESPONSE:", response.data);
+      const adminAssignments = (adminResponse.data.assignments || []).map(
+        (assignment) => ({
+          ...assignment,
+          assignmentType: "admin",
+        }),
+      );
 
-      setAssignments(response.data.assignments || []);
+      let mentorAssignments = [];
+
+      try {
+        const mentorResponse = await api.get("/assignments/mentor");
+
+        mentorAssignments = (mentorResponse.data.assignments || []).map(
+          (assignment) => ({
+            ...assignment,
+            assignmentType: "mentor",
+          }),
+        );
+      } catch (mentorError) {
+        console.error("GET OWN MENTOR ASSIGNMENTS ERROR:", mentorError);
+      }
+
+      setAssignments([...adminAssignments, ...mentorAssignments]);
     } catch (error) {
       console.error("GET ASSIGNMENTS ERROR:", error);
 
@@ -67,46 +127,173 @@ const Assignment = () => {
   };
 
   // ============================================================
-  // GET SUBMISSIONS
+  // CREATE FORM
   // ============================================================
 
-  const fetchSubmissions = async (assignmentId) => {
+  const handleCreateFormChange = (event) => {
+    const { name, value } = event.target;
+
+    setCreateForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const resetCreateForm = () => {
+    setCreateForm({
+      title: "",
+      description: "",
+      instructorName: "",
+      deadline: "",
+      maxScore: "100",
+      link: "",
+    });
+
+    setCreateFile(null);
+  };
+
+  const closeCreateModal = () => {
+    if (creatingAssignment) return;
+
+    setShowCreateModal(false);
+    resetCreateForm();
+  };
+
+  // ============================================================
+  // CREATE MENTOR ASSIGNMENT
+  // ============================================================
+
+  const handleCreateAssignment = async (event) => {
+    event.preventDefault();
+
+    if (!createForm.title.trim()) {
+      toast.error("Please enter an assignment title.");
+      return;
+    }
+
+    if (!createForm.description.trim()) {
+      toast.error("Please enter an assignment description.");
+      return;
+    }
+
+    if (!createForm.instructorName.trim()) {
+      toast.error("Please enter the mentor name.");
+      return;
+    }
+
+    if (!createForm.deadline) {
+      toast.error("Please select a deadline.");
+      return;
+    }
+
+    if (
+      !Number.isFinite(Number(createForm.maxScore)) ||
+      Number(createForm.maxScore) <= 0
+    ) {
+      toast.error("Maximum score must be greater than 0.");
+      return;
+    }
+
+    if (createFile && createFile.size > 20 * 1024 * 1024) {
+      toast.error("File size cannot exceed 20 MB.");
+      return;
+    }
+
+    try {
+      setCreatingAssignment(true);
+
+      const formData = new FormData();
+
+      formData.append("title", createForm.title.trim());
+      formData.append("description", createForm.description.trim());
+      formData.append("instructorName", createForm.instructorName.trim());
+      formData.append("deadline", createForm.deadline);
+      formData.append("maxScore", Number(createForm.maxScore));
+
+      if (createForm.link.trim()) {
+        formData.append("link", createForm.link.trim());
+      }
+
+      if (createFile) {
+        formData.append("files", createFile);
+      }
+
+      const response = await api.post("/assignments/mentor-create", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (!response.data.success) {
+        throw new Error(
+          response.data.message || "Failed to create assignment.",
+        );
+      }
+
+      toast.success("Assignment created successfully.");
+
+      setShowCreateModal(false);
+      resetCreateForm();
+
+      await fetchAssignments();
+    } catch (error) {
+      console.error("CREATE MENTOR ASSIGNMENT ERROR:", error);
+
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to create assignment.",
+      );
+    } finally {
+      setCreatingAssignment(false);
+    }
+  };
+
+  // ============================================================
+  // FETCH ADMIN ASSIGNMENT SUBMISSIONS
+  // ============================================================
+
+  const fetchAdminSubmissions = async (assignmentId) => {
     try {
       setLoadingSubmissions(true);
 
-      console.log("==========================================");
-      console.log("SELECTED ASSIGNMENT:", assignmentId);
-
       const response = await api.get(`/submissions/assignment/${assignmentId}`);
-
-      console.log("SUBMISSIONS API RESPONSE:", response.data);
-
-      console.log(
-        "NUMBER OF SUBMISSIONS:",
-        response.data.submissions?.length || 0,
-      );
-
-      console.log("SUBMISSIONS:", response.data.submissions);
-
-      console.log("TOTAL TEAM STUDENTS:", response.data.totalTeamStudents);
-
-      console.log("SUBMITTED STUDENTS:", response.data.submittedStudents);
-
-      console.log(
-        "STUDENTS WITHOUT SUBMISSION:",
-        response.data.studentsWithoutSubmission,
-      );
-
-      console.log("==========================================");
 
       setSubmissions(response.data.submissions || []);
     } catch (error) {
-      console.error("GET SUBMISSIONS ERROR:", error);
+      console.error("GET ADMIN SUBMISSIONS ERROR:", error);
 
       setSubmissions([]);
 
       toast.error(
         error.response?.data?.message || "Failed to load submissions.",
+      );
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  };
+
+  // ============================================================
+  // FETCH OWN MENTOR ASSIGNMENT SUBMISSIONS
+  // ============================================================
+
+  const fetchMentorSubmissions = async (assignmentId) => {
+    try {
+      setLoadingSubmissions(true);
+
+      const response = await api.get(
+        `/mentor-assignment-submissions/assignment/${assignmentId}`,
+      );
+
+      setSubmissions(response.data.submissions || []);
+    } catch (error) {
+      console.error("GET MENTOR ASSIGNMENT SUBMISSIONS ERROR:", error);
+
+      setSubmissions([]);
+
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to load mentor assignment submissions.",
       );
     } finally {
       setLoadingSubmissions(false);
@@ -121,8 +308,16 @@ const Assignment = () => {
     setSelectedAssignment(assignment);
     setSelectedSubmission(null);
     setShowSubmissionModal(false);
+    setScore("");
+    setFeedback("");
 
-    await fetchSubmissions(assignment._id);
+    if (assignment.assignmentType === "mentor") {
+      setSelectedAssignmentType("mentor");
+      await fetchMentorSubmissions(assignment._id);
+    } else {
+      setSelectedAssignmentType("admin");
+      await fetchAdminSubmissions(assignment._id);
+    }
   };
 
   // ============================================================
@@ -132,23 +327,26 @@ const Assignment = () => {
   const handleViewSubmission = (submission) => {
     setSelectedSubmission(submission);
 
-    setScore(
-      submission.score !== null && submission.score !== undefined
-        ? submission.score
-        : "",
-    );
+    if (selectedAssignmentType === "admin") {
+      setScore(
+        submission.score !== null && submission.score !== undefined
+          ? submission.score
+          : "",
+      );
+    } else {
+      setScore("");
+    }
 
     setFeedback(submission.feedback || "");
-
     setShowSubmissionModal(true);
   };
 
   // ============================================================
-  // CLOSE MODAL
+  // CLOSE SUBMISSION MODAL
   // ============================================================
 
   const closeSubmissionModal = () => {
-    if (grading) return;
+    if (grading || feedbackSaving) return;
 
     setShowSubmissionModal(false);
     setSelectedSubmission(null);
@@ -157,10 +355,15 @@ const Assignment = () => {
   };
 
   // ============================================================
-  // GRADE / REQUEST RESUBMISSION
+  // GRADE ADMIN ASSIGNMENT
   // ============================================================
 
   const handleGradeSubmission = async (status = "Graded") => {
+    if (selectedAssignmentType !== "admin") {
+      toast.error("Mentor assignments do not use score grading.");
+      return;
+    }
+
     if (!selectedSubmission) {
       toast.error("No submission selected.");
       return;
@@ -183,11 +386,7 @@ const Assignment = () => {
       return;
     }
 
-    const maxScore = Number(
-      selectedAssignment?.maxScore ||
-        selectedSubmission.assignment?.maxScore ||
-        100,
-    );
+    const maxScore = Number(selectedAssignment?.maxScore || 100);
 
     if (numericScore > maxScore) {
       toast.error(`Score cannot exceed ${maxScore}.`);
@@ -196,16 +395,6 @@ const Assignment = () => {
 
     try {
       setGrading(true);
-
-      /*
-       * IMPORTANT:
-       *
-       * Backend route:
-       * PUT /submissions/grade/:id
-       *
-       * Therefore the frontend must use:
-       * PUT /submissions/grade/${id}
-       */
 
       const response = await api.put(
         `/submissions/grade/${selectedSubmission._id}`,
@@ -216,16 +405,14 @@ const Assignment = () => {
         },
       );
 
-      console.log("GRADE RESPONSE:", response.data);
-
       if (!response.data.success) {
-        toast.error(response.data.message || "Failed to update submission.");
-        return;
+        throw new Error(
+          response.data.message || "Failed to update submission.",
+        );
       }
 
       const updatedSubmission = response.data.submission;
 
-      // Update table immediately
       setSubmissions((prev) =>
         prev.map((submission) =>
           submission._id === updatedSubmission._id
@@ -234,7 +421,6 @@ const Assignment = () => {
         ),
       );
 
-      // Update modal immediately
       setSelectedSubmission(updatedSubmission);
 
       setScore(
@@ -255,10 +441,73 @@ const Assignment = () => {
       console.error("GRADE SUBMISSION ERROR:", error);
 
       toast.error(
-        error.response?.data?.message || "Failed to update submission.",
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to update grade.",
       );
     } finally {
       setGrading(false);
+    }
+  };
+
+  // ============================================================
+  // GIVE FEEDBACK ON OWN MENTOR ASSIGNMENT
+  // ============================================================
+
+  const handleMentorFeedback = async () => {
+    if (selectedAssignmentType !== "mentor") {
+      toast.error("This action is only for your mentor assignments.");
+      return;
+    }
+
+    if (!selectedSubmission) {
+      toast.error("No submission selected.");
+      return;
+    }
+
+    if (!feedback.trim()) {
+      toast.error("Please enter feedback.");
+      return;
+    }
+
+    try {
+      setFeedbackSaving(true);
+
+      const response = await api.put(
+        `/mentor-assignment-submissions/feedback/${selectedSubmission._id}`,
+        {
+          feedback: feedback.trim(),
+        },
+      );
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || "Failed to save feedback.");
+      }
+
+      const updatedSubmission = response.data.submission;
+
+      setSubmissions((prev) =>
+        prev.map((submission) =>
+          submission._id === updatedSubmission._id
+            ? updatedSubmission
+            : submission,
+        ),
+      );
+
+      setSelectedSubmission(updatedSubmission);
+      setFeedback(updatedSubmission.feedback || "");
+
+      toast.success("Feedback sent successfully.");
+    } catch (error) {
+      console.error("MENTOR FEEDBACK ERROR:", error);
+
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to save feedback.",
+      );
+    } finally {
+      setFeedbackSaving(false);
     }
   };
 
@@ -330,7 +579,6 @@ const Assignment = () => {
       <div className="min-h-screen bg-[#F6FAFD] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 text-[#1A3D63] animate-spin" />
-
           <p className="text-sm text-gray-500">Loading assignments...</p>
         </div>
       </div>
@@ -343,36 +591,38 @@ const Assignment = () => {
 
   return (
     <div className="min-h-screen bg-[#F6FAFD] p-6">
-      {/* ========================================================
-          HEADER
-      ======================================================== */}
-
       <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#1A3D63] flex items-center justify-center">
-            <ClipboardList className="w-6 h-6 text-white" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-[#1A3D63] flex items-center justify-center">
+              <ClipboardList className="w-6 h-6 text-white" />
+            </div>
+
+            <div>
+              <h1 className="text-2xl font-bold text-[#0A1931]">Assignments</h1>
+
+              <p className="text-sm text-gray-500">
+                View assignments, submissions, grading and feedback
+              </p>
+            </div>
           </div>
 
-          <div>
-            <h1 className="text-2xl font-bold text-[#0A1931]">Assignments</h1>
-
-            <p className="text-sm text-gray-500">
-              View assignments and student submissions
-            </p>
-          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#1A3D63] text-white text-sm font-semibold hover:bg-[#0A1931] transition"
+          >
+            <Plus className="w-4 h-4" />
+            Create Assignment
+          </button>
         </div>
       </div>
 
-      {/* ========================================================
-          ASSIGNMENT TABLE
-      ======================================================== */}
+      {/* ASSIGNMENT TABLE */}
 
       <div className="max-w-7xl mx-auto">
         {assignments.length === 0 ? (
           <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-              <FileX className="w-8 h-8 text-gray-400" />
-            </div>
+            <FileX className="w-8 h-8 text-gray-400 mx-auto mb-4" />
 
             <h2 className="text-lg font-semibold text-gray-700">
               No assignments found
@@ -385,7 +635,7 @@ const Assignment = () => {
         ) : (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-250">
                 <thead className="bg-[#F6FAFD] border-b border-gray-200">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -393,7 +643,7 @@ const Assignment = () => {
                     </th>
 
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Batch
+                      Type
                     </th>
 
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -402,10 +652,6 @@ const Assignment = () => {
 
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Deadline
-                    </th>
-
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Max Score
                     </th>
 
                     <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -417,18 +663,17 @@ const Assignment = () => {
                 <tbody className="divide-y divide-gray-100">
                   {assignments.map((assignment) => (
                     <tr
-                      key={assignment._id}
+                      key={`${assignment.assignmentType}-${assignment._id}`}
                       className={`hover:bg-gray-50 transition ${
-                        selectedAssignment?._id === assignment._id
+                        selectedAssignment?._id === assignment._id &&
+                        selectedAssignmentType === assignment.assignmentType
                           ? "bg-[#F6FAFD]"
                           : ""
                       }`}
                     >
-                      {/* ASSIGNMENT */}
-
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-[#B3CFE5]/40 flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 rounded-lg bg-[#B3CFE5]/40 flex items-center justify-center">
                             <FileText className="w-5 h-5 text-[#1A3D63]" />
                           </div>
 
@@ -444,43 +689,32 @@ const Assignment = () => {
                         </div>
                       </td>
 
-                      {/* BATCH */}
+                      <td className="px-6 py-4">
+                        {assignment.assignmentType === "admin" ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
+                            Admin Assignment
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold">
+                            My Assignment
+                          </span>
+                        )}
+                      </td>
 
                       <td className="px-6 py-4">
                         <span className="text-sm text-gray-600">
-                          {assignment.batch?.name || "Current Batch"}
+                          {assignment.instructorName ||
+                            assignment.mentor?.firstName ||
+                            "—"}
                         </span>
                       </td>
-
-                      {/* INSTRUCTOR */}
-
-                      <td className="px-6 py-4">
-                        <span className="text-sm text-gray-600">
-                          {assignment.instructorName || "—"}
-                        </span>
-                      </td>
-
-                      {/* DEADLINE */}
 
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Calendar className="w-4 h-4 text-[#4A7FA7]" />
-
                           {formatDate(assignment.deadline)}
                         </div>
                       </td>
-
-                      {/* MAX SCORE */}
-
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Trophy className="w-4 h-4 text-[#4A7FA7]" />
-
-                          {assignment.maxScore || 100}
-                        </div>
-                      </td>
-
-                      {/* ACTION */}
 
                       <td className="px-6 py-4 text-right">
                         <button
@@ -500,49 +734,41 @@ const Assignment = () => {
         )}
       </div>
 
-      {/* ========================================================
-          SELECTED ASSIGNMENT / SUBMISSIONS
-      ======================================================== */}
+      {/* SUBMISSIONS */}
 
       {selectedAssignment && (
         <div className="max-w-7xl mx-auto mt-8">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            {/* HEADER */}
-
             <div className="px-6 py-5 border-b border-gray-200">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-bold text-[#0A1931]">
-                    Student Submissions
-                  </h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-[#0A1931]">
+                  Student Submissions
+                </h2>
 
-                  <p className="text-sm text-gray-500 mt-1">
-                    {selectedAssignment.title}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1.5 rounded-lg bg-[#F6FAFD] text-[#1A3D63] text-sm font-semibold">
-                    {submissions.length} submission
-                    {submissions.length !== 1 ? "s" : ""}
+                {selectedAssignmentType === "admin" ? (
+                  <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
+                    Admin Assignment
                   </span>
-                </div>
+                ) : (
+                  <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold">
+                    Your Assignment
+                  </span>
+                )}
               </div>
-            </div>
 
-            {/* LOADING */}
+              <p className="text-sm text-gray-500 mt-1">
+                {selectedAssignment.title}
+              </p>
+            </div>
 
             {loadingSubmissions ? (
               <div className="py-16 flex flex-col items-center justify-center">
                 <Loader2 className="w-8 h-8 text-[#1A3D63] animate-spin mb-3" />
-
                 <p className="text-sm text-gray-500">Loading submissions...</p>
               </div>
             ) : submissions.length === 0 ? (
               <div className="py-16 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                  <FileX className="w-8 h-8 text-gray-400" />
-                </div>
+                <FileX className="w-8 h-8 text-gray-400 mx-auto mb-3" />
 
                 <h3 className="text-lg font-semibold text-gray-700">
                   No submissions yet
@@ -554,7 +780,7 @@ const Assignment = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px]">
+                <table className="w-full min-w-225">
                   <thead className="bg-[#F6FAFD] border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -573,13 +799,23 @@ const Assignment = () => {
                         Submitted
                       </th>
 
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        Status
-                      </th>
+                      {selectedAssignmentType === "admin" && (
+                        <>
+                          <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Status
+                          </th>
 
-                      <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        Score
-                      </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Score
+                          </th>
+                        </>
+                      )}
+
+                      {selectedAssignmentType === "mentor" && (
+                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                          Feedback
+                        </th>
+                      )}
 
                       <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Action
@@ -602,27 +838,23 @@ const Assignment = () => {
                           key={submission._id}
                           className="hover:bg-gray-50 transition"
                         >
-                          {/* STUDENT */}
-
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-[#B3CFE5] flex items-center justify-center flex-shrink-0">
+                              <div className="w-10 h-10 rounded-full bg-[#B3CFE5] flex items-center justify-center">
                                 <UserCircle className="w-6 h-6 text-[#1A3D63]" />
                               </div>
 
-                              <div className="min-w-0">
-                                <p className="font-semibold text-[#0A1931] truncate">
+                              <div>
+                                <p className="font-semibold text-[#0A1931]">
                                   {studentName}
                                 </p>
 
-                                <p className="text-xs text-gray-500 truncate">
+                                <p className="text-xs text-gray-500">
                                   {student?.email || "No email"}
                                 </p>
                               </div>
                             </div>
                           </td>
-
-                          {/* GITHUB */}
 
                           <td className="px-6 py-4">
                             {submission.githubUrl ? (
@@ -636,11 +868,9 @@ const Assignment = () => {
                                 GitHub
                               </a>
                             ) : (
-                              <span className="text-sm text-gray-400">—</span>
+                              "—"
                             )}
                           </td>
-
-                          {/* LIVE DEMO */}
 
                           <td className="px-6 py-4">
                             {submission.liveDemoUrl ? (
@@ -654,44 +884,49 @@ const Assignment = () => {
                                 Demo
                               </a>
                             ) : (
-                              <span className="text-sm text-gray-400">—</span>
+                              "—"
                             )}
                           </td>
 
-                          {/* SUBMITTED */}
-
-                          <td className="px-6 py-4">
-                            <span className="text-sm text-gray-600">
-                              {formatDate(submission.createdAt)}
-                            </span>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {formatDate(submission.createdAt)}
                           </td>
 
-                          {/* STATUS */}
+                          {selectedAssignmentType === "admin" && (
+                            <>
+                              <td className="px-6 py-4">
+                                {getStatusBadge(submission.status)}
+                              </td>
 
-                          <td className="px-6 py-4">
-                            {getStatusBadge(submission.status)}
-                          </td>
+                              <td className="px-6 py-4">
+                                {submission.score !== null &&
+                                submission.score !== undefined ? (
+                                  <span className="font-bold text-[#0A1931]">
+                                    {submission.score} /{" "}
+                                    {selectedAssignment.maxScore || 100}
+                                  </span>
+                                ) : (
+                                  <span className="text-sm text-gray-400">
+                                    Not graded
+                                  </span>
+                                )}
+                              </td>
+                            </>
+                          )}
 
-                          {/* SCORE */}
-
-                          <td className="px-6 py-4">
-                            {submission.score !== null &&
-                            submission.score !== undefined ? (
-                              <span className="font-bold text-[#0A1931]">
-                                {submission.score}
-
-                                {selectedAssignment.maxScore
-                                  ? ` / ${selectedAssignment.maxScore}`
-                                  : ""}
-                              </span>
-                            ) : (
-                              <span className="text-sm text-gray-400">
-                                Not graded
-                              </span>
-                            )}
-                          </td>
-
-                          {/* ACTION */}
+                          {selectedAssignmentType === "mentor" && (
+                            <td className="px-6 py-4">
+                              {submission.feedback ? (
+                                <span className="text-sm text-green-600 font-medium">
+                                  Feedback given
+                                </span>
+                              ) : (
+                                <span className="text-sm text-gray-400">
+                                  No feedback
+                                </span>
+                              )}
+                            </td>
+                          )}
 
                           <td className="px-6 py-4 text-right">
                             <button
@@ -713,22 +948,219 @@ const Assignment = () => {
         </div>
       )}
 
-      {/* ========================================================
-          SUBMISSION / GRADING MODAL
-      ======================================================== */}
+      {/* CREATE ASSIGNMENT MODAL */}
+
+      {showCreateModal && (
+        <div
+          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !creatingAssignment) {
+              closeCreateModal();
+            }
+          }}
+        >
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 sticky top-0 bg-white z-10">
+              <div>
+                <h2 className="text-xl font-bold text-[#0A1931]">
+                  Create Assignment
+                </h2>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  Create an assignment for your assigned students.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeCreateModal}
+                disabled={creatingAssignment}
+                className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-gray-100"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateAssignment} className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+                  Assignment Title
+                </label>
+
+                <input
+                  type="text"
+                  name="title"
+                  value={createForm.title}
+                  onChange={handleCreateFormChange}
+                  disabled={creatingAssignment}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-[#1A3D63]/20"
+                  placeholder="Enter assignment title"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+                  Description
+                </label>
+
+                <textarea
+                  name="description"
+                  value={createForm.description}
+                  onChange={handleCreateFormChange}
+                  disabled={creatingAssignment}
+                  rows={5}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none outline-none focus:ring-2 focus:ring-[#1A3D63]/20"
+                  placeholder="Describe the assignment..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+                  Mentor Name
+                </label>
+
+                <input
+                  type="text"
+                  name="instructorName"
+                  value={createForm.instructorName}
+                  onChange={handleCreateFormChange}
+                  disabled={creatingAssignment}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-[#1A3D63]/20"
+                  placeholder="Enter mentor name"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+                    Deadline
+                  </label>
+
+                  <input
+                    type="date"
+                    name="deadline"
+                    value={createForm.deadline}
+                    onChange={handleCreateFormChange}
+                    disabled={creatingAssignment}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+                    Maximum Score
+                  </label>
+
+                  <input
+                    type="number"
+                    name="maxScore"
+                    min="1"
+                    step="0.01"
+                    value={createForm.maxScore}
+                    onChange={handleCreateFormChange}
+                    disabled={creatingAssignment}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+                  Assignment Link
+                  <span className="text-gray-400 font-normal ml-1">
+                    (optional)
+                  </span>
+                </label>
+
+                <input
+                  type="url"
+                  name="link"
+                  value={createForm.link}
+                  onChange={handleCreateFormChange}
+                  disabled={creatingAssignment}
+                  placeholder="https://example.com/assignment"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+                  Assignment File
+                  <span className="text-gray-400 font-normal ml-1">
+                    (optional)
+                  </span>
+                </label>
+
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar"
+                  disabled={creatingAssignment}
+                  onChange={(event) =>
+                    setCreateFile(event.target.files?.[0] || null)
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-sm"
+                />
+
+                <p className="text-xs text-gray-500 mt-2">Maximum 20 MB.</p>
+
+                {createFile && (
+                  <div className="mt-3 flex items-center justify-between p-3 rounded-lg bg-[#F6FAFD] border border-gray-200">
+                    <span className="text-sm text-gray-700 truncate">
+                      {createFile.name}
+                    </span>
+
+                    <button type="button" onClick={() => setCreateFile(null)}>
+                      <X className="w-4 h-4 text-gray-400" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-5 border-t border-gray-200 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={closeCreateModal}
+                  disabled={creatingAssignment}
+                  className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-semibold"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={creatingAssignment}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#1A3D63] text-white font-semibold disabled:opacity-50"
+                >
+                  {creatingAssignment ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
+
+                  {creatingAssignment ? "Creating..." : "Create Assignment"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* SUBMISSION MODAL */}
 
       {showSubmissionModal && selectedSubmission && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !grading) {
+            if (
+              event.target === event.currentTarget &&
+              !grading &&
+              !feedbackSaving
+            ) {
               closeSubmissionModal();
             }
           }}
         >
           <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
-            {/* MODAL HEADER */}
-
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 sticky top-0 bg-white z-10">
               <div>
                 <h2 className="text-xl font-bold text-[#0A1931]">
@@ -736,25 +1168,21 @@ const Assignment = () => {
                 </h2>
 
                 <p className="text-sm text-gray-500 mt-1">
-                  {selectedSubmission.student?.firstName || "Unknown"}{" "}
-                  {selectedSubmission.student?.lastName || ""}
+                  {selectedSubmission.student?.firstName}{" "}
+                  {selectedSubmission.student?.lastName}
                 </p>
               </div>
 
               <button
                 onClick={closeSubmissionModal}
-                disabled={grading}
-                className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-gray-100 transition disabled:opacity-50"
+                disabled={grading || feedbackSaving}
+                className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-gray-100"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
-            {/* CONTENT */}
-
             <div className="p-6 space-y-6">
-              {/* STUDENT */}
-
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-[#B3CFE5] flex items-center justify-center">
                   <UserCircle className="w-7 h-7 text-[#1A3D63]" />
@@ -762,27 +1190,25 @@ const Assignment = () => {
 
                 <div>
                   <h3 className="font-bold text-[#0A1931]">
-                    {selectedSubmission.student?.firstName || ""}{" "}
-                    {selectedSubmission.student?.lastName || ""}
+                    {selectedSubmission.student?.firstName}{" "}
+                    {selectedSubmission.student?.lastName}
                   </h3>
 
                   <p className="text-sm text-gray-500">
-                    {selectedSubmission.student?.email || "No email"}
+                    {selectedSubmission.student?.email}
                   </p>
                 </div>
               </div>
 
-              {/* CURRENT STATUS */}
+              {selectedAssignmentType === "admin" && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                    Status
+                  </p>
 
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-                  Status
-                </p>
-
-                {getStatusBadge(selectedSubmission.status)}
-              </div>
-
-              {/* GITHUB */}
+                  {getStatusBadge(selectedSubmission.status)}
+                </div>
+              )}
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
@@ -794,22 +1220,20 @@ const Assignment = () => {
                     href={selectedSubmission.githubUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 rounded-lg bg-[#F6FAFD] text-[#1A3D63] hover:bg-[#B3CFE5]/30 transition break-all"
+                    className="flex items-center gap-2 p-3 rounded-lg bg-[#F6FAFD] text-[#1A3D63] break-all"
                   >
-                    <Code2 className="w-5 h-5 flex-shrink-0" />
+                    <Code2 className="w-5 h-5 shrink-0" />
 
                     <span className="text-sm">
                       {selectedSubmission.githubUrl}
                     </span>
 
-                    <ExternalLink className="w-4 h-4 ml-auto flex-shrink-0" />
+                    <ExternalLink className="w-4 h-4 ml-auto shrink-0" />
                   </a>
                 ) : (
                   <p className="text-sm text-gray-400">No GitHub URL</p>
                 )}
               </div>
-
-              {/* LIVE DEMO */}
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
@@ -821,9 +1245,9 @@ const Assignment = () => {
                     href={selectedSubmission.liveDemoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 rounded-lg bg-[#F6FAFD] text-[#1A3D63] hover:bg-[#B3CFE5]/30 transition break-all"
+                    className="flex items-center gap-2 p-3 rounded-lg bg-[#F6FAFD] text-[#1A3D63] break-all"
                   >
-                    <ExternalLink className="w-5 h-5 flex-shrink-0" />
+                    <ExternalLink className="w-5 h-5 shrink-0" />
 
                     <span className="text-sm">
                       {selectedSubmission.liveDemoUrl}
@@ -833,8 +1257,6 @@ const Assignment = () => {
                   <p className="text-sm text-gray-400">No live demo URL</p>
                 )}
               </div>
-
-              {/* NOTES */}
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
@@ -848,149 +1270,153 @@ const Assignment = () => {
                 </div>
               </div>
 
-              {/* ==================================================
-                  GRADING
-              ================================================== */}
+              {/* ADMIN ASSIGNMENT GRADING */}
 
-              <div className="border-t border-gray-200 pt-6">
-                <div className="flex items-center justify-between mb-4">
+              {selectedAssignmentType === "admin" && (
+                <div className="border-t border-gray-200 pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-[#0A1931]">
+                        Grade Submission
+                      </h3>
+
+                      <p className="text-sm text-gray-500 mt-1">
+                        Enter score and feedback.
+                      </p>
+                    </div>
+
+                    <div className="px-3 py-1.5 rounded-lg bg-[#F6FAFD] text-[#1A3D63] text-sm font-bold">
+                      Max: {selectedAssignment.maxScore || 100}
+                    </div>
+                  </div>
+
+                  <div className="mb-5">
+                    <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+                      Score
+                    </label>
+
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        min="0"
+                        max={selectedAssignment.maxScore || 100}
+                        step="0.01"
+                        value={score}
+                        onChange={(event) => setScore(event.target.value)}
+                        disabled={grading}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl"
+                        placeholder="Enter score"
+                      />
+
+                      <span className="text-gray-500 font-semibold">
+                        / {selectedAssignment.maxScore || 100}
+                      </span>
+                    </div>
+                  </div>
+
                   <div>
-                    <h3 className="text-lg font-bold text-[#0A1931]">
-                      Grade Submission
-                    </h3>
+                    <label className="block text-sm font-semibold text-[#0A1931] mb-2">
+                      Mentor Feedback
+                    </label>
 
-                    <p className="text-sm text-gray-500 mt-1">
-                      Enter score and feedback for the student.
-                    </p>
-                  </div>
-
-                  <div className="px-3 py-1.5 rounded-lg bg-[#F6FAFD] text-[#1A3D63] text-sm font-bold">
-                    Max:{" "}
-                    {selectedAssignment?.maxScore ||
-                      selectedSubmission.assignment?.maxScore ||
-                      100}
-                  </div>
-                </div>
-
-                {/* SCORE */}
-
-                <div className="mb-5">
-                  <label className="block text-sm font-semibold text-[#0A1931] mb-2">
-                    Score
-                  </label>
-
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      min="0"
-                      max={
-                        selectedAssignment?.maxScore ||
-                        selectedSubmission.assignment?.maxScore ||
-                        100
-                      }
-                      step="0.01"
-                      value={score}
-                      onChange={(event) => setScore(event.target.value)}
+                    <textarea
+                      value={feedback}
+                      onChange={(event) => setFeedback(event.target.value)}
                       disabled={grading}
-                      placeholder="Enter score"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-[#1A3D63]/20 focus:border-[#1A3D63] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      rows={5}
+                      placeholder="Write feedback for the student..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none"
                     />
-
-                    <span className="text-gray-500 font-semibold whitespace-nowrap">
-                      /{" "}
-                      {selectedAssignment?.maxScore ||
-                        selectedSubmission.assignment?.maxScore ||
-                        100}
-                    </span>
                   </div>
                 </div>
+              )}
 
-                {/* FEEDBACK */}
+              {/* MENTOR ASSIGNMENT FEEDBACK ONLY */}
 
-                <div>
-                  <label className="block text-sm font-semibold text-[#0A1931] mb-2">
-                    Mentor Feedback
-                  </label>
+              {selectedAssignmentType === "mentor" && (
+                <div className="border-t border-gray-200 pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <MessageSquare className="w-5 h-5 text-[#1A3D63]" />
+
+                    <div>
+                      <h3 className="text-lg font-bold text-[#0A1931]">
+                        Mentor Feedback
+                      </h3>
+
+                      <p className="text-sm text-gray-500">
+                        Give feedback to the student. No score is required.
+                      </p>
+                    </div>
+                  </div>
 
                   <textarea
                     value={feedback}
                     onChange={(event) => setFeedback(event.target.value)}
-                    disabled={grading}
+                    disabled={feedbackSaving}
                     rows={5}
                     placeholder="Write feedback for the student..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none outline-none focus:ring-2 focus:ring-[#1A3D63]/20 focus:border-[#1A3D63] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none"
                   />
-                </div>
-              </div>
-
-              {/* EXISTING GRADE INFORMATION */}
-
-              {selectedSubmission.gradedBy && (
-                <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-                    Graded By
-                  </p>
-
-                  <p className="text-sm font-medium text-[#0A1931]">
-                    {selectedSubmission.gradedBy.firstName || ""}{" "}
-                    {selectedSubmission.gradedBy.lastName || ""}
-                  </p>
-
-                  {selectedSubmission.gradedAt && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Graded on {formatDate(selectedSubmission.gradedAt)}
-                    </p>
-                  )}
                 </div>
               )}
             </div>
 
-            {/* ==================================================
-                FOOTER
-            ================================================== */}
-
             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <button
                 onClick={closeSubmissionModal}
-                disabled={grading}
-                className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={grading || feedbackSaving}
+                className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold"
               >
                 Close
               </button>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                {/* REQUEST RESUBMISSION */}
+              {selectedAssignmentType === "admin" && (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() =>
+                      handleGradeSubmission("Resubmission Required")
+                    }
+                    disabled={grading}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {grading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RotateCcw className="w-4 h-4" />
+                    )}
+                    Request Resubmission
+                  </button>
 
+                  <button
+                    onClick={() => handleGradeSubmission("Graded")}
+                    disabled={grading}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#1A3D63] text-white text-sm font-semibold hover:bg-[#0A1931] disabled:opacity-50"
+                  >
+                    {grading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    Save Grade
+                  </button>
+                </div>
+              )}
+
+              {selectedAssignmentType === "mentor" && (
                 <button
-                  onClick={() => handleGradeSubmission("Resubmission Required")}
-                  disabled={grading}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleMentorFeedback}
+                  disabled={feedbackSaving}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#1A3D63] text-white text-sm font-semibold hover:bg-[#0A1931] disabled:opacity-50"
                 >
-                  {grading ? (
+                  {feedbackSaving ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <RotateCcw className="w-4 h-4" />
+                    <MessageSquare className="w-4 h-4" />
                   )}
 
-                  {grading ? "Saving..." : "Request Resubmission"}
+                  {feedbackSaving ? "Saving..." : "Send Feedback"}
                 </button>
-
-                {/* SAVE GRADE */}
-
-                <button
-                  onClick={() => handleGradeSubmission("Graded")}
-                  disabled={grading}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#1A3D63] text-white text-sm font-semibold hover:bg-[#0A1931] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {grading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-
-                  {grading ? "Saving..." : "Save Grade"}
-                </button>
-              </div>
+              )}
             </div>
           </div>
         </div>

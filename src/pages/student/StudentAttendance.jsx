@@ -71,7 +71,7 @@ const StudentAttendance = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-[500px] items-center justify-center bg-gray-50">
+      <div className="flex min-h-125 items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
             <Loader2 size={30} className="animate-spin text-indigo-600" />
@@ -274,7 +274,7 @@ const StudentAttendance = () => {
             ================================================== */
 
             <div className="w-full overflow-x-auto">
-              <table className="w-full min-w-[750px] text-left">
+              <table className="w-full min-w-187.5 text-left">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-gray-500">
