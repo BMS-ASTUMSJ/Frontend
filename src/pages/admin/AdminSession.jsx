@@ -6,16 +6,22 @@ import {
   CheckCircle2,
   Trash2,
   Layers,
+  Calendar,
 } from "lucide-react";
 import api from "../../utils/api";
 
 const AdminSessions = () => {
+  const todayString = new Date().toISOString().split("T")[0];
+
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState("");
 
   const [week, setWeek] = useState(1);
   const [lectureCount, setLectureCount] = useState(2);
-  const [defaultDate, setDefaultDate] = useState("");
+  const [weekStartDate, setWeekStartDate] = useState(todayString);
+
+  const [experienceSharingDate, setExperienceSharingDate] = useState("");
+  const [contestDate, setContestDate] = useState("");
 
   const [sessions, setSessions] = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
@@ -38,7 +44,6 @@ const AdminSessions = () => {
           setSelectedBatch(list[0]._id);
         }
       } catch (err) {
-        console.error("Failed to load batches:", err);
         setError("Failed to load batches.");
       }
     };
@@ -56,10 +61,9 @@ const AdminSessions = () => {
       const res = await api.get(`/sessions/batch/${selectedBatch}`);
       setSessions(Array.isArray(res.data?.sessions) ? res.data.sessions : []);
     } catch (err) {
-      console.error("Failed to load sessions:", err);
       setError(
         err.response?.data?.message ||
-          "Failed to load sessions for this batch.",
+          "Failed to load sessions for this batch."
       );
     } finally {
       setLoadingSessions(false);
@@ -70,14 +74,42 @@ const AdminSessions = () => {
     fetchSessions();
   }, [selectedBatch]);
 
+  const handleStartDateChange = (val) => {
+    setWeekStartDate(val);
+    if (!val) return;
+
+    const base = new Date(val);
+    if (Number.isNaN(base.getTime())) return;
+
+    const addD = (d, days) => {
+      const r = new Date(d);
+      r.setDate(r.getDate() + days);
+      return r.toISOString().split("T")[0];
+    };
+
+    setExperienceSharingDate(addD(base, 3));
+    setContestDate(addD(base, 5));
+  };
+
+  useEffect(() => {
+    if (weekStartDate) {
+      handleStartDateChange(weekStartDate);
+    }
+  }, []);
+
   const handleGenerate = async () => {
     if (!selectedBatch) {
       setError("Select a batch first.");
       return;
     }
 
-    if (!defaultDate) {
-      setError("Pick a default date for this week's sessions.");
+    if (!weekStartDate) {
+      setError("Pick a valid week start date.");
+      return;
+    }
+
+    if (weekStartDate < todayString) {
+      setError("You cannot pick a past date. Please select today or a future date.");
       return;
     }
 
@@ -90,16 +122,19 @@ const AdminSessions = () => {
         batchId: selectedBatch,
         week,
         lectureCount,
-        dates: { default: defaultDate },
+        weekStartDate,
+        dates: {
+          default: weekStartDate,
+          experienceSharing: experienceSharingDate || undefined,
+          contest: contestDate || undefined,
+        },
       });
 
-      setSuccess(res.data?.message || "Sessions generated successfully.");
-
+      setSuccess(res.data?.message || "Sessions generated successfully across future days.");
       await fetchSessions();
     } catch (err) {
-      console.error("Failed to generate sessions:", err);
       setError(
-        err.response?.data?.message || "Failed to generate week sessions.",
+        err.response?.data?.message || "Failed to generate week sessions."
       );
     } finally {
       setGenerating(false);
@@ -111,7 +146,6 @@ const AdminSessions = () => {
       await api.delete(`/sessions/${sessionId}`);
       setSessions((prev) => prev.filter((s) => s._id !== sessionId));
     } catch (err) {
-      console.error("Failed to delete session:", err);
       setError(err.response?.data?.message || "Failed to delete session.");
     }
   };
@@ -127,29 +161,24 @@ const AdminSessions = () => {
     .sort((a, b) => a - b);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-5xl space-y-6">
-        {/* HEADER */}
-
-        <header className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+        <header className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1A3D63] text-white">
               <Layers size={26} />
             </div>
 
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-gray-900">
-                Weekly Sessions
+              <h1 className="text-2xl font-black tracking-tight text-slate-900">
+                Weekly Sessions Generator
               </h1>
-              <p className="mt-1 text-sm font-medium text-gray-500">
-                Configure how many lectures each week has, plus Contest and
-                Experience Sharing. Mentors mark attendance against these.
+              <p className="mt-1 text-sm font-medium text-slate-500">
+                Configure schedule for current and upcoming dates. Past dates are locked.
               </p>
             </div>
           </div>
         </header>
-
-        {/* ERROR / SUCCESS */}
 
         {error && (
           <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-5">
@@ -168,22 +197,20 @@ const AdminSessions = () => {
           </div>
         )}
 
-        {/* GENERATE FORM */}
-
-        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="mb-5 text-lg font-black text-gray-900">
-            Generate a Week
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="mb-5 text-lg font-black text-slate-900">
+            Generate Week Schedule
           </h2>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-500">
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
                 Batch
               </label>
               <select
                 value={selectedBatch}
                 onChange={(e) => setSelectedBatch(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#4A7FA7] focus:bg-white"
               >
                 {batches.map((batch) => (
                   <option key={batch._id} value={batch._id}>
@@ -194,7 +221,7 @@ const AdminSessions = () => {
             </div>
 
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-500">
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
                 Week Number
               </label>
               <input
@@ -202,78 +229,98 @@ const AdminSessions = () => {
                 min={1}
                 value={week}
                 onChange={(e) => setWeek(Number(e.target.value))}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#4A7FA7] focus:bg-white"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-500">
-                Lectures This Week
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                Lectures Count
               </label>
               <input
                 type="number"
                 min={1}
-                max={10}
+                max={5}
                 value={lectureCount}
                 onChange={(e) => setLectureCount(Number(e.target.value))}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#4A7FA7] focus:bg-white"
               />
-              <p className="mt-1 text-[10px] text-gray-400">
-                e.g. 2 for a normal week, 4 for a heavier week
-              </p>
             </div>
 
             <div>
-              <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-500">
-                Default Date
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                Week Start Date
               </label>
               <input
                 type="date"
-                value={defaultDate}
-                onChange={(e) => setDefaultDate(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50"
+                min={todayString}
+                value={weekStartDate}
+                onChange={(e) => handleStartDateChange(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#4A7FA7] focus:bg-white"
               />
             </div>
           </div>
 
-          <p className="mt-4 text-xs text-gray-400">
-            This creates {lectureCount} Lecture session(s), 1 Contest and 1
-            Experience Sharing session for the selected week. Regenerating a
-            week replaces its existing sessions.
-          </p>
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 rounded-2xl bg-[#F6FAFD] p-4 border border-slate-100">
+            <div>
+              <label className="mb-1 block text-xs font-bold text-[#1A3D63]">
+                🎤 Experience Sharing Date (Mid-Week)
+              </label>
+              <input
+                type="date"
+                min={todayString}
+                value={experienceSharingDate}
+                onChange={(e) => setExperienceSharingDate(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-bold text-[#1A3D63]">
+                🏆 Contest Date (Weekend)
+              </label>
+              <input
+                type="date"
+                min={todayString}
+                value={contestDate}
+                onChange={(e) => setContestDate(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none"
+              />
+            </div>
+          </div>
 
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="mt-5 flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-xs font-black uppercase tracking-widest text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-6 flex items-center gap-2 rounded-xl bg-[#1A3D63] px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {generating ? (
               <Loader2 size={15} className="animate-spin" />
             ) : (
               <CalendarPlus size={15} />
             )}
-            Generate Week
+            Generate Staggered Week
           </button>
         </div>
 
-        <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="mb-5 text-lg font-black text-gray-900">
-            Configured Sessions
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="mb-5 text-lg font-black text-slate-900">
+            Configured Sessions Timeline
           </h2>
 
           {loadingSessions ? (
             <div className="flex flex-col items-center justify-center py-10">
-              <Loader2 size={24} className="animate-spin text-indigo-600" />
+              <Loader2 size={24} className="animate-spin text-[#1A3D63]" />
             </div>
           ) : weekNumbers.length === 0 ? (
-            <p className="py-6 text-center text-sm font-medium text-gray-400">
+            <p className="py-6 text-center text-sm font-medium text-slate-400">
               No sessions configured for this batch yet.
             </p>
           ) : (
             <div className="space-y-6">
               {weekNumbers.map((weekNum) => (
                 <div key={weekNum}>
-                  <p className="mb-3 text-xs font-black uppercase tracking-widest text-indigo-500">
+                  <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#1A3D63]">
                     Week {weekNum}
                   </p>
 
@@ -281,22 +328,27 @@ const AdminSessions = () => {
                     {sessionsByWeek[weekNum].map((session) => (
                       <div
                         key={session._id}
-                        className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+                        className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/80 p-4"
                       >
                         <div>
-                          <p className="text-sm font-bold text-gray-800">
+                          <p className="text-sm font-bold text-slate-900">
                             {session.name}
                           </p>
-                          <p className="text-[10px] font-semibold uppercase text-gray-400">
-                            {session.type} ·{" "}
-                            {new Date(session.date).toLocaleDateString()}
-                          </p>
+                          <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-slate-500">
+                            <Calendar size={13} className="text-[#4A7FA7]" />
+                            <span>
+                              {new Date(session.date).toLocaleDateString(undefined, {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </span>
+                          </div>
                         </div>
 
                         <button
                           onClick={() => handleDelete(session._id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-600"
-                          title="Remove session"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
                         >
                           <Trash2 size={15} />
                         </button>
