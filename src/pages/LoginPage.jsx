@@ -40,13 +40,13 @@ function LoginPage() {
       },
 
       mentor: {
-        email: "demo.mentor@astu-msj.com",
-        password: "YOUR_MENTOR_DEMO_PASSWORD",
+        email: "demomentor8@gmail.com",
+        password: "studentMentor@123",
       },
 
       student: {
-        email: "demomentor8@gmail.com",
-        password: "studentMentor@123",
+        email: "demoastumsj@gmail.com",
+        password: "studentDemo@123",
       },
     };
 

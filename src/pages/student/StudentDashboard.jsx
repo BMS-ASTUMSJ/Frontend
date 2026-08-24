@@ -85,7 +85,7 @@ function StudentDashboard() {
 
   const isAtRisk = risk.isAtRisk;
 
-  const status = isAtRisk ? "Pending" : "On Track";
+  const status = isAtRisk ? "At Risk" : "On Track";
 
   // ============================================================
   // STATS
@@ -369,7 +369,8 @@ function StudentDashboard() {
         {/* ======================================================
             KEEP LEARNING
         ====================================================== */}
-        <h2 className="text-lg mt-5 font-bold text-[#0A1931]">Keep Learning</h2>
+
+        <h2 className="mt-5 text-lg font-bold text-[#0A1931]">Keep Learning</h2>
 
         <p className="mt-1 text-sm text-gray-500">
           Stay consistent with your bootcamp activities.
