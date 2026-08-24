@@ -298,19 +298,6 @@ function ApplicantsPage() {
                   </p>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={() => fetchApplicants(false)}
-                disabled={refreshing}
-                className="flex items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/20 disabled:opacity-50"
-              >
-                <RefreshCw
-                  size={17}
-                  className={refreshing ? "animate-spin" : ""}
-                />
-                Refresh
-              </button>
             </div>
           </div>
 

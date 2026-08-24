@@ -146,7 +146,7 @@ function StudentDashboard() {
             </div>
 
             <div>
-              <p className="font-semibold text-amber-800">Status: Pending</p>
+              <p className="font-semibold text-amber-800">Status: At Risk</p>
 
               <p className="mt-1 text-sm text-amber-700">
                 Your current performance requires attention.
@@ -162,7 +162,7 @@ function StudentDashboard() {
 
           <div className="flex items-center gap-2 self-start rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white sm:self-auto">
             <Clock3 className="h-4 w-4" />
-            Pending
+            At Risk
           </div>
         </div>
       )}
@@ -268,7 +268,7 @@ function StudentDashboard() {
 
               {isAtRisk ? (
                 <div className="rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-semibold text-amber-700">
-                  Pending
+                  At Risk
                 </div>
               ) : (
                 <div className="rounded-lg bg-green-100 px-3 py-1.5 text-sm font-semibold text-green-700">

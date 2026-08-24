@@ -17,6 +17,9 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // ============================================================
+  // HANDLE INPUT CHANGE
+  // ============================================================
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -26,6 +29,36 @@ function LoginPage() {
     }));
   };
 
+  // ============================================================
+  // FILL DEMO ACCOUNT
+  // ============================================================
+  const fillDemoAccount = (role) => {
+    const demoAccounts = {
+      admin: {
+        email: "admin@bms.com",
+        password: "Admin@123",
+      },
+
+      mentor: {
+        email: "demo.mentor@astu-msj.com",
+        password: "YOUR_MENTOR_DEMO_PASSWORD",
+      },
+
+      student: {
+        email: "demomentor8@gmail.com",
+        password: "studentMentor@123",
+      },
+    };
+
+    setFormData(demoAccounts[role]);
+
+    // Make sure the password is visible after selecting a demo account
+    setShowPassword(true);
+  };
+
+  // ============================================================
+  // REDIRECT USER
+  // ============================================================
   const redirectUser = (user) => {
     if (
       (user.role === "student" || user.role === "mentor") &&
@@ -46,9 +79,9 @@ function LoginPage() {
     }
   };
 
-  /**
-   * Save login information and redirect.
-   */
+  // ============================================================
+  // LOGIN SUCCESS
+  // ============================================================
   const handleLoginSuccess = (accessToken, user) => {
     localStorage.setItem("token", accessToken);
     localStorage.setItem("user", JSON.stringify(user));
@@ -60,9 +93,9 @@ function LoginPage() {
     redirectUser(user);
   };
 
-  /**
-   * Normal email/password login
-   */
+  // ============================================================
+  // NORMAL LOGIN
+  // ============================================================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -110,9 +143,9 @@ function LoginPage() {
     }
   };
 
-  /**
-   * Google login
-   */
+  // ============================================================
+  // GOOGLE LOGIN
+  // ============================================================
   const handleGoogleLogin = async (credentialResponse) => {
     try {
       setLoading(true);
@@ -158,7 +191,9 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-[#F6FAFD] px-4 py-12">
       <div className="mx-auto grid min-h-[calc(100vh-6rem)] max-w-5xl overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-[#B3CFE5] md:grid-cols-2">
-        {/* LEFT SIDE */}
+        {/* ======================================================
+            LEFT SIDE
+        ====================================================== */}
         <div className="hidden bg-[#0A1931] p-10 text-white md:flex md:flex-col md:justify-between">
           <div>
             <div className="mb-8 flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-white p-1">
@@ -186,9 +221,12 @@ function LoginPage() {
           <p className="text-sm text-[#7A7F85]">Learn. Build. Compete. Grow.</p>
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* ======================================================
+            RIGHT SIDE
+        ====================================================== */}
         <div className="flex items-center p-7 sm:p-10">
           <div className="w-full">
+            {/* HEADER */}
             <div className="mb-8">
               <Link
                 to="/"
@@ -205,7 +243,9 @@ function LoginPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* EMAIL */}
+              {/* ==================================================
+                  EMAIL
+              ================================================== */}
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
                   Email Address <span className="text-red-500">*</span>
@@ -226,7 +266,9 @@ function LoginPage() {
                 </div>
               </div>
 
-              {/* PASSWORD */}
+              {/* ==================================================
+                  PASSWORD
+              ================================================== */}
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-sm font-semibold text-[#0A1931]">
@@ -268,7 +310,9 @@ function LoginPage() {
                 </div>
               </div>
 
-              {/* LOGIN BUTTON */}
+              {/* ==================================================
+                  LOGIN BUTTON
+              ================================================== */}
               <button
                 type="submit"
                 disabled={loading}
@@ -279,7 +323,56 @@ function LoginPage() {
                 {loading ? "Signing in..." : "Login"}
               </button>
 
-              {/* GOOGLE DIVIDER */}
+              {/* ==================================================
+                  DEMO ACCOUNTS
+              ================================================== */}
+              <div className="rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD] p-4">
+                <div className="text-center">
+                  <p className="text-sm font-bold text-[#0A1931]">
+                    Demo Accounts
+                  </p>
+
+                  <p className="mt-1 text-xs text-[#7A7F85]">
+                    Select a role to automatically fill the login details.
+                  </p>
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {/* ADMIN */}
+                  <button
+                    type="button"
+                    onClick={() => fillDemoAccount("admin")}
+                    disabled={loading}
+                    className="rounded-xl border border-[#B3CFE5] bg-white px-2 py-2.5 text-xs font-semibold text-[#1A3D63] transition hover:bg-[#EAF3F9] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Admin Demo
+                  </button>
+
+                  {/* MENTOR */}
+                  <button
+                    type="button"
+                    onClick={() => fillDemoAccount("mentor")}
+                    disabled={loading}
+                    className="rounded-xl border border-[#B3CFE5] bg-white px-2 py-2.5 text-xs font-semibold text-[#1A3D63] transition hover:bg-[#EAF3F9] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Mentor Demo
+                  </button>
+
+                  {/* STUDENT */}
+                  <button
+                    type="button"
+                    onClick={() => fillDemoAccount("student")}
+                    disabled={loading}
+                    className="rounded-xl border border-[#B3CFE5] bg-white px-2 py-2.5 text-xs font-semibold text-[#1A3D63] transition hover:bg-[#EAF3F9] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Student Demo
+                  </button>
+                </div>
+              </div>
+
+              {/* ==================================================
+                  GOOGLE DIVIDER
+              ================================================== */}
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-gray-200" />
@@ -292,7 +385,9 @@ function LoginPage() {
                 </div>
               </div>
 
-              {/* GOOGLE */}
+              {/* ==================================================
+                  GOOGLE LOGIN
+              ================================================== */}
               <div className="flex w-full justify-center">
                 <GoogleLogin
                   onSuccess={handleGoogleLogin}
@@ -304,6 +399,7 @@ function LoginPage() {
               </div>
             </form>
 
+            {/* REGISTER */}
             <p className="mt-8 text-center text-sm text-[#7A7F85]">
               Don't have an account?{" "}
               <Link
