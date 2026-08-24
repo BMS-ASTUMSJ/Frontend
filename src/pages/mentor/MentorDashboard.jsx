@@ -22,6 +22,58 @@ function MentorDashboard() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
+  // ============================================================
+  // HELPERS
+  // ============================================================
+
+  const getId = (value) => {
+    if (!value) return null;
+
+    if (typeof value === "string") {
+      return value;
+    }
+
+    if (value._id) {
+      return String(value._id);
+    }
+
+    if (value.id) {
+      return String(value.id);
+    }
+
+    return null;
+  };
+
+  const getStudentId = (student) => {
+    if (!student) return null;
+
+    return getId(student._id) || getId(student.id) || getId(student.userId);
+  };
+
+  // ============================================================
+  // CALCULATE STUDENT COMPLETION
+  // ============================================================
+
+  const calculateCompletion = (completed, total) => {
+    const completedNumber = Math.max(Number(completed) || 0, 0);
+    const totalNumber = Math.max(Number(total) || 0, 0);
+
+    if (totalNumber <= 0) {
+      return 0;
+    }
+
+    const safeCompleted = Math.min(completedNumber, totalNumber);
+
+    return Math.min(
+      Math.max(Math.round((safeCompleted / totalNumber) * 100), 0),
+      100,
+    );
+  };
+
+  // ============================================================
+  // LOAD MENTOR DATA
+  // ============================================================
+
   useEffect(() => {
     let isMounted = true;
 
@@ -38,40 +90,199 @@ function MentorDashboard() {
 
         if (!isMounted) return;
 
+        // ========================================================
+        // MENTOR PROFILE
+        // ========================================================
+
+        let mentor = null;
+
         if (profileRes.status === "fulfilled") {
-          const mentor = profileRes.value.data?.user || {};
+          mentor = profileRes.value.data?.user || null;
 
           setMentorProfile(mentor);
+        }
 
-          if (teamsRes.status === "fulfilled") {
-            const allTeams = teamsRes.value.data?.teams || [];
+        // ========================================================
+        // FIND ASSIGNED TEAM
+        // ========================================================
 
-            const myTeam = allTeams.find((team) =>
-              team.mentors?.some(
-                (mentorItem) =>
-                  mentorItem._id === mentor._id || mentorItem === mentor._id,
-              ),
-            );
+        let myTeam = null;
 
-            if (myTeam) {
-              setAssignedTeam(myTeam);
+        if (mentor && teamsRes.status === "fulfilled") {
+          const teamsData = teamsRes.value.data || {};
 
-              const partner = myTeam.mentors?.find(
-                (mentorItem) => mentorItem._id !== mentor._id,
-              );
+          const allTeams = Array.isArray(teamsData.teams)
+            ? teamsData.teams
+            : Array.isArray(teamsData.data)
+              ? teamsData.data
+              : Array.isArray(teamsData)
+                ? teamsData
+                : [];
 
-              setCoMentor(partner || null);
+          const mentorId = getId(mentor._id || mentor.id);
+
+          myTeam = allTeams.find((team) => {
+            if (!Array.isArray(team?.mentors)) {
+              return false;
             }
+
+            return team.mentors.some((mentorItem) => {
+              const mentorItemId = getId(mentorItem);
+
+              return mentorItemId === mentorId;
+            });
+          });
+
+          if (myTeam) {
+            setAssignedTeam(myTeam);
+
+            // ====================================================
+            // FIND CO-MENTOR
+            // ====================================================
+
+            const partner = Array.isArray(myTeam.mentors)
+              ? myTeam.mentors.find((mentorItem) => {
+                  return getId(mentorItem) !== mentorId;
+                })
+              : null;
+
+            setCoMentor(partner || null);
+          } else {
+            setAssignedTeam(null);
+            setCoMentor(null);
           }
         }
 
-        if (progressRes.status === "fulfilled") {
-          const progressData =
-            progressRes.value.data?.data || progressRes.value.data || [];
+        // ========================================================
+        // PROGRESS DATA
+        // ========================================================
 
-          setAssignedStudentsProgress(
-            Array.isArray(progressData) ? progressData : [],
-          );
+        if (progressRes.status === "fulfilled") {
+          const responseData = progressRes.value.data || {};
+
+          const progressData =
+            responseData.data ||
+            responseData.progress ||
+            responseData.students ||
+            responseData;
+
+          const progressArray = Array.isArray(progressData) ? progressData : [];
+
+          // ======================================================
+          // NORMALIZE PROGRESS
+          // ======================================================
+
+          const normalizedProgress = progressArray
+            .map((item) => {
+              const student = item?.student || {};
+
+              const studentId =
+                getStudentId(student) ||
+                getId(item?.studentId) ||
+                getId(item?.userId);
+
+              if (!studentId) {
+                return null;
+              }
+
+              // IMPORTANT:
+              // Always calculate the percentage from completed / total.
+              // Do NOT trust item.completion from the backend.
+
+              const completed = Math.max(Number(item?.completed) || 0, 0);
+
+              const total = Math.max(Number(item?.total) || 0, 0);
+
+              const safeCompleted = Math.min(completed, total);
+
+              const completion = calculateCompletion(safeCompleted, total);
+
+              return {
+                ...item,
+
+                student: {
+                  ...student,
+                  _id: studentId,
+                  id: studentId,
+                },
+
+                completed: safeCompleted,
+                total,
+                completion,
+              };
+            })
+            .filter(Boolean);
+
+          // ======================================================
+          // TEAM STUDENTS
+          // ======================================================
+
+          const teamStudents = Array.isArray(myTeam?.students)
+            ? myTeam.students
+            : [];
+
+          if (teamStudents.length > 0) {
+            const assignedStudentIds = new Set(
+              teamStudents
+                .map((student) => getStudentId(student))
+                .filter(Boolean),
+            );
+
+            // ====================================================
+            // ONLY KEEP STUDENTS FROM THIS TEAM
+            // ====================================================
+
+            const filteredProgress = normalizedProgress.filter((item) => {
+              const studentId = getStudentId(item.student);
+
+              return studentId && assignedStudentIds.has(studentId);
+            });
+
+            // ====================================================
+            // CREATE PROGRESS FOR EVERY TEAM STUDENT
+            // ====================================================
+
+            const mergedProgress = teamStudents
+              .map((teamStudent) => {
+                const studentId = getStudentId(teamStudent);
+
+                if (!studentId) {
+                  return null;
+                }
+
+                const existing = filteredProgress.find(
+                  (item) => getStudentId(item.student) === studentId,
+                );
+
+                if (existing) {
+                  return existing;
+                }
+
+                // Student exists in team but has no progress yet.
+
+                return {
+                  student: {
+                    ...teamStudent,
+                    _id: studentId,
+                    id: studentId,
+                  },
+
+                  completed: 0,
+                  total: 0,
+                  completion: 0,
+                  rank: null,
+                };
+              })
+              .filter(Boolean);
+
+            setAssignedStudentsProgress(mergedProgress);
+          } else {
+            // ====================================================
+            // FALLBACK
+            // ====================================================
+
+            setAssignedStudentsProgress(normalizedProgress);
+          }
         }
       } catch (err) {
         console.error("Mentor dashboard load error:", err);
@@ -96,34 +307,107 @@ function MentorDashboard() {
     };
   }, []);
 
+  // ============================================================
+  // TOTAL STUDENTS
+  // ============================================================
+
   const totalStudents = assignedStudentsProgress.length;
 
-  const totalTasksExpected = assignedStudentsProgress[0]?.total || 0;
+  // ============================================================
+  // TOTAL TASKS EXPECTED
+  // ============================================================
 
-  const avgCompletion =
-    totalStudents > 0
-      ? Math.round(
-          assignedStudentsProgress.reduce(
-            (acc, curr) => acc + (curr.completion || 0),
-            0,
-          ) / totalStudents,
-        )
-      : 0;
-
-  const totalTasksSolved = assignedStudentsProgress.reduce(
-    (acc, curr) => acc + (curr.completed || 0),
+  const totalTasksExpected = assignedStudentsProgress.reduce(
+    (acc, student) => acc + Math.max(Number(student?.total) || 0, 0),
     0,
   );
 
-  const filteredStudents = assignedStudentsProgress.filter((item) => {
+  // ============================================================
+  // TOTAL COMPLETED TASKS
+  // ============================================================
+
+  const totalTasksSolved = assignedStudentsProgress.reduce(
+    (acc, student) =>
+      acc +
+      Math.min(
+        Math.max(Number(student?.completed) || 0, 0),
+        Math.max(Number(student?.total) || 0, 0),
+      ),
+    0,
+  );
+
+  // ============================================================
+  // TEAM COMPLETION
+  //
+  // completed tasks / total tasks
+  // ============================================================
+
+  const avgCompletion =
+    totalTasksExpected > 0
+      ? Math.min(Math.round((totalTasksSolved / totalTasksExpected) * 100), 100)
+      : 0;
+
+  // ============================================================
+  // SORT STUDENTS BY PERFORMANCE
+  // ============================================================
+
+  const rankedStudents = [...assignedStudentsProgress]
+    .map((item) => {
+      const completed = Math.max(Number(item?.completed) || 0, 0);
+
+      const total = Math.max(Number(item?.total) || 0, 0);
+
+      const safeCompleted = Math.min(completed, total);
+
+      return {
+        ...item,
+        completed: safeCompleted,
+        total,
+        completion: calculateCompletion(safeCompleted, total),
+      };
+    })
+    .sort((a, b) => {
+      const completionA = Number(a?.completion) || 0;
+
+      const completionB = Number(b?.completion) || 0;
+
+      if (completionB !== completionA) {
+        return completionB - completionA;
+      }
+
+      return (Number(b?.completed) || 0) - (Number(a?.completed) || 0);
+    })
+    .map((item, index) => ({
+      ...item,
+      rank: index + 1,
+    }));
+
+  // ============================================================
+  // SEARCH
+  // ============================================================
+
+  const filteredStudents = rankedStudents.filter((item) => {
     const name = item?.student?.name?.toLowerCase() || "";
 
     const email = item?.student?.email?.toLowerCase() || "";
 
-    const search = searchTerm.toLowerCase();
+    const firstName = item?.student?.firstName?.toLowerCase() || "";
 
-    return name.includes(search) || email.includes(search);
+    const lastName = item?.student?.lastName?.toLowerCase() || "";
+
+    const search = searchTerm.toLowerCase().trim();
+
+    return (
+      name.includes(search) ||
+      email.includes(search) ||
+      firstName.includes(search) ||
+      lastName.includes(search)
+    );
   });
+
+  // ============================================================
+  // LOADING
+  // ============================================================
 
   if (loading) {
     return (
@@ -139,9 +423,16 @@ function MentorDashboard() {
     );
   }
 
+  // ============================================================
+  // RETURN
+  // ============================================================
+
   return (
     <div className="min-h-screen space-y-8 bg-[#F6FAFD] p-6 sm:p-8">
-      {/* Header */}
+      {/* ========================================================
+          HEADER
+      ======================================================== */}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -167,6 +458,7 @@ function MentorDashboard() {
         </div>
 
         {/* Mentor Avatar */}
+
         <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-2.5 pr-4 shadow-sm">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-[#1A3D63] to-[#4A7FA7] text-sm font-bold text-white shadow">
             {mentorProfile?.firstName?.[0]}
@@ -185,7 +477,10 @@ function MentorDashboard() {
         </div>
       </div>
 
-      {/* Error */}
+      {/* ========================================================
+          ERROR
+      ======================================================== */}
+
       {error && (
         <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <AlertCircle className="h-5 w-5 shrink-0" />
@@ -194,9 +489,13 @@ function MentorDashboard() {
         </div>
       )}
 
-      {/* Stats */}
+      {/* ========================================================
+          STATS
+      ======================================================== */}
+
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {/* Assigned Students */}
+
         <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
@@ -208,7 +507,11 @@ function MentorDashboard() {
             </h3>
 
             <p className="mt-1 text-[11px] font-semibold text-blue-600">
-              100% {mentorProfile?.gender} Group
+              {mentorProfile?.gender === "Female"
+                ? "100% Female Group"
+                : mentorProfile?.gender === "Male"
+                  ? "100% Male Group"
+                  : "Assigned Group"}
             </p>
           </div>
 
@@ -218,6 +521,7 @@ function MentorDashboard() {
         </div>
 
         {/* Assigned Team */}
+
         <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
@@ -229,7 +533,9 @@ function MentorDashboard() {
             </h3>
 
             <p className="mt-1 text-[11px] text-[#7A7F85]">
-              {assignedTeam?.batch?.name || "Active Batch"}
+              {assignedTeam?.batch?.name ||
+                assignedTeam?.batch?.batchName ||
+                "Active Batch"}
             </p>
           </div>
 
@@ -239,6 +545,7 @@ function MentorDashboard() {
         </div>
 
         {/* Co-Mentor */}
+
         <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
@@ -247,7 +554,9 @@ function MentorDashboard() {
 
             <h3 className="mt-1 max-w-37.5 truncate text-lg font-bold text-[#0A1931]">
               {coMentor
-                ? `${coMentor.firstName} ${coMentor.lastName}`
+                ? `${coMentor.firstName || ""} ${
+                    coMentor.lastName || ""
+                  }`.trim()
                 : "2nd Mentor Pair"}
             </h3>
 
@@ -262,6 +571,7 @@ function MentorDashboard() {
         </div>
 
         {/* Average Performance */}
+
         <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
@@ -273,7 +583,7 @@ function MentorDashboard() {
             </h3>
 
             <p className="mt-1 text-[11px] font-semibold text-green-600">
-              {totalTasksSolved} tasks submitted
+              {totalTasksSolved} tasks completed
             </p>
           </div>
 
@@ -283,9 +593,13 @@ function MentorDashboard() {
         </div>
       </div>
 
-      {/* Middle Section */}
+      {/* ========================================================
+          MIDDLE SECTION
+      ======================================================== */}
+
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Progress Overview */}
+
         <div className="space-y-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8 lg:col-span-2">
           <div className="flex items-center justify-between">
             <div>
@@ -306,6 +620,7 @@ function MentorDashboard() {
 
           <div className="grid gap-6 pt-2 sm:grid-cols-2">
             {/* CP */}
+
             <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-[#F6FAFD]/60 p-5">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -324,7 +639,7 @@ function MentorDashboard() {
                   <p className="text-xl font-bold text-[#0A1931]">
                     {totalTasksSolved}{" "}
                     <span className="text-xs font-normal text-gray-400">
-                      / {totalStudents * totalTasksExpected || 100}
+                      / {totalTasksExpected}
                     </span>
                   </p>
                 </div>
@@ -364,6 +679,7 @@ function MentorDashboard() {
             </div>
 
             {/* Development */}
+
             <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-[#F6FAFD]/60 p-5">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -377,13 +693,10 @@ function MentorDashboard() {
                 </div>
 
                 <div className="pt-2">
-                  <p className="text-xs text-[#7A7F85]">Videos Completed</p>
+                  <p className="text-xs text-[#7A7F85]">Current Progress</p>
 
                   <p className="text-xl font-bold text-[#0A1931]">
-                    {Math.round(totalTasksSolved * 0.85)}{" "}
-                    <span className="text-xs font-normal text-gray-400">
-                      Watched
-                    </span>
+                    {avgCompletion}%
                   </p>
                 </div>
               </div>
@@ -400,7 +713,7 @@ function MentorDashboard() {
 
                   <path
                     className="text-[#4A7FA7]"
-                    strokeDasharray={`${Math.min(avgCompletion + 5, 100)}, 100`}
+                    strokeDasharray={`${avgCompletion}, 100`}
                     strokeWidth="3.5"
                     strokeLinecap="round"
                     stroke="currentColor"
@@ -411,11 +724,11 @@ function MentorDashboard() {
 
                 <div className="absolute text-center">
                   <span className="text-base font-bold text-[#0A1931]">
-                    {Math.min(avgCompletion + 5, 100)}%
+                    {avgCompletion}%
                   </span>
 
                   <span className="block text-[9px] text-[#7A7F85]">
-                    Watched
+                    Progress
                   </span>
                 </div>
               </div>
@@ -423,7 +736,10 @@ function MentorDashboard() {
           </div>
         </div>
 
-        {/* Top Performers */}
+        {/* ======================================================
+            TOP PERFORMERS
+        ====================================================== */}
+
         <div className="space-y-4 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex items-center justify-between border-b border-gray-100 pb-3">
             <h3 className="text-base font-bold text-[#0A1931]">
@@ -433,44 +749,58 @@ function MentorDashboard() {
             <span className="text-xs font-bold text-[#4A7FA7]">Rankings</span>
           </div>
 
-          {assignedStudentsProgress.length === 0 ? (
+          {rankedStudents.length === 0 ? (
             <p className="py-8 text-center text-xs text-[#7A7F85]">
               No assigned students yet.
             </p>
           ) : (
             <div className="space-y-3">
-              {assignedStudentsProgress.slice(0, 5).map((item, idx) => (
-                <div
-                  key={item?.student?.id || idx}
-                  className="flex items-center justify-between rounded-xl bg-[#F6FAFD] p-3 text-xs"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1A3D63] text-[11px] font-bold text-white">
-                      {idx + 1}
-                    </span>
+              {rankedStudents.slice(0, 5).map((item, idx) => {
+                const student = item?.student || {};
 
-                    <div>
-                      <p className="font-bold text-[#0A1931]">
-                        {item?.student?.name}
-                      </p>
+                const studentName =
+                  student.name ||
+                  `${student.firstName || ""} ${
+                    student.lastName || ""
+                  }`.trim() ||
+                  "Unknown Student";
 
-                      <p className="text-[11px] text-[#7A7F85]">
-                        {item?.completed}/{item?.total} tasks
-                      </p>
+                return (
+                  <div
+                    key={getStudentId(student) || idx}
+                    className="flex items-center justify-between rounded-xl bg-[#F6FAFD] p-3 text-xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1A3D63] text-[11px] font-bold text-white">
+                        {idx + 1}
+                      </span>
+
+                      <div>
+                        <p className="font-bold text-[#0A1931]">
+                          {studentName}
+                        </p>
+
+                        <p className="text-[11px] text-[#7A7F85]">
+                          {item?.completed || 0}/{item?.total || 0} tasks
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  <span className="rounded-md bg-blue-50 px-2 py-1 font-bold text-[#1A3D63]">
-                    {item?.completion}%
-                  </span>
-                </div>
-              ))}
+                    <span className="rounded-md bg-blue-50 px-2 py-1 font-bold text-[#1A3D63]">
+                      {item?.completion || 0}%
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
       </div>
 
-      {/* Detailed Progress */}
+      {/* ========================================================
+          DETAILED PROGRESS
+      ======================================================== */}
+
       <div className="space-y-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-4 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -479,8 +809,7 @@ function MentorDashboard() {
             </h2>
 
             <p className="mt-0.5 text-xs text-[#7A7F85]">
-              Only students of matching gender ({mentorProfile?.gender})
-              assigned to your team.
+              Only students assigned to your team.
             </p>
           </div>
 
@@ -507,9 +836,13 @@ function MentorDashboard() {
               <thead className="border-b border-gray-100 bg-[#F6FAFD] text-[11px] font-bold uppercase text-[#7A7F85]">
                 <tr>
                   <th className="px-6 py-4">Student</th>
+
                   <th className="px-6 py-4">Gender</th>
+
                   <th className="px-6 py-4">Completed / Total</th>
+
                   <th className="px-6 py-4">Completion Bar</th>
+
                   <th className="px-6 py-4">Team Rank</th>
                 </tr>
               </thead>
@@ -517,22 +850,43 @@ function MentorDashboard() {
               <tbody className="divide-y divide-gray-100">
                 {filteredStudents.map((item, index) => {
                   const student = item?.student || {};
-                  const completion = item?.completion || 0;
+
+                  // Recalculate here as well so the displayed
+                  // percentage can never depend on stale data.
+
+                  const completed = Math.max(Number(item?.completed) || 0, 0);
+
+                  const total = Math.max(Number(item?.total) || 0, 0);
+
+                  const safeCompleted = Math.min(completed, total);
+
+                  const completion = calculateCompletion(safeCompleted, total);
+
+                  const studentName =
+                    student.name ||
+                    `${student.firstName || ""} ${
+                      student.lastName || ""
+                    }`.trim() ||
+                    "Unknown Student";
 
                   return (
                     <tr
-                      key={student.id || index}
+                      key={getStudentId(student) || index}
                       className="transition hover:bg-gray-50/60"
                     >
+                      {/* Student */}
+
                       <td className="px-6 py-4">
                         <p className="font-bold text-[#0A1931]">
-                          {student.name}
+                          {studentName}
                         </p>
 
                         <p className="text-[11px] text-gray-400">
-                          {student.email}
+                          {student.email || "No email"}
                         </p>
                       </td>
+
+                      {/* Gender */}
 
                       <td className="px-6 py-4">
                         <span
@@ -548,15 +902,19 @@ function MentorDashboard() {
                         </span>
                       </td>
 
+                      {/* Completed / Total */}
+
                       <td className="px-6 py-4 font-bold text-[#0A1931]">
-                        {item.completed} / {item.total} tasks
+                        {safeCompleted} / {total} tasks
                       </td>
+
+                      {/* Completion */}
 
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="h-2 w-32 overflow-hidden rounded-full bg-gray-100">
                             <div
-                              className="h-full rounded-full bg-[#1A3D63]"
+                              className="h-full rounded-full bg-[#1A3D63] transition-all duration-500"
                               style={{
                                 width: `${completion}%`,
                               }}
@@ -568,6 +926,8 @@ function MentorDashboard() {
                           </span>
                         </div>
                       </td>
+
+                      {/* Rank */}
 
                       <td className="px-6 py-4 font-bold text-[#1A3D63]">
                         #{item?.rank || index + 1}

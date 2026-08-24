@@ -47,10 +47,8 @@ const AdminAssignment = () => {
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [assignments, setAssignments] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-
   const [editingAssignment, setEditingAssignment] = useState(null);
   const [replaceFiles, setReplaceFiles] = useState(false);
 
@@ -108,6 +106,77 @@ const AdminAssignment = () => {
     setSelectedFiles([]);
     setEditingAssignment(null);
     setReplaceFiles(false);
+  };
+
+  // ============================================================
+  // GET MINIMUM DATETIME
+  // Used when creating a new assignment
+  // ============================================================
+
+  const getMinDateTime = () => {
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  // ============================================================
+  // CHECK WHETHER DEADLINE IS IN THE PAST
+  // ============================================================
+
+  const isDeadlineInPast = (deadline) => {
+    if (!deadline) return false;
+
+    const deadlineDate = new Date(deadline);
+
+    if (Number.isNaN(deadlineDate.getTime())) {
+      return false;
+    }
+
+    return deadlineDate.getTime() <= Date.now();
+  };
+
+  // ============================================================
+  // FORMAT DATE FOR DATETIME-LOCAL INPUT
+  // ============================================================
+
+  const formatDateTimeForInput = (date) => {
+    if (!date) return "";
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "";
+    }
+
+    const year = parsedDate.getFullYear();
+    const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
+    const day = String(parsedDate.getDate()).padStart(2, "0");
+    const hours = String(parsedDate.getHours()).padStart(2, "0");
+    const minutes = String(parsedDate.getMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  // ============================================================
+  // CONVERT LOCAL DATETIME TO ISO
+  // ============================================================
+
+  const convertLocalDateTimeToISO = (value) => {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    return date.toISOString();
   };
 
   // ============================================================
@@ -169,31 +238,15 @@ const AdminAssignment = () => {
   };
 
   // ============================================================
-  // FORMAT DATE FOR INPUT
-  // ============================================================
-
-  const formatDateForInput = (date) => {
-    if (!date) return "";
-
-    const parsedDate = new Date(date);
-
-    if (Number.isNaN(parsedDate.getTime())) {
-      return "";
-    }
-
-    const year = parsedDate.getFullYear();
-    const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
-    const day = String(parsedDate.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-  };
-
-  // ============================================================
   // SUBMIT
   // ============================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ----------------------------------------------------------
+    // BASIC VALIDATION
+    // ----------------------------------------------------------
 
     if (!formData.title.trim()) {
       toast.error("Assignment title is required");
@@ -215,10 +268,51 @@ const AdminAssignment = () => {
       return;
     }
 
+    // ----------------------------------------------------------
+    // DEADLINE VALIDATION
+    // ----------------------------------------------------------
+
+    const deadlineDate = new Date(formData.deadline);
+
+    if (Number.isNaN(deadlineDate.getTime())) {
+      toast.error("Please enter a valid deadline");
+      return;
+    }
+
+    if (!editingAssignment && isDeadlineInPast(formData.deadline)) {
+      toast.error("Deadline must be today or a future date and time");
+      return;
+    }
+
+    if (editingAssignment) {
+      const originalDeadline = editingAssignment.deadline
+        ? new Date(editingAssignment.deadline).getTime()
+        : null;
+
+      const newDeadline = deadlineDate.getTime();
+
+      const deadlineWasChanged =
+        originalDeadline !== null &&
+        Math.abs(originalDeadline - newDeadline) > 1000;
+
+      if (deadlineWasChanged && isDeadlineInPast(formData.deadline)) {
+        toast.error("A changed deadline must be in the future");
+        return;
+      }
+    }
+
+    // ----------------------------------------------------------
+    // SCORE VALIDATION
+    // ----------------------------------------------------------
+
     if (Number(formData.maxScore) <= 0) {
       toast.error("Maximum score must be greater than 0");
       return;
     }
+
+    // ----------------------------------------------------------
+    // SAVE
+    // ----------------------------------------------------------
 
     try {
       setSubmitting(true);
@@ -228,7 +322,9 @@ const AdminAssignment = () => {
       data.append("title", formData.title.trim());
       data.append("description", formData.description.trim());
       data.append("instructorName", formData.instructorName.trim());
-      data.append("deadline", formData.deadline);
+
+      data.append("deadline", convertLocalDateTimeToISO(formData.deadline));
+
       data.append("maxScore", Number(formData.maxScore));
       data.append("link", formData.link.trim());
 
@@ -236,17 +332,26 @@ const AdminAssignment = () => {
         data.append("files", file);
       });
 
+      // --------------------------------------------------------
+      // UPDATE
+      // --------------------------------------------------------
+
       if (editingAssignment) {
         data.append("replaceFiles", replaceFiles);
 
-        await api.patch(`/assignments/${editingAssignment._id}`, data, {
+        await api.put(`/assignments/${editingAssignment._id}`, data, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
 
         toast.success("Assignment updated successfully");
-      } else {
+      }
+
+      // --------------------------------------------------------
+      // CREATE
+      // --------------------------------------------------------
+      else {
         await api.post("/assignments", data, {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -279,7 +384,7 @@ const AdminAssignment = () => {
       title: assignment.title || "",
       description: assignment.description || "",
       instructorName: assignment.instructorName || "",
-      deadline: formatDateForInput(assignment.deadline),
+      deadline: formatDateTimeForInput(assignment.deadline),
       maxScore: assignment.maxScore || 100,
       link: assignment.link || "",
     });
@@ -343,14 +448,15 @@ const AdminAssignment = () => {
   // EXPIRED
   // ============================================================
 
+  const [currentTime] = useState(() => Date.now());
+
   const isExpired = (deadline) => {
     if (!deadline) return false;
-
-    return new Date(deadline) < new Date();
+    return new Date(deadline).getTime() < currentTime;
   };
 
   // ============================================================
-  // FILE SIZE
+  // FORMAT FILE SIZE
   // ============================================================
 
   const formatFileSize = (bytes) => {
@@ -384,6 +490,10 @@ const AdminAssignment = () => {
 
     return `${serverURL}${fileUrl}`;
   };
+
+  // ============================================================
+  // RENDER
+  // ============================================================
 
   return (
     <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-8">
@@ -460,7 +570,9 @@ const AdminAssignment = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 md:grid-cols-2">
-              {/* TITLE */}
+              {/* ==================================================
+                  TITLE
+              ================================================== */}
 
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
@@ -478,7 +590,9 @@ const AdminAssignment = () => {
                 />
               </div>
 
-              {/* INSTRUCTOR */}
+              {/* ==================================================
+                  INSTRUCTOR
+              ================================================== */}
 
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
@@ -496,7 +610,9 @@ const AdminAssignment = () => {
                 />
               </div>
 
-              {/* DESCRIPTION */}
+              {/* ==================================================
+                  DESCRIPTION
+              ================================================== */}
 
               <div className="md:col-span-2">
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
@@ -513,7 +629,9 @@ const AdminAssignment = () => {
                 />
               </div>
 
-              {/* LINK */}
+              {/* ==================================================
+                  LINK
+              ================================================== */}
 
               <div className="md:col-span-2">
                 <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500">
@@ -534,7 +652,9 @@ const AdminAssignment = () => {
                 />
               </div>
 
-              {/* FILE UPLOAD */}
+              {/* ==================================================
+                  FILE UPLOAD
+              ================================================== */}
 
               <div className="md:col-span-2">
                 <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500">
@@ -609,10 +729,13 @@ const AdminAssignment = () => {
                 )}
               </div>
 
-              {/* DEADLINE */}
+              {/* ==================================================
+                  DEADLINE
+              ================================================== */}
 
               <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
+                <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500">
+                  <Calendar size={14} />
                   Deadline
                 </label>
 
@@ -620,13 +743,20 @@ const AdminAssignment = () => {
                   type="date"
                   name="deadline"
                   value={formData.deadline}
+                  min={!editingAssignment ? getMinDateTime() : undefined}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63]"
+                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
                 />
+
+                <p className="mt-1 text-xs text-gray-400">
+                  Select the exact date and time students must submit.
+                </p>
               </div>
 
-              {/* POINTS */}
+              {/* ==================================================
+                  POINTS
+              ================================================== */}
 
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
@@ -644,7 +774,9 @@ const AdminAssignment = () => {
                 />
               </div>
 
-              {/* EXISTING FILES */}
+              {/* ==================================================
+                  EXISTING FILES
+              ================================================== */}
 
               {editingAssignment &&
                 (editingAssignment.files || []).length > 0 && (
@@ -710,7 +842,9 @@ const AdminAssignment = () => {
                 )}
             </div>
 
-            {/* SUBMIT */}
+            {/* ====================================================
+                SUBMIT
+            ==================================================== */}
 
             <div className="mt-5 flex gap-3">
               {editingAssignment && (
@@ -853,6 +987,7 @@ const AdminAssignment = () => {
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2 text-sm font-semibold text-[#1A3D63]">
                             <Users size={15} />
+
                             {getBatchName(assignment)}
                           </div>
                         </td>
@@ -866,17 +1001,36 @@ const AdminAssignment = () => {
                         {/* DEADLINE */}
 
                         <td className="px-4 py-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Calendar size={15} />
+                          <div className="flex items-start gap-2">
+                            <Calendar
+                              size={15}
+                              className="mt-0.5 shrink-0 text-[#4A7FA7]"
+                            />
 
-                            {new Date(assignment.deadline).toLocaleDateString(
-                              undefined,
-                              {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              },
-                            )}
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700">
+                                {assignment.deadline
+                                  ? new Date(
+                                      assignment.deadline,
+                                    ).toLocaleDateString(undefined, {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })
+                                  : "-"}
+                              </p>
+
+                              <p className="mt-1 text-xs text-gray-500">
+                                {assignment.deadline
+                                  ? new Date(
+                                      assignment.deadline,
+                                    ).toLocaleTimeString(undefined, {
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                    })
+                                  : "-"}
+                              </p>
+                            </div>
                           </div>
                         </td>
 
@@ -885,6 +1039,7 @@ const AdminAssignment = () => {
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2 text-sm font-semibold text-[#4A7FA7]">
                             <Trophy size={15} />
+
                             {assignment.maxScore}
                           </div>
                         </td>
@@ -894,20 +1049,17 @@ const AdminAssignment = () => {
                         <td className="px-4 py-4">
                           {(assignment.files || []).length > 0 ? (
                             <div className="flex flex-wrap gap-1">
-                              {assignment.files.map((file, index) => (
-                                <a
-                                  key={`${file.fileName}-${index}`}
-                                  href={getFileUrl(file.fileUrl)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  title={file.originalName}
-                                  className="flex items-center gap-1 rounded-lg bg-[#EAF3F9] px-2 py-1 text-xs font-semibold text-[#1A3D63] hover:bg-[#B3CFE5]"
-                                >
-                                  <FileText size={13} />
+                              <a
+                                href={getFileUrl(assignment.files[0]?.fileUrl)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={`${assignment.files.length} file(s)`}
+                                className="flex items-center gap-1 rounded-lg bg-[#EAF3F9] px-2 py-1 text-xs font-semibold text-[#1A3D63] hover:bg-[#B3CFE5]"
+                              >
+                                <FileText size={13} />
 
-                                  {assignment.files.length}
-                                </a>
-                              ))}
+                                {assignment.files.length}
+                              </a>
                             </div>
                           ) : (
                             <span className="text-xs text-gray-400">

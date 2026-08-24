@@ -111,12 +111,18 @@ function ProfileForm({ role = "Student" }) {
           profileImage: "",
         }));
         setPreviewImage("");
-        toast.success(response.data.message || "Profile image removed successfully.");
+        toast.success(
+          response.data.message || "Profile image removed successfully.",
+        );
       } else {
-        toast.error(response?.data?.message || "Failed to remove profile image.");
+        toast.error(
+          response?.data?.message || "Failed to remove profile image.",
+        );
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to remove profile image.");
+      toast.error(
+        error.response?.data?.message || "Failed to remove profile image.",
+      );
     } finally {
       setRemovingImage(false);
     }
@@ -152,7 +158,9 @@ function ProfileForm({ role = "Student" }) {
         } catch (e2) {
           response = await api.put("/users/profile", {
             bio: profile.bio,
-            ...(!isStudent ? { firstName: profile.firstName, phone: profile.phone } : {}),
+            ...(!isStudent
+              ? { firstName: profile.firstName, phone: profile.phone }
+              : {}),
           });
         }
       }
@@ -200,7 +208,9 @@ function ProfileForm({ role = "Student" }) {
     <div className="min-h-screen bg-[#F6FAFD] p-6 md:p-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-6">
-          <p className="text-sm font-medium text-[#4A7FA7]">{role} Account Settings</p>
+          <p className="text-sm font-medium text-[#4A7FA7]">
+            {role} Account Settings
+          </p>
           <h1 className="mt-1 text-2xl font-bold text-[#0A1931]">My Profile</h1>
           <p className="mt-1 text-sm text-gray-500">
             {isStudent
@@ -246,7 +256,8 @@ function ProfileForm({ role = "Student" }) {
                   {profile.firstName || role}
                 </h2>
                 <p className="text-sm text-gray-500">
-                  {role} {profile.gender && `• ${profile.gender}`} {profile.schoolId && `• ID: ${profile.schoolId}`}
+                  {role} {profile.gender && `• ${profile.gender}`}{" "}
+                  {profile.schoolId && `• ID: ${profile.schoolId}`}
                 </p>
               </div>
             </div>
@@ -348,11 +359,8 @@ function ProfileForm({ role = "Student" }) {
                     htmlFor="bio"
                     className="block text-sm font-medium text-[#0A1931]"
                   >
-                    Bio / About Self
+                    Bio
                   </label>
-                  <span className="text-xs text-gray-400">
-                    {profile.bio?.length || 0}/300
-                  </span>
                 </div>
 
                 <textarea

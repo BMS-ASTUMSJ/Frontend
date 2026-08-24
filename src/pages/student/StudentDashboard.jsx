@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   Clock3,
 } from "lucide-react";
-
 import api from "../../utils/api";
 
 function StudentDashboard() {
@@ -361,10 +360,6 @@ function StudentDashboard() {
             </div>
           </div>
         </div>
-
-        {/* ======================================================
-            STATUS MESSAGE
-        ====================================================== */}
 
         {/* ======================================================
             KEEP LEARNING
