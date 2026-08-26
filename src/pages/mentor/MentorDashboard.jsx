@@ -90,9 +90,9 @@ function MentorDashboard() {
 
         if (!isMounted) return;
 
-        // ========================================================
+        // ======================================================
         // MENTOR PROFILE
-        // ========================================================
+        // ======================================================
 
         let mentor = null;
 
@@ -102,9 +102,9 @@ function MentorDashboard() {
           setMentorProfile(mentor);
         }
 
-        // ========================================================
+        // ======================================================
         // FIND ASSIGNED TEAM
-        // ========================================================
+        // ======================================================
 
         let myTeam = null;
 
@@ -136,9 +136,9 @@ function MentorDashboard() {
           if (myTeam) {
             setAssignedTeam(myTeam);
 
-            // ====================================================
+            // ==================================================
             // FIND CO-MENTOR
-            // ====================================================
+            // ==================================================
 
             const partner = Array.isArray(myTeam.mentors)
               ? myTeam.mentors.find((mentorItem) => {
@@ -153,9 +153,9 @@ function MentorDashboard() {
           }
         }
 
-        // ========================================================
+        // ======================================================
         // PROGRESS DATA
-        // ========================================================
+        // ======================================================
 
         if (progressRes.status === "fulfilled") {
           const responseData = progressRes.value.data || {};
@@ -168,9 +168,9 @@ function MentorDashboard() {
 
           const progressArray = Array.isArray(progressData) ? progressData : [];
 
-          // ======================================================
+          // ====================================================
           // NORMALIZE PROGRESS
-          // ======================================================
+          // ====================================================
 
           const normalizedProgress = progressArray
             .map((item) => {
@@ -185,9 +185,8 @@ function MentorDashboard() {
                 return null;
               }
 
-              // IMPORTANT:
-              // Always calculate the percentage from completed / total.
-              // Do NOT trust item.completion from the backend.
+              // Always calculate percentage
+              // from completed / total.
 
               const completed = Math.max(Number(item?.completed) || 0, 0);
 
@@ -213,9 +212,9 @@ function MentorDashboard() {
             })
             .filter(Boolean);
 
-          // ======================================================
+          // ====================================================
           // TEAM STUDENTS
-          // ======================================================
+          // ====================================================
 
           const teamStudents = Array.isArray(myTeam?.students)
             ? myTeam.students
@@ -228,9 +227,9 @@ function MentorDashboard() {
                 .filter(Boolean),
             );
 
-            // ====================================================
+            // ==================================================
             // ONLY KEEP STUDENTS FROM THIS TEAM
-            // ====================================================
+            // ==================================================
 
             const filteredProgress = normalizedProgress.filter((item) => {
               const studentId = getStudentId(item.student);
@@ -238,9 +237,9 @@ function MentorDashboard() {
               return studentId && assignedStudentIds.has(studentId);
             });
 
-            // ====================================================
+            // ==================================================
             // CREATE PROGRESS FOR EVERY TEAM STUDENT
-            // ====================================================
+            // ==================================================
 
             const mergedProgress = teamStudents
               .map((teamStudent) => {
@@ -257,8 +256,6 @@ function MentorDashboard() {
                 if (existing) {
                   return existing;
                 }
-
-                // Student exists in team but has no progress yet.
 
                 return {
                   student: {
@@ -277,10 +274,6 @@ function MentorDashboard() {
 
             setAssignedStudentsProgress(mergedProgress);
           } else {
-            // ====================================================
-            // FALLBACK
-            // ====================================================
-
             setAssignedStudentsProgress(normalizedProgress);
           }
         }
@@ -338,8 +331,6 @@ function MentorDashboard() {
 
   // ============================================================
   // TEAM COMPLETION
-  //
-  // completed tasks / total tasks
   // ============================================================
 
   const avgCompletion =
@@ -411,456 +402,427 @@ function MentorDashboard() {
 
   if (loading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="flex items-center gap-3 text-[#1A3D63]">
+      <div className="flex min-h-[500px] items-center justify-center bg-[#F6FAFD]">
+        <div className="flex items-center gap-3 text-[#123B46]">
           <Loader2 className="h-7 w-7 animate-spin" />
 
-          <span className="text-base font-semibold">
-            Loading assigned team progress...
-          </span>
+          <span className="text-sm font-bold">Loading mentor dashboard...</span>
         </div>
       </div>
     );
   }
 
   // ============================================================
-  // RETURN
+  // UI
   // ============================================================
 
   return (
-    <div className="min-h-screen space-y-8 bg-[#F6FAFD] p-6 sm:p-8">
-      {/* ========================================================
-          HEADER
-      ======================================================== */}
+    <div className="min-h-screen bg-[#F6FAFD] p-4 sm:p-5 lg:p-6">
+      <div className="mx-auto max-w-[1600px] space-y-5">
+        {/* ======================================================
+            DASHBOARD HEADER
+        ====================================================== */}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-[#1A3D63]/10 px-3 py-0.5 text-xs font-bold text-[#1A3D63]">
-              {mentorProfile?.gender === "Female"
-                ? "👩 Female Mentor Portal"
-                : "👨 Male Mentor Portal"}
-            </span>
+        <div className="flex min-h-[96px] items-center rounded-2xl bg-[#123B46] px-5 py-5 shadow-md sm:px-6">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0A7187] text-white shadow-inner">
+              <Users className="h-6 w-6" />
+            </div>
 
-            <span className="text-xs text-[#7A7F85]">
-              • Assigned Students Only
-            </span>
-          </div>
-
-          <h1 className="mt-1 text-2xl font-bold text-[#0A1931] sm:text-3xl">
-            Welcome back, {mentorProfile?.firstName || "Mentor"}!
-          </h1>
-
-          <p className="text-sm text-[#7A7F85]">
-            Track your assigned {mentorProfile?.gender?.toLowerCase()} students'
-            weekly learning milestones and ranking.
-          </p>
-        </div>
-
-        {/* Mentor Avatar */}
-
-        <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-2.5 pr-4 shadow-sm">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-[#1A3D63] to-[#4A7FA7] text-sm font-bold text-white shadow">
-            {mentorProfile?.firstName?.[0]}
-            {mentorProfile?.lastName?.[0]}
-          </div>
-
-          <div className="text-xs">
-            <p className="font-bold text-[#0A1931]">
-              {mentorProfile?.firstName} {mentorProfile?.lastName}
-            </p>
-
-            <p className="font-semibold text-[#4A7FA7]">
-              {mentorProfile?.role?.toUpperCase()} • {mentorProfile?.gender}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================
-          ERROR
-      ======================================================== */}
-
-      {error && (
-        <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* ========================================================
-          STATS
-      ======================================================== */}
-
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Assigned Students */}
-
-        <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
-              Assigned Students
-            </span>
-
-            <h3 className="mt-1 text-3xl font-bold text-[#0A1931]">
-              {totalStudents}
-            </h3>
-
-            <p className="mt-1 text-[11px] font-semibold text-blue-600">
-              {mentorProfile?.gender === "Female"
-                ? "100% Female Group"
-                : mentorProfile?.gender === "Male"
-                  ? "100% Male Group"
-                  : "Assigned Group"}
-            </p>
-          </div>
-
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1A3D63]">
-            <Users className="h-6 w-6" />
-          </div>
-        </div>
-
-        {/* Assigned Team */}
-
-        <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
-              Assigned Team
-            </span>
-
-            <h3 className="mt-1 max-w-37.5 truncate text-xl font-bold text-[#0A1931]">
-              {assignedTeam?.name || "Team Assigned"}
-            </h3>
-
-            <p className="mt-1 text-[11px] text-[#7A7F85]">
-              {assignedTeam?.batch?.name ||
-                assignedTeam?.batch?.batchName ||
-                "Active Batch"}
-            </p>
-          </div>
-
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F6FAFD] text-[#4A7FA7]">
-            <Shield className="h-6 w-6" />
-          </div>
-        </div>
-
-        {/* Co-Mentor */}
-
-        <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
-              Assigned Co-Mentor
-            </span>
-
-            <h3 className="mt-1 max-w-37.5 truncate text-lg font-bold text-[#0A1931]">
-              {coMentor
-                ? `${coMentor.firstName || ""} ${
-                    coMentor.lastName || ""
-                  }`.trim()
-                : "2nd Mentor Pair"}
-            </h3>
-
-            <p className="mt-1 text-[11px] font-semibold text-green-600">
-              Active Co-Pilot
-            </p>
-          </div>
-
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
-            <UserCheck className="h-6 w-6" />
-          </div>
-        </div>
-
-        {/* Average Performance */}
-
-        <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
-              Team Avg Completion
-            </span>
-
-            <h3 className="mt-1 text-3xl font-bold text-[#1A3D63]">
-              {avgCompletion}%
-            </h3>
-
-            <p className="mt-1 text-[11px] font-semibold text-green-600">
-              {totalTasksSolved} tasks completed
-            </p>
-          </div>
-
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-700">
-            <TrendingUp className="h-6 w-6" />
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================
-          MIDDLE SECTION
-      ======================================================== */}
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Progress Overview */}
-
-        <div className="space-y-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8 lg:col-span-2">
-          <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-[#0A1931]">
-                Assigned Team Progress Overview
+              <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                Mentor Dashboard
+              </h1>
+
+              <p className="mt-1 text-xs font-medium text-white/65">
+                Manage your assigned team and track student progress.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ======================================================
+            WELCOME CARD
+        ====================================================== */}
+
+        <div className="rounded-2xl border border-[#D8D8D8] bg-white px-5 py-5 shadow-sm sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <span className="inline-flex rounded-full bg-[#DDF7FA] px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#178AA0]">
+                Mentor Portal
+              </span>
+
+              <h2 className="mt-2 text-xl font-extrabold text-[#102F38] sm:text-2xl">
+                Welcome back, {mentorProfile?.firstName || "Mentor"}
               </h2>
 
-              <p className="mt-0.5 text-xs text-[#7A7F85]">
-                Real-time metrics for your assigned{" "}
-                {mentorProfile?.gender?.toLowerCase()} students.
+              <p className="mt-1 text-sm text-[#7A7F85]">
+                Track your assigned students, team progress, and performance.
               </p>
             </div>
 
-            <span className="rounded-full bg-[#1A3D63]/10 px-3 py-1 text-xs font-bold text-[#1A3D63]">
-              Live Stats
-            </span>
-          </div>
-
-          <div className="grid gap-6 pt-2 sm:grid-cols-2">
-            {/* CP */}
-
-            <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-[#F6FAFD]/60 p-5">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-[#1A3D63]">
-                    <Code2 className="h-4 w-4" />
-                  </div>
-
-                  <span className="text-sm font-bold text-[#0A1931]">
-                    CP Problems
-                  </span>
-                </div>
-
-                <div className="pt-2">
-                  <p className="text-xs text-[#7A7F85]">Problems Solved</p>
-
-                  <p className="text-xl font-bold text-[#0A1931]">
-                    {totalTasksSolved}{" "}
-                    <span className="text-xs font-normal text-gray-400">
-                      / {totalTasksExpected}
-                    </span>
-                  </p>
-                </div>
+            <div className="flex w-fit items-center gap-3 rounded-xl bg-[#123B46] px-4 py-3 text-white shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-sm font-extrabold">
+                {mentorProfile?.firstName?.[0] || "M"}
+                {mentorProfile?.lastName?.[0] || ""}
               </div>
 
-              <div className="relative flex h-24 w-24 items-center justify-center">
-                <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-gray-200"
-                    strokeWidth="3.5"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
+              <div>
+                <p className="text-sm font-bold">
+                  {mentorProfile?.firstName || "Mentor"}{" "}
+                  {mentorProfile?.lastName || ""}
+                </p>
 
-                  <path
-                    className="text-[#1A3D63]"
-                    strokeDasharray={`${avgCompletion}, 100`}
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-
-                <div className="absolute text-center">
-                  <span className="text-base font-bold text-[#0A1931]">
-                    {avgCompletion}%
-                  </span>
-
-                  <span className="block text-[9px] text-[#7A7F85]">
-                    Avg. Done
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Development */}
-
-            <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-[#F6FAFD]/60 p-5">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
-                    <Monitor className="h-4 w-4" />
-                  </div>
-
-                  <span className="text-sm font-bold text-[#0A1931]">
-                    Dev Lectures
-                  </span>
-                </div>
-
-                <div className="pt-2">
-                  <p className="text-xs text-[#7A7F85]">Current Progress</p>
-
-                  <p className="text-xl font-bold text-[#0A1931]">
-                    {avgCompletion}%
-                  </p>
-                </div>
-              </div>
-
-              <div className="relative flex h-24 w-24 items-center justify-center">
-                <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-gray-200"
-                    strokeWidth="3.5"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-
-                  <path
-                    className="text-[#4A7FA7]"
-                    strokeDasharray={`${avgCompletion}, 100`}
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-
-                <div className="absolute text-center">
-                  <span className="text-base font-bold text-[#0A1931]">
-                    {avgCompletion}%
-                  </span>
-
-                  <span className="block text-[9px] text-[#7A7F85]">
-                    Progress
-                  </span>
-                </div>
+                <p className="text-[10px] font-medium text-white/60">
+                  {assignedTeam?.name || "Assigned Team"}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         {/* ======================================================
-            TOP PERFORMERS
+            PERFORMANCE ALERT
         ====================================================== */}
 
-        <div className="space-y-4 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-            <h3 className="text-base font-bold text-[#0A1931]">
-              Top Performers
-            </h3>
+        {error ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100">
+              <AlertCircle className="h-5 w-5" />
+            </div>
 
-            <span className="text-xs font-bold text-[#4A7FA7]">Rankings</span>
+            <div>
+              <p className="font-bold">Dashboard Alert</p>
+
+              <p className="mt-0.5 text-xs">{error}</p>
+            </div>
+          </div>
+        ) : avgCompletion < 50 ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-[#F4E7A9] bg-[#FFFBE8] px-5 py-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FFF1C7] text-[#D99000]">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+
+            <div>
+              <p className="text-xs font-extrabold text-[#855B00]">
+                Performance Alert
+              </p>
+
+              <p className="mt-1 text-[11px] text-[#A36E18]">
+                Your team's current completion requires attention.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-2xl border border-[#D8F0E3] bg-[#F4FFF8] px-5 py-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#DDF6E8] text-[#219653]">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+
+            <div>
+              <p className="text-xs font-extrabold text-[#237A48]">
+                Team Performance
+              </p>
+
+              <p className="mt-1 text-[11px] text-[#4C8C66]">
+                Your assigned team is progressing well.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================
+            STAT CARDS
+        ====================================================== */}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Assigned Students */}
+
+          <div className="flex min-h-[104px] items-center justify-between rounded-2xl border border-[#D5D5D5] bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div>
+              <p className="text-xs font-medium text-[#818181]">
+                Assigned Students
+              </p>
+
+              <h3 className="mt-1 text-2xl font-extrabold text-[#172F37]">
+                {totalStudents}
+              </h3>
+
+              <p className="mt-1 text-[10px] font-medium text-[#818181]">
+                Students in your team
+              </p>
+            </div>
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#EAFBFD] text-[#0798B0]">
+              <Users className="h-5 w-5" />
+            </div>
           </div>
 
-          {rankedStudents.length === 0 ? (
-            <p className="py-8 text-center text-xs text-[#7A7F85]">
-              No assigned students yet.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {rankedStudents.slice(0, 5).map((item, idx) => {
-                const student = item?.student || {};
+          {/* Assigned Team */}
 
-                const studentName =
-                  student.name ||
-                  `${student.firstName || ""} ${
-                    student.lastName || ""
-                  }`.trim() ||
-                  "Unknown Student";
+          <div className="flex min-h-[104px] items-center justify-between rounded-2xl border border-[#D5D5D5] bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-[#818181]">
+                Assigned Team
+              </p>
 
-                return (
-                  <div
-                    key={getStudentId(student) || idx}
-                    className="flex items-center justify-between rounded-xl bg-[#F6FAFD] p-3 text-xs"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1A3D63] text-[11px] font-bold text-white">
-                        {idx + 1}
-                      </span>
+              <h3 className="mt-1 truncate text-lg font-extrabold text-[#172F37]">
+                {assignedTeam?.name || "Team Assigned"}
+              </h3>
+
+              <p className="mt-1 truncate text-[10px] font-medium text-[#818181]">
+                {assignedTeam?.batch?.name ||
+                  assignedTeam?.batch?.batchName ||
+                  "Active Batch"}
+              </p>
+            </div>
+
+            <div className="ml-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#EAFBFD] text-[#0798B0]">
+              <Shield className="h-5 w-5" />
+            </div>
+          </div>
+
+          {/* Co-Mentor */}
+
+          <div className="flex min-h-[104px] items-center justify-between rounded-2xl border border-[#D5D5D5] bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-[#818181]">Co-Mentor</p>
+
+              <h3 className="mt-1 truncate text-lg font-extrabold text-[#172F37]">
+                {coMentor
+                  ? `${coMentor.firstName || ""} ${
+                      coMentor.lastName || ""
+                    }`.trim()
+                  : "2nd Mentor Pair"}
+              </h3>
+
+              <p className="mt-1 text-[10px] font-semibold text-[#2AA66A]">
+                Active Co-Mentor
+              </p>
+            </div>
+
+            <div className="ml-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#F0EDFF] text-[#7666C8]">
+              <UserCheck className="h-5 w-5" />
+            </div>
+          </div>
+
+          {/* Team Completion */}
+
+          <div className="flex min-h-[104px] items-center justify-between rounded-2xl border border-[#D5D5D5] bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div>
+              <p className="text-xs font-medium text-[#818181]">
+                Team Completion
+              </p>
+
+              <h3 className="mt-1 text-2xl font-extrabold text-[#172F37]">
+                {avgCompletion}%
+              </h3>
+
+              <p className="mt-1 text-[10px] font-medium text-[#818181]">
+                {totalTasksSolved} / {totalTasksExpected} tasks
+              </p>
+            </div>
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#EAFBFD] text-[#0798B0]">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        {/* ======================================================
+            MAIN CONTENT
+        ====================================================== */}
+
+        <div className="grid gap-5 xl:grid-cols-3">
+          {/* ====================================================
+              TEAM PROGRESS
+          ==================================================== */}
+
+          <div className="rounded-2xl border border-[#D5D5D5] bg-white p-5 shadow-sm sm:p-6 xl:col-span-2">
+            <div className="flex flex-col gap-2 border-b border-[#EEEEEE] pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-base font-extrabold text-[#17353E]">
+                  Team Progress Overview
+                </h2>
+
+                <p className="mt-1 text-xs text-[#858585]">
+                  Monitor the learning progress of your assigned students.
+                </p>
+              </div>
+
+              <span className="w-fit rounded-full bg-[#EAFBFD] px-3 py-1 text-[10px] font-bold text-[#16899F]">
+                Live Statistics
+              </span>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {/* CP Problems */}
+
+              <div className="rounded-2xl border border-[#E7E7E7] bg-[#FBFDFE] p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E8F8FB] text-[#0798B0]">
+                        <Code2 className="h-4 w-4" />
+                      </div>
 
                       <div>
-                        <p className="font-bold text-[#0A1931]">
-                          {studentName}
+                        <p className="text-sm font-extrabold text-[#17353E]">
+                          CP Problems
                         </p>
 
-                        <p className="text-[11px] text-[#7A7F85]">
-                          {item?.completed || 0}/{item?.total || 0} tasks
+                        <p className="text-[10px] text-[#8A8A8A]">
+                          Problems solved
                         </p>
                       </div>
                     </div>
 
-                    <span className="rounded-md bg-blue-50 px-2 py-1 font-bold text-[#1A3D63]">
-                      {item?.completion || 0}%
-                    </span>
+                    <div className="mt-5">
+                      <p className="text-2xl font-extrabold text-[#17353E]">
+                        {totalTasksSolved}
+
+                        <span className="ml-1 text-xs font-medium text-[#999999]">
+                          / {totalTasksExpected}
+                        </span>
+                      </p>
+                    </div>
                   </div>
-                );
-              })}
+
+                  <div className="relative flex h-20 w-20 items-center justify-center">
+                    <svg
+                      className="h-full w-full -rotate-90"
+                      viewBox="0 0 36 36"
+                    >
+                      <path
+                        className="text-[#E8E8E8]"
+                        strokeWidth="3.5"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+
+                      <path
+                        className="text-[#0798B0]"
+                        strokeDasharray={`${avgCompletion}, 100`}
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+
+                    <div className="absolute text-center">
+                      <span className="text-sm font-extrabold text-[#17353E]">
+                        {avgCompletion}%
+                      </span>
+
+                      <span className="block text-[8px] text-[#8A8A8A]">
+                        Done
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Development */}
+
+              <div className="rounded-2xl border border-[#E7E7E7] bg-[#FBFDFE] p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F0EDFF] text-[#7666C8]">
+                        <Monitor className="h-4 w-4" />
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-extrabold text-[#17353E]">
+                          Development
+                        </p>
+
+                        <p className="text-[10px] text-[#8A8A8A]">
+                          Current team progress
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5">
+                      <p className="text-2xl font-extrabold text-[#17353E]">
+                        {avgCompletion}%
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="relative flex h-20 w-20 items-center justify-center">
+                    <svg
+                      className="h-full w-full -rotate-90"
+                      viewBox="0 0 36 36"
+                    >
+                      <path
+                        className="text-[#E8E8E8]"
+                        strokeWidth="3.5"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+
+                      <path
+                        className="text-[#7666C8]"
+                        strokeDasharray={`${avgCompletion}, 100`}
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+
+                    <div className="absolute text-center">
+                      <span className="text-sm font-extrabold text-[#17353E]">
+                        {avgCompletion}%
+                      </span>
+
+                      <span className="block text-[8px] text-[#8A8A8A]">
+                        Progress
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* ========================================================
-          DETAILED PROGRESS
-      ======================================================== */}
-
-      <div className="space-y-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-4 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-[#0A1931]">
-              My Assigned Students Progress
-            </h2>
-
-            <p className="mt-0.5 text-xs text-[#7A7F85]">
-              Only students assigned to your team.
-            </p>
           </div>
 
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+          {/* ====================================================
+              TOP PERFORMERS
+          ==================================================== */}
 
-            <input
-              type="text"
-              placeholder="Search student name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 py-2 pl-9 pr-4 text-xs outline-none focus:border-[#4A7FA7]"
-            />
-          </div>
-        </div>
+          <div className="rounded-2xl border border-[#D5D5D5] bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex items-center justify-between border-b border-[#EEEEEE] pb-4">
+              <div>
+                <h2 className="text-base font-extrabold text-[#17353E]">
+                  Top Performers
+                </h2>
 
-        {filteredStudents.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#7A7F85]">
-            No assigned students match your search.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-gray-100 bg-[#F6FAFD] text-[11px] font-bold uppercase text-[#7A7F85]">
-                <tr>
-                  <th className="px-6 py-4">Student</th>
+                <p className="mt-1 text-[10px] text-[#858585]">
+                  Best performing students
+                </p>
+              </div>
 
-                  <th className="px-6 py-4">Gender</th>
+              <span className="rounded-full bg-[#EAFBFD] px-3 py-1 text-[10px] font-bold text-[#16899F]">
+                Rankings
+              </span>
+            </div>
 
-                  <th className="px-6 py-4">Completed / Total</th>
-
-                  <th className="px-6 py-4">Completion Bar</th>
-
-                  <th className="px-6 py-4">Team Rank</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-gray-100">
-                {filteredStudents.map((item, index) => {
+            {rankedStudents.length === 0 ? (
+              <div className="flex min-h-[220px] items-center justify-center">
+                <p className="text-xs text-[#858585]">
+                  No assigned students yet.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-4 space-y-2.5">
+                {rankedStudents.slice(0, 5).map((item, idx) => {
                   const student = item?.student || {};
-
-                  // Recalculate here as well so the displayed
-                  // percentage can never depend on stale data.
-
-                  const completed = Math.max(Number(item?.completed) || 0, 0);
-
-                  const total = Math.max(Number(item?.total) || 0, 0);
-
-                  const safeCompleted = Math.min(completed, total);
-
-                  const completion = calculateCompletion(safeCompleted, total);
 
                   const studentName =
                     student.name ||
@@ -870,75 +832,205 @@ function MentorDashboard() {
                     "Unknown Student";
 
                   return (
-                    <tr
-                      key={getStudentId(student) || index}
-                      className="transition hover:bg-gray-50/60"
+                    <div
+                      key={getStudentId(student) || idx}
+                      className="flex items-center justify-between rounded-xl border border-[#EEEEEE] bg-[#FBFDFE] px-3 py-2.5"
                     >
-                      {/* Student */}
-
-                      <td className="px-6 py-4">
-                        <p className="font-bold text-[#0A1931]">
-                          {studentName}
-                        </p>
-
-                        <p className="text-[11px] text-gray-400">
-                          {student.email || "No email"}
-                        </p>
-                      </td>
-
-                      {/* Gender */}
-
-                      <td className="px-6 py-4">
+                      <div className="flex min-w-0 items-center gap-3">
                         <span
-                          className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
-                            student.gender === "Female"
-                              ? "border-pink-200 bg-pink-50 text-pink-700"
-                              : "border-blue-200 bg-blue-50 text-blue-700"
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold ${
+                            idx === 0
+                              ? "bg-[#123B46] text-white"
+                              : "bg-[#EAFBFD] text-[#16899F]"
                           }`}
                         >
-                          {student.gender === "Female"
-                            ? "👩 Female"
-                            : "👨 Male"}
+                          {idx + 1}
                         </span>
-                      </td>
 
-                      {/* Completed / Total */}
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-extrabold text-[#17353E]">
+                            {studentName}
+                          </p>
 
-                      <td className="px-6 py-4 font-bold text-[#0A1931]">
-                        {safeCompleted} / {total} tasks
-                      </td>
-
-                      {/* Completion */}
-
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-2 w-32 overflow-hidden rounded-full bg-gray-100">
-                            <div
-                              className="h-full rounded-full bg-[#1A3D63] transition-all duration-500"
-                              style={{
-                                width: `${completion}%`,
-                              }}
-                            />
-                          </div>
-
-                          <span className="font-bold text-[#0A1931]">
-                            {completion}%
-                          </span>
+                          <p className="text-[10px] text-[#858585]">
+                            {item?.completed || 0}/{item?.total || 0} tasks
+                          </p>
                         </div>
-                      </td>
+                      </div>
 
-                      {/* Rank */}
-
-                      <td className="px-6 py-4 font-bold text-[#1A3D63]">
-                        #{item?.rank || index + 1}
-                      </td>
-                    </tr>
+                      <span className="ml-2 shrink-0 rounded-lg bg-[#EAFBFD] px-2 py-1 text-[10px] font-extrabold text-[#16899F]">
+                        {item?.completion || 0}%
+                      </span>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* ======================================================
+            ASSIGNED STUDENTS
+        ====================================================== */}
+
+        <div className="rounded-2xl border border-[#D5D5D5] bg-white shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-[#EEEEEE] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div>
+              <h2 className="text-base font-extrabold text-[#17353E]">
+                My Assigned Students
+              </h2>
+
+              <p className="mt-1 text-xs text-[#858585]">
+                Only students assigned to your team are displayed.
+              </p>
+            </div>
+
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#999999]" />
+
+              <input
+                type="text"
+                placeholder="Search student..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-10 w-full rounded-xl border border-[#DDDDDD] bg-[#FBFBFB] pl-9 pr-4 text-xs text-[#333333] outline-none transition focus:border-[#0798B0] focus:bg-white focus:ring-2 focus:ring-[#0798B0]/10"
+              />
+            </div>
+          </div>
+
+          {filteredStudents.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#EAFBFD] text-[#0798B0]">
+                <Users className="h-5 w-5" />
+              </div>
+
+              <p className="mt-3 text-xs font-semibold text-[#858585]">
+                No assigned students match your search.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-left text-xs">
+                <thead className="border-b border-[#EEEEEE] bg-[#F7FAFB]">
+                  <tr className="text-[10px] font-extrabold uppercase tracking-wide text-[#858585]">
+                    <th className="px-5 py-4 sm:px-6">Student</th>
+
+                    <th className="px-5 py-4">Gender</th>
+
+                    <th className="px-5 py-4">Completed / Total</th>
+
+                    <th className="px-5 py-4">Progress</th>
+
+                    <th className="px-5 py-4">Rank</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-[#EEEEEE]">
+                  {filteredStudents.map((item, index) => {
+                    const student = item?.student || {};
+
+                    const completed = Math.max(Number(item?.completed) || 0, 0);
+
+                    const total = Math.max(Number(item?.total) || 0, 0);
+
+                    const safeCompleted = Math.min(completed, total);
+
+                    const completion = calculateCompletion(
+                      safeCompleted,
+                      total,
+                    );
+
+                    const studentName =
+                      student.name ||
+                      `${student.firstName || ""} ${
+                        student.lastName || ""
+                      }`.trim() ||
+                      "Unknown Student";
+
+                    return (
+                      <tr
+                        key={getStudentId(student) || index}
+                        className="transition hover:bg-[#FAFCFD]"
+                      >
+                        {/* Student */}
+
+                        <td className="px-5 py-4 sm:px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EAFBFD] text-xs font-extrabold text-[#16899F]">
+                              {student.firstName?.[0] ||
+                                student.name?.[0] ||
+                                "S"}
+                            </div>
+
+                            <div className="min-w-0">
+                              <p className="truncate font-extrabold text-[#17353E]">
+                                {studentName}
+                              </p>
+
+                              <p className="truncate text-[10px] text-[#999999]">
+                                {student.email || "No email"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Gender */}
+
+                        <td className="px-5 py-4">
+                          <span
+                            className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${
+                              student.gender === "Female"
+                                ? "border-pink-200 bg-pink-50 text-pink-700"
+                                : "border-blue-200 bg-blue-50 text-blue-700"
+                            }`}
+                          >
+                            {student.gender === "Female" ? "Female" : "Male"}
+                          </span>
+                        </td>
+
+                        {/* Completed */}
+
+                        <td className="px-5 py-4 font-bold text-[#17353E]">
+                          {safeCompleted} / {total}
+                          <span className="ml-1 font-normal text-[#999999]">
+                            tasks
+                          </span>
+                        </td>
+
+                        {/* Progress */}
+
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-2 w-28 overflow-hidden rounded-full bg-[#EAEAEA]">
+                              <div
+                                className="h-full rounded-full bg-[#0798B0] transition-all duration-500"
+                                style={{
+                                  width: `${completion}%`,
+                                }}
+                              />
+                            </div>
+
+                            <span className="font-extrabold text-[#17353E]">
+                              {completion}%
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Rank */}
+
+                        <td className="px-5 py-4">
+                          <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-[#EAFBFD] px-2 font-extrabold text-[#16899F]">
+                            #{item?.rank || index + 1}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
