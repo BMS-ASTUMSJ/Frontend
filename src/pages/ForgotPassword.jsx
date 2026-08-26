@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import toast from "react-hot-toast";
-import { Mail, Lock, KeyRound } from "lucide-react";
+import { Mail, Lock, KeyRound, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 function ForgotPassword() {
   const navigate = useNavigate();
@@ -14,7 +14,19 @@ function ForgotPassword() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
+
+  // Dynamic Password Validation Checks for UI Feedback
+  const validations = {
+    length: newPassword.length >= 8,
+    uppercase: /[A-Z]/.test(newPassword),
+    lowercase: /[a-z]/.test(newPassword),
+    number: /[0-9]/.test(newPassword),
+    special: /[^A-Za-z0-9]/.test(newPassword),
+  };
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
@@ -83,13 +95,33 @@ function ForgotPassword() {
   const handleResetPassword = async (e) => {
     e.preventDefault();
 
-    if (!newPassword) {
-      toast.error("Please enter a new password.");
+    if (!newPassword || !confirmPassword) {
+      toast.error("Please fill in all fields.");
       return;
     }
 
-    if (newPassword.length < 8) {
-      toast.error("Password must be at least 8 characters.");
+    if (!validations.length) {
+      toast.error("Password must be at least 8 characters long.");
+      return;
+    }
+
+    if (!validations.uppercase) {
+      toast.error("Password must contain at least one uppercase letter.");
+      return;
+    }
+
+    if (!validations.lowercase) {
+      toast.error("Password must contain at least one lowercase letter.");
+      return;
+    }
+
+    if (!validations.number) {
+      toast.error("Password must contain at least one number.");
+      return;
+    }
+
+    if (!validations.special) {
+      toast.error("Password must contain at least one special character.");
       return;
     }
 
@@ -126,165 +158,238 @@ function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6FAFD] px-4 py-12">
-      <div className="mx-auto flex min-h-150 max-w-lg items-center justify-center">
-        <div className="w-full rounded-3xl bg-white p-7 shadow-lg ring-1 ring-[#B3CFE5] sm:p-10">
-          {/* Back to Login */}
+    <div className="min-h-screen bg-linear-to-b from-[#1C2E3A] via-[#14222B] to-[#0E171E] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+      <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#00A8CC]/10 blur-3xl pointer-events-none border border-[#293E4C]" />
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-[#00A8CC]/10 blur-3xl pointer-events-none border border-[#293E4C]" />
 
-          <Link
-            to="/login"
-            className="mb-8 inline-flex text-sm font-medium text-[#7A7F85] hover:text-[#1A3D63]"
-          >
-            ← Back to Login
-          </Link>
+      <div className="w-full max-w-md relative z-10">
+        <Link
+          to="/login"
+          className="mb-4 inline-flex items-center gap-2 text-xs font-semibold text-[#8FA3B0] hover:text-[#00A8CC] transition-colors"
+        >
+          <ArrowLeft size={16} />
+          Back to Login
+        </Link>
 
-          {/* Header */}
+        <div className="rounded-3xl bg-[#FFFFFF] shadow-2xl border border-[#B4D7E2]/50 overflow-hidden">
+          <div className="bg-[#1b3c47] px-8 py-7 text-white border-b border-[#293E4C] relative overflow-hidden">
+            <div className="absolute top-3 right-4 w-12 h-12 rounded-full bg-[#00A8CC]/15 border border-[#00A8CC]/30 pointer-events-none" />
 
-          <div className="mb-8">
-            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-[#B3CFE5]">
-              {step === 1 && <Mail className="h-6 w-6 text-[#1A3D63]" />}
+            <div className="flex items-center gap-4 relative z-10">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1C2E3A] border border-[#293E4C] shadow-inner">
+                {step === 1 && <Mail size={24} className="text-[#00A8CC]" />}
+                {step === 2 && (
+                  <KeyRound size={24} className="text-[#00A8CC]" />
+                )}
+                {step === 3 && <Lock size={24} className="text-[#00A8CC]" />}
+              </div>
 
-              {step === 2 && <KeyRound className="h-6 w-6 text-[#1A3D63]" />}
-
-              {step === 3 && <Lock className="h-6 w-6 text-[#1A3D63]" />}
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-[#FFFFFF]">
+                  {step === 1 && "Forgot Password?"}
+                  {step === 2 && "Verify Email"}
+                  {step === 3 && "New Password"}
+                </h1>
+                <p className="mt-0.5 text-xs text-[#8FA3B0]">
+                  ASTU MSJ Security Verification
+                </p>
+              </div>
             </div>
-
-            <h1 className="text-3xl font-bold text-[#0A1931]">
-              {step === 1 && "Forgot Password?"}
-              {step === 2 && "Verify Your Email"}
-              {step === 3 && "Create New Password"}
-            </h1>
-
-            <p className="mt-2 leading-6 text-[#7A7F85]">
-              {step === 1 &&
-                "Enter your email and we'll send you a verification code."}
-
-              {step === 2 && `Enter the 6-digit code sent to ${email}.`}
-
-              {step === 3 && "Create a new password for your account."}
-            </p>
           </div>
 
-          {/* ======================================
-              STEP 1
-          ====================================== */}
+          <div className="p-6 sm:p-8">
+            <h2 className="text-xl font-bold text-[#14222B]">
+              {step === 1 && "Reset your account password"}
+              {step === 2 && "Enter verification code"}
+              {step === 3 && "Create your new password"}
+            </h2>
+            <p className="mt-1 text-xs text-[#8FA3B0]">
+              {step === 1 &&
+                "Enter your email and we'll send you a 6-digit verification code."}
+              {step === 2 && `Enter the 6-digit code sent to ${email}.`}
+              {step === 3 &&
+                "Ensure your new password meets all security criteria."}
+            </p>
 
-          {step === 1 && (
-            <form onSubmit={handleSendOTP} className="space-y-5">
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Email Address <span className="text-red-500">*</span>
-                </label>
+            {step === 1 && (
+              <form onSubmit={handleSendOTP} className="mt-6 space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-[#14222B]">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
 
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7A7F85]" />
+                  <div className="relative">
+                    <Mail
+                      size={17}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                    />
+
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] py-2.5 pl-10 pr-4 text-sm text-[#14222B] placeholder-[#8FA3B0] outline-none transition focus:border-[#00A8CC] focus:ring-2 focus:ring-[#00A8CC]/20"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full rounded-xl bg-[#00A8CC] py-3 text-sm font-semibold text-white shadow-md hover:bg-[#0088A6] transition disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {loading ? "Sending Code..." : "Send Verification Code"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {step === 2 && (
+              <form onSubmit={handleVerifyOTP} className="mt-6 space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-[#14222B]">
+                    6-Digit OTP <span className="text-red-500">*</span>
+                  </label>
 
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] py-3 pl-12 pr-4 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    placeholder="000000"
+                    className="w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] px-4 py-3 text-center text-2xl font-bold tracking-[0.4em] text-[#14222B] outline-none transition focus:border-[#00A8CC] focus:ring-2 focus:ring-[#00A8CC]/20"
                   />
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-[#1A3D63] py-3.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7] disabled:opacity-60"
-              >
-                {loading ? "Sending..." : "Send Verification Code"}
-              </button>
-            </form>
-          )}
+                <div className="pt-2 space-y-2.5">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full rounded-xl bg-[#00A8CC] py-3 text-sm font-semibold text-white shadow-md hover:bg-[#0088A6] transition disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {loading ? "Verifying..." : "Verify OTP"}
+                  </button>
 
-          {/* ======================================
-              STEP 2
-          ====================================== */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep(1);
+                      setOtp("");
+                    }}
+                    className="w-full rounded-xl border border-[#293E4C]/20 bg-[#F4F8FA] py-3 text-sm font-semibold text-[#1C2E3A] hover:bg-[#E3F5F9] transition"
+                  >
+                    Change Email
+                  </button>
+                </div>
+              </form>
+            )}
 
-          {step === 2 && (
-            <form onSubmit={handleVerifyOTP} className="space-y-5">
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  6-Digit OTP <span className="text-red-500">*</span>
-                </label>
+            {step === 3 && (
+              <form onSubmit={handleResetPassword} className="mt-6 space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-[#14222B]">
+                    New Password <span className="text-red-500">*</span>
+                  </label>
 
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  placeholder="000000"
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-4 text-center text-2xl font-bold tracking-[0.5em] text-[#0A1931] outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                />
-              </div>
+                  <div className="relative">
+                    <Lock
+                      size={17}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                    />
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-[#1A3D63] py-3.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7] disabled:opacity-60"
-              >
-                {loading ? "Verifying..." : "Verify OTP"}
-              </button>
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      className="w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] py-2.5 pl-10 pr-10 text-sm text-[#14222B] placeholder-[#8FA3B0] outline-none transition focus:border-[#00A8CC] focus:ring-2 focus:ring-[#00A8CC]/20"
+                    />
 
-              <button
-                type="button"
-                onClick={() => {
-                  setStep(1);
-                  setOtp("");
-                }}
-                className="w-full text-sm font-medium text-[#4A7FA7] hover:text-[#1A3D63]"
-              >
-                Change email
-              </button>
-            </form>
-          )}
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword((prev) => !prev)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8FA3B0] hover:text-[#14222B] transition-colors"
+                    >
+                      {showNewPassword ? (
+                        <EyeOff size={17} />
+                      ) : (
+                        <Eye size={17} />
+                      )}
+                    </button>
+                  </div>
 
-          {/* ======================================
-              STEP 3
-          ====================================== */}
+                  <div className="mt-2 text-xs text-[#8FA3B0] space-y-1">
+                    <p className="font-medium text-[#14222B]">
+                      Password must contain:
+                    </p>
+                    <ul className="grid grid-cols-2 gap-x-2 gap-y-1">
+                      <li
+                        className={`flex items-center gap-1.5 ${validations.length ? "text-[#0088A6] font-medium" : ""}`}
+                      >
+                        <span>•</span> At least 8 characters
+                      </li>
+                      <li
+                        className={`flex items-center gap-1.5 ${validations.uppercase ? "text-[#0088A6] font-medium" : ""}`}
+                      >
+                        <span>•</span> Uppercase letter
+                      </li>
+                      <li
+                        className={`flex items-center gap-1.5 ${validations.special ? "text-[#0088A6] font-medium" : ""}`}
+                      >
+                        <span>•</span> Special character
+                      </li>
+                    </ul>
+                  </div>
+                </div>
 
-          {step === 3 && (
-            <form onSubmit={handleResetPassword} className="space-y-5">
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  New Password <span className="text-red-500">*</span>
-                </label>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-[#14222B]">
+                    Confirm Password <span className="text-red-500">*</span>
+                  </label>
 
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="At least 8 characters"
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                />
-              </div>
+                  <div className="relative">
+                    <Lock
+                      size={17}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                    />
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Confirm Password <span className="text-red-500">*</span>
-                </label>
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      className="w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] py-2.5 pl-10 pr-10 text-sm text-[#14222B] placeholder-[#8FA3B0] outline-none transition focus:border-[#00A8CC] focus:ring-2 focus:ring-[#00A8CC]/20"
+                    />
 
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Enter password again"
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                />
-              </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8FA3B0] hover:text-[#14222B] transition-colors"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff size={17} />
+                      ) : (
+                        <Eye size={17} />
+                      )}
+                    </button>
+                  </div>
+                </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-[#1A3D63] py-3.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7] disabled:opacity-60"
-              >
-                {loading ? "Resetting..." : "Reset Password"}
-              </button>
-            </form>
-          )}
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full rounded-xl bg-[#00A8CC] py-3 text-sm font-semibold text-white shadow-md hover:bg-[#0088A6] transition disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {loading ? "Resetting Password..." : "Reset Password"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </div>
