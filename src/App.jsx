@@ -22,7 +22,7 @@ import AdminAnnouncements from "./pages/admin/Announcements";
 import AdminProfile from "./pages/admin/AdminProfile";
 import UserManagement from "./pages/admin/UserManagement";
 import AdminAssignment from "./pages/admin/Assignment";
-
+import AIDocumentation from "./pages/admin/AIDocumentation";
 // Mentor Imports
 import MentorDashboard from "./pages/mentor/MentorDashboard";
 import MentorAttendance from "./pages/mentor/MentorAttendance";
@@ -53,8 +53,12 @@ import MentorLayout from "./layouts/MentorLayout";
 import StudentLayout from "./layouts/StudentLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
+// AI Assistant
+import AIAssistant from "./components/ai/AIAssistant";
+
 function AppContent() {
   const location = useLocation();
+
   const showNavbar = location.pathname === "/";
 
   return (
@@ -67,46 +71,74 @@ function AppContent() {
         {/* =====================================================
             PUBLIC ROUTES
         ====================================================== */}
+
         <Route path="/" element={<LandingPage />} />
+
         <Route path="/login" element={<LoginPage />} />
+
         <Route path="/register" element={<RegisterationPage />} />
+
         <Route path="/forgot-password" element={<ForgotPassword />} />
+
         <Route path="/change-password" element={<ChangePassword />} />
 
         {/* =====================================================
             ADMIN ROUTES
         ====================================================== */}
+
         <Route element={<ProtectedRoute allowedRole="admin" />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
+
             <Route path="dashboard" element={<AdminDashboard />} />
+
             <Route path="sessions" element={<AdminSessions />} />
+
             <Route path="batches" element={<BatchManagement />} />
+
             <Route path="batch-history" element={<AdminBatchHistory />} />
+
             <Route path="teams" element={<TeamManagement />} />
+
             <Route path="applicants" element={<ApplicantsPage />} />
+
             <Route path="users" element={<UserManagement />} />
+
             <Route path="attendance" element={<AdminAttendance />} />
+
             <Route path="progress" element={<AdminProgress />} />
+
             <Route path="announcements" element={<AdminAnnouncements />} />
+
             <Route path="assignments" element={<AdminAssignment />} />
+
             <Route path="profile" element={<AdminProfile />} />
+            <Route path="documentation" element={<AIDocumentation />} />
           </Route>
         </Route>
 
         {/* =====================================================
             MENTOR ROUTES
         ====================================================== */}
+
         <Route element={<ProtectedRoute allowedRole="mentor" />}>
           <Route path="/mentor" element={<MentorLayout />}>
             <Route index element={<MentorDashboard />} />
+
             <Route path="dashboard" element={<MentorDashboard />} />
+
             <Route path="students" element={<MyStudents />} />
+
             <Route path="attendance" element={<MentorAttendance />} />
+
             <Route path="progress" element={<MentorProgress />} />
+
             <Route path="assignments" element={<MentorAssignment />} />
+
             <Route path="announcements" element={<MentorAnnouncements />} />
+
             <Route path="my-batch" element={<MentorBatchHistory />} />
+
             <Route path="profile" element={<MentorProfile />} />
           </Route>
         </Route>
@@ -114,33 +146,49 @@ function AppContent() {
         {/* =====================================================
             STUDENT ROUTES
         ====================================================== */}
+
         <Route element={<ProtectedRoute allowedRole="student" />}>
           <Route path="/student" element={<StudentLayout />}>
             <Route index element={<StudentDashboard />} />
+
             <Route path="dashboard" element={<StudentDashboard />} />
+
             <Route path="progress" element={<StudentProgress />} />
+
             <Route path="attendance" element={<StudentAttendance />} />
+
             <Route path="announcements" element={<StudentAnnouncements />} />
+
             <Route path="assignments" element={<StudentAssignment />} />
+
             <Route path="profile" element={<StudentProfile />} />
           </Route>
         </Route>
 
         {/* =====================================================
-            404 NOT FOUND
+            404
         ====================================================== */}
+
         <Route
           path="*"
           element={
             <div className="flex min-h-screen items-center justify-center p-20 text-center">
               <div>
                 <h1 className="text-3xl font-bold text-slate-800">404</h1>
+
                 <p className="mt-2 text-slate-500">Page Not Found</p>
               </div>
             </div>
           }
         />
       </Routes>
+
+      {/* =====================================================
+          AI ASSISTANT
+          Available globally
+      ====================================================== */}
+
+      <AIAssistant />
     </>
   );
 }
