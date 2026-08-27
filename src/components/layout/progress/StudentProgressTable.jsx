@@ -1,14 +1,6 @@
-import {
-  CheckCircle2,
-  Clock3,
-  HelpCircle,
-  PlayCircle,
-} from "lucide-react";
+import { CheckCircle2, Clock3, HelpCircle, PlayCircle } from "lucide-react";
 
-const StudentProgressTable = ({
-  students = [],
-  loading = false,
-}) => {
+const StudentProgressTable = ({ students = [], loading = false }) => {
   const getName = (student) => {
     if (student.name) {
       return student.name;
@@ -81,12 +73,9 @@ const StudentProgressTable = ({
       return student.progress;
     }
 
-    if (
-      student.totalContent &&
-      student.completedContent !== undefined
-    ) {
+    if (student.totalContent && student.completedContent !== undefined) {
       return Math.round(
-        (student.completedContent / student.totalContent) * 100
+        (student.completedContent / student.totalContent) * 100,
       );
     }
 
@@ -95,7 +84,7 @@ const StudentProgressTable = ({
 
   if (loading) {
     return (
-      <div className="flex min-h-[250px] items-center justify-center rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex min-h-62.5 items-center justify-center rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600 dark:border-slate-700 dark:border-t-blue-400" />
       </div>
     );
@@ -114,7 +103,7 @@ const StudentProgressTable = ({
       </div>
 
       {students.length === 0 ? (
-        <div className="flex min-h-[220px] items-center justify-center px-6 text-center">
+        <div className="flex min-h-55 items-center justify-center px-6 text-center">
           <div>
             <p className="font-medium text-slate-700 dark:text-slate-300">
               No student progress found
@@ -127,7 +116,7 @@ const StudentProgressTable = ({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[750px]">
+          <table className="w-full min-w-187.5">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -157,7 +146,7 @@ const StudentProgressTable = ({
                 const status = getStatus(student);
                 const percentage = Math.min(
                   Math.max(Number(getPercentage(student)) || 0, 0),
-                  100
+                  100,
                 );
 
                 return (
@@ -205,7 +194,7 @@ const StudentProgressTable = ({
                     <td className="px-6 py-5">
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${getStatusClass(
-                          status
+                          status,
                         )}`}
                       >
                         {getStatusIcon(status)}
@@ -215,17 +204,13 @@ const StudentProgressTable = ({
 
                     <td className="px-6 py-5">
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {student.completedContent ??
-                          student.completed ??
-                          0}
+                        {student.completedContent ?? student.completed ?? 0}
                       </span>
                     </td>
 
                     <td className="px-6 py-5">
                       <span className="text-sm text-slate-600 dark:text-slate-400">
-                        {student.week
-                          ? `Week ${student.week}`
-                          : "-"}
+                        {student.week ? `Week ${student.week}` : "-"}
                       </span>
                     </td>
                   </tr>

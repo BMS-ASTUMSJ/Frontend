@@ -6,7 +6,7 @@ function MentorLayout() {
     <div className="min-h-screen bg-[#F6FAFD]">
       <Sidebar role="mentor" />
 
-      <main className="ml-64 min-h-screen">
+      <main className="min-h-screen pt-16 lg:ml-64 lg:pt-0">
         <Outlet />
       </main>
     </div>

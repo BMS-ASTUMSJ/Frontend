@@ -169,11 +169,10 @@ function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center bg- justify-center overflow-x-hidden bg-cover bg-center bg-no-repeat px-3 py-6 sm:px-6 md:px-8 lg:py-8">
-      {/* DARK BACKGROUND OVERLAY */}
-      <div className="absolute inset-0 bg-[#0f2b34] backdrop-blur-[2px]" />
+    <div className="relative flex min-h-screen items-center bg- justify-center bg-[#1b3c47] overflow-x-hidden bg-cover bg-center bg-no-repeat px-3 py-6 sm:px-6 md:px-8 lg:py-8">
+      <div className="absolute inset-0 bg-[#06151c]/75 backdrop-blur-[2px]" />
 
-      <main className="relative z-10 my-auto flex h-auto min-h-150 w-full max-w-300 flex-col justify-center overflow-hidden rounded-[20px] bg-[#f8f9fa] shadow-[0_25px_80px_rgba(0,0,0,0.55)] sm:rounded-[28px] md:flex-row lg:h-[840px]">
+      <main className="relative z-10 my-auto flex h-auto min-h-150 w-full max-w-300 flex-col justify-center overflow-hidden rounded-[20px] bg-[#f8f9fa] shadow-[0_25px_80px_rgba(0,0,0,0.55)] sm:rounded-[28px] md:flex-row lg:h-210">
         <svg
           className="absolute inset-y-0 left-0 z-0 hidden h-full w-[62%] md:block"
           viewBox="0 0 700 900"
@@ -227,8 +226,6 @@ function LoginPage() {
 
         <div className="absolute -bottom-30 -left-22.5 z-10 hidden h-90 w-90 rounded-full bg-[radial-gradient(circle_at_34%_24%,#daf3f6_0%,#b0d3da_27%,#7b9fa8_51%,#526f78_75%,#2c474f_100%)] shadow-[20px_20px_55px_rgba(0,0,0,0.3)] md:block" />
 
-        <div className="absolute bottom-27.5 left-[31%] z-30 hidden h-52.5 w-52.5 rounded-full bg-[radial-gradient(circle_at_32%_22%,#d9f2f6_0%,#aecfd7_27%,#789aa4_52%,#506d76_75%,#2b454e_100%)] shadow-[18px_25px_45px_rgba(0,0,0,0.32)] md:block" />
-
         <section className="absolute left-0 top-0 z-20 hidden h-full w-[48%] flex-col justify-between px-16 py-14 text-white md:flex">
           <div>
             <div className="w-20 h-20 rounded-full overflow-hidden">
@@ -242,14 +239,16 @@ function LoginPage() {
             <p className="mb-2 text-[15px] font-bold uppercase tracking-[0.2em] text-[#9fc4cf]">
               ASTU MSJ
             </p>
+            <p className="text-2xl font-serif text-slate-100 tracking-wide md:text-3xl mt-6">
+              مَنْ سارَ عَلى الدَّرْبِ وَصَلَ
+            </p>
 
-            <h1 className="max-w-105 text-[44px] font-extrabold leading-[1.18] tracking-tight text-white">
-              Welcome back to
-              <br />
-              the bootcamp.
-            </h1>
+            <div className="my-4 mx-auto h-px w-12 bg-cyan-400/50" />
 
-            <p className="mt-6 max-w-105 text-[15px] leading-[1.6] text-[#cbe0e5]">
+            <p className="text-l font-medium text-gray-200">
+              "Whoever walks the path will reach their destination."
+            </p>
+            <p className="max-w-105 text-[15px] text-[#cbe0e5] mt-4">
               Continue your learning journey, connect with mentors,
               <br />
               and keep growing your technical skills.
@@ -313,17 +312,9 @@ function LoginPage() {
             </div>
 
             <div className="flex items-center justify-between px-0.5 text-[13px] sm:text-[14px]">
-              <label className="flex cursor-pointer items-center gap-2 text-[#51646c]">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-[#bdcbce] text-[#0f768e] focus:ring-[#0f768e]"
-                />
-                <span>Remember me</span>
-              </label>
-
               <Link
                 to="/forgot-password"
-                className="font-semibold text-[#00a6c0] transition hover:text-[#0b596b] hover:underline"
+                className="font-semibold ml-62 text-[#00a6c0] transition hover:text-[#0b596b] hover:underline"
               >
                 Forgot password?
               </Link>

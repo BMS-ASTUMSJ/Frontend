@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import api from "../../utils/api";
+
 import {
   Megaphone,
   Send,
   Trash2,
   Pencil,
-  CalendarDays,
-  Bell,
   Loader2,
   AlertCircle,
   User,
+  X,
+  RefreshCw,
 } from "lucide-react";
 
 function Announcements() {
@@ -44,9 +45,8 @@ function Announcements() {
   const [editAudience, setEditAudience] = useState("all");
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // =====================================================
-  // LOAD ANNOUNCEMENTS
-  // =====================================================
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
   const loadAnnouncements = async () => {
     try {
@@ -79,15 +79,11 @@ function Announcements() {
     loadAnnouncements();
   }, []);
 
-  // =====================================================
-  // PUBLISH
-  // =====================================================
-
   const handlePublish = async (e) => {
     e.preventDefault();
 
     if (!title.trim()) {
-      toast.error("Title is required.");
+      toast.error("Announcement title is required.");
       return;
     }
 
@@ -137,87 +133,24 @@ function Announcements() {
     }
   };
 
-  // =====================================================
-  // DELETE
-  // =====================================================
-
-  const handleDelete = (id) => {
-    if (!id) return;
-
-    toast(
-      (t) => (
-        <div className="w-[320px]">
-          <p className="mb-2 text-sm font-bold text-[#0A1931]">
-            Delete this announcement?
-          </p>
-
-          <p className="mb-4 text-xs text-gray-500">
-            This action cannot be undone.
-          </p>
-
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => toast.dismiss(t.id)}
-              className="rounded-lg px-4 py-2 text-xs font-bold text-gray-500 transition hover:bg-gray-100"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              onClick={async () => {
-                toast.dismiss(t.id);
-
-                try {
-                  setError("");
-
-                  const response = await api.delete(`/announcements/${id}`);
-
-                  if (!response.data?.success) {
-                    throw new Error(
-                      response.data?.message ||
-                        "Failed to delete announcement.",
-                    );
-                  }
-
-                  toast.success("Announcement deleted successfully.");
-
-                  await loadAnnouncements();
-                } catch (err) {
-                  console.error("Delete announcement error:", err);
-
-                  toast.error(
-                    err.response?.data?.message ||
-                      err.message ||
-                      "Failed to delete announcement.",
-                  );
-                }
-              }}
-              className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ),
-      {
-        duration: Infinity,
-        position: "top-center",
-      },
-    );
-  };
-
-  // =====================================================
-  // EDIT
-  // =====================================================
-
   const startEdit = (item) => {
     setEditingId(item._id);
     setEditTitle(item.title || "");
     setEditBody(item.body || "");
     setEditAudience(item.audience || "all");
+
     setError("");
+
+    setTimeout(() => {
+      const element = document.getElementById(`announcement-edit-${item._id}`);
+
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }, 100);
   };
 
   const cancelEdit = () => {
@@ -229,7 +162,7 @@ function Announcements() {
 
   const handleUpdate = async (id) => {
     if (!editTitle.trim()) {
-      toast.error("Title is required.");
+      toast.error("Announcement title is required.");
       return;
     }
 
@@ -277,11 +210,65 @@ function Announcements() {
     }
   };
 
-  // =====================================================
-  // FORMAT DATE
-  // =====================================================
+  const handleDeleteTrigger = (id) => {
+    if (!id) return;
+
+    setDeleteTargetId(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
+
+    try {
+      setError("");
+
+      const response = await api.delete(`/announcements/${deleteTargetId}`);
+
+      if (!response.data?.success) {
+        throw new Error(
+          response.data?.message || "Failed to delete announcement.",
+        );
+      }
+
+      toast.success("Announcement deleted successfully.");
+
+      if (editingId === deleteTargetId) {
+        cancelEdit();
+      }
+
+      await loadAnnouncements();
+    } catch (err) {
+      console.error("Delete announcement error:", err);
+
+      toast.error(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to delete announcement.",
+      );
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteTargetId(null);
+    }
+  };
 
   const formatDate = (date) => {
+    if (!date) return "N/A";
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "N/A";
+    }
+
+    return parsedDate.toLocaleDateString(undefined, {
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (date) => {
     if (!date) return "";
 
     const parsedDate = new Date(date);
@@ -290,36 +277,31 @@ function Announcements() {
       return "";
     }
 
-    return parsedDate.toLocaleString();
+    return parsedDate.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
-
-  // =====================================================
-  // AUDIENCE
-  // =====================================================
 
   const getAudienceLabel = (announcementAudience) => {
     if (announcementAudience === "all") {
-      return "Everyone";
+      return "EVERYONE";
     }
 
     if (announcementAudience === "mentor") {
-      return "Mentors Only";
+      return "MENTORS";
     }
 
     if (announcementAudience === "assigned_students") {
-      return "Assigned Students";
+      return "ASSIGNED STUDENTS";
     }
 
-    return announcementAudience;
+    return String(announcementAudience || "UNKNOWN").toUpperCase();
   };
-
-  // =====================================================
-  // CREATOR
-  // =====================================================
 
   const getCreatorName = (item) => {
     if (!item?.createdBy) {
-      return "Unknown";
+      return "Admin";
     }
 
     const firstName = item.createdBy.firstName || "";
@@ -327,380 +309,477 @@ function Announcements() {
 
     const fullName = `${firstName} ${lastName}`.trim();
 
-    return fullName || "Unknown";
+    return fullName || "Admin";
   };
 
-  // =====================================================
-  // PAGE
-  // =====================================================
+  const getInitials = (titleValue) => {
+    if (!titleValue) return "AN";
+
+    const words = titleValue.trim().split(/\s+/).filter(Boolean);
+
+    if (words.length >= 2) {
+      return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+    }
+
+    return titleValue.substring(0, 2).toUpperCase();
+  };
 
   return (
-    <div className="min-h-full bg-[#F6FAFD] p-4 md:p-6 lg:p-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        {/* =====================================================
-            HEADER
-        ===================================================== */}
-
-        <div className="rounded-2xl bg-[#0A1931] px-5 py-4 shadow-sm md:px-6">
-          <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-[#1A3D63] p-3">
-              <Megaphone className="h-5 w-5 text-white" />
+    <div className="min-h-screen bg-[#F4F8FA] py-8">
+      <div className="mx-auto max-w-7xl space-y-6 px-4">
+        <div className="rounded-2xl border border-[#1b3c47] bg-linear-to-r from-[#071b23] via-[#0f2b34] to-[#1b3c47] p-6 shadow-lg md:p-8">
+          <div className="flex items-center gap-5">
+            <div className="rounded-xl bg-[#00A8CC] p-3 shadow-lg shadow-[#00A8CC]/20">
+              <Megaphone size={28} className="text-white" />
             </div>
 
             <div>
-              <h1 className="text-xl font-black tracking-tight text-white">
-                Announcements
+              <h1 className="text-2xl font-bold text-white md:text-3xl">
+                Announcement Management
               </h1>
-
-              <p className="mt-0.5 text-xs font-medium text-[#B3CFE5]">
-                Manage announcements for students and mentors
-              </p>
             </div>
           </div>
         </div>
 
-        {/* =====================================================
-            ERROR
-        ===================================================== */}
+        <div className="overflow-hidden rounded-2xl border border-[#B4D7E2] bg-white shadow-xl">
+          {isAdmin && (
+            <div className="border-b border-[#F4F8FA] p-6 md:p-8">
+              <div className="mb-8 flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-[#14222B]">
+                    {editingId ? "Modify Announcement" : "New Announcement"}
+                  </h2>
 
-        {error && (
-          <div className="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-red-700">
-            <AlertCircle size={17} />
-
-            <span className="text-xs font-bold">{error}</span>
-          </div>
-        )}
-
-        {/* =====================================================
-            NEW ANNOUNCEMENT
-            NO BACKGROUND CARD
-        ===================================================== */}
-
-        {isAdmin && (
-          <section className="px-1 py-2 md:px-2">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="rounded-lg bg-[#EAF3F9] p-2">
-                <Bell className="h-4 w-4 text-[#1A3D63]" />
-              </div>
-
-              <div>
-                <h2 className="text-base font-black text-[#0A1931]">
-                  New Announcement
-                </h2>
-
-                <p className="text-[11px] text-gray-400">
-                  Create and publish an update
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handlePublish} className="space-y-3">
-              {/* TITLE */}
-
-              <input
-                type="text"
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Subject Title"
-                className="w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm font-semibold outline-none transition-all focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]/30"
-              />
-
-              {/* MESSAGE */}
-
-              <textarea
-                rows={3}
-                required
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="Type your message here..."
-                className="w-full resize-none rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm outline-none transition-all focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]/30"
-              />
-
-              {/* CONTROLS */}
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex w-full rounded-xl border border-gray-200 bg-white p-1 sm:w-auto">
-                  <button
-                    type="button"
-                    onClick={() => setAudience("all")}
-                    className={`flex-1 rounded-lg px-5 py-2 text-[10px] font-black transition-all sm:flex-none ${
-                      audience === "all"
-                        ? "bg-[#0A1931] text-white shadow-sm"
-                        : "text-gray-400 hover:text-gray-600"
-                    }`}
-                  >
-                    EVERYONE
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setAudience("mentor")}
-                    className={`flex-1 rounded-lg px-5 py-2 text-[10px] font-black transition-all sm:flex-none ${
-                      audience === "mentor"
-                        ? "bg-[#0A1931] text-white shadow-sm"
-                        : "text-gray-400 hover:text-gray-600"
-                    }`}
-                  >
-                    MENTORS ONLY
-                  </button>
+                  <p className="mt-1 text-sm font-medium text-[#8FA3B0]">
+                    {editingId
+                      ? "Update the selected announcement"
+                      : "Create and publish an announcement"}
+                  </p>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isPublishing}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-[#1A3D63] px-7 py-2.5 text-xs font-bold text-white transition-all hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isPublishing ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Send className="h-3.5 w-3.5" />
-                  )}
-
-                  {isPublishing ? "Publishing..." : "Publish"}
-                </button>
-              </div>
-            </form>
-          </section>
-        )}
-
-        {/* =====================================================
-            RECENT FEED
-        ===================================================== */}
-
-        <section className="space-y-3 pb-10">
-          <div className="flex items-center justify-between border-b border-[#B3CFE5]/40 px-1 pb-3">
-            <div>
-              <h2 className="text-base font-black text-[#0A1931]">
-                Recent Feed
-              </h2>
-
-              <p className="text-[10px] text-gray-400">Latest announcements</p>
-            </div>
-
-            <span className="rounded-lg bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 shadow-sm">
-              Total: {announcements.length}
-            </span>
-          </div>
-
-          {/* LOADING */}
-
-          {loading ? (
-            <div className="rounded-xl border border-gray-200 bg-white py-12 text-center">
-              <Loader2 className="mx-auto h-7 w-7 animate-spin text-[#1A3D63]" />
-
-              <p className="mt-3 text-[11px] font-bold text-gray-400">
-                Fetching Updates...
-              </p>
-            </div>
-          ) : announcements.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[#B3CFE5] bg-white p-10 text-center">
-              <Megaphone className="mx-auto mb-3 h-9 w-9 text-[#B3CFE5]" />
-
-              <p className="text-sm font-bold text-[#0A1931]">
-                No announcements yet.
-              </p>
-
-              <p className="mt-1 text-[11px] text-gray-400">
-                Create an announcement to share an update.
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-              {/* TABLE HEADER */}
-
-              <div className="hidden grid-cols-[2fr_1fr_1.3fr_1fr_auto] items-center gap-4 border-b border-gray-200 bg-[#F6FAFD] px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-gray-400 md:grid">
-                <span>Announcement</span>
-                <span>Audience</span>
-                <span>Posted By</span>
-                <span>Date</span>
-                <span className="text-right">Actions</span>
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    disabled={isUpdating}
+                    className="flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-red-500 transition-all hover:bg-red-50 disabled:opacity-50"
+                  >
+                    <X size={18} />
+                    CANCEL EDITING
+                  </button>
+                )}
               </div>
 
-              {/* TABLE ROWS */}
+              {!editingId ? (
+                <form onSubmit={handlePublish} className="space-y-6">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                        Announcement Title
+                      </label>
 
-              <div className="divide-y divide-gray-100">
-                {announcements.map((item) => (
-                  <div key={item._id}>
-                    {editingId === item._id ? (
-                      /* =================================================
-                         EDIT ROW
-                      ================================================= */
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        required
+                        placeholder="e.g. Important Bootcamp Update"
+                        className="w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-3.5 text-sm font-semibold text-[#14222B] outline-none transition-all focus:ring-2 focus:ring-[#00A8CC]/10"
+                      />
+                    </div>
 
-                      <div className="space-y-3 bg-[#F6FAFD] p-4">
-                        <div className="grid gap-3 md:grid-cols-2">
-                          <input
-                            type="text"
-                            value={editTitle}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold outline-none focus:border-[#4A7FA7]"
-                            placeholder="Announcement title"
-                          />
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                        Message
+                      </label>
 
-                          <div className="flex gap-1 rounded-lg border border-gray-200 bg-white p-1">
-                            <button
-                              type="button"
-                              onClick={() => setEditAudience("all")}
-                              className={`flex-1 rounded-md py-1.5 text-[9px] font-black ${
-                                editAudience === "all"
-                                  ? "bg-[#0A1931] text-white"
-                                  : "text-gray-400"
-                              }`}
-                            >
-                              ALL
-                            </button>
+                      <textarea
+                        rows={5}
+                        value={body}
+                        onChange={(e) => setBody(e.target.value)}
+                        required
+                        placeholder="Write your announcement message..."
+                        className="w-full resize-none rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-3.5 text-sm font-semibold text-[#14222B] outline-none transition-all focus:ring-2 focus:ring-[#00A8CC]/10"
+                      />
+                    </div>
 
-                            <button
-                              type="button"
-                              onClick={() => setEditAudience("mentor")}
-                              className={`flex-1 rounded-md py-1.5 text-[9px] font-black ${
-                                editAudience === "mentor"
-                                  ? "bg-[#0A1931] text-white"
-                                  : "text-gray-400"
-                              }`}
-                            >
-                              MENTORS
-                            </button>
-                          </div>
-                        </div>
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                        Audience
+                      </label>
 
-                        <textarea
-                          rows={3}
-                          value={editBody}
-                          onChange={(e) => setEditBody(e.target.value)}
-                          className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs outline-none focus:border-[#4A7FA7]"
-                          placeholder="Announcement message"
-                        />
+                      <div className="flex w-full max-w-md rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-1">
+                        <button
+                          type="button"
+                          onClick={() => setAudience("all")}
+                          className={`flex-1 rounded-lg px-5 py-3 text-[10px] font-black transition-all ${
+                            audience === "all"
+                              ? "bg-white text-[#00A8CC] border border-[#00A8CC] shadow-sm"
+                              : "text-gray-500 hover:text-[#0D2A38]"
+                          }`}
+                        >
+                          EVERYONE
+                        </button>
 
-                        <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={cancelEdit}
-                            disabled={isUpdating}
-                            className="rounded-lg px-4 py-2 text-[10px] font-bold text-gray-500 hover:bg-white"
-                          >
-                            Cancel
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleUpdate(item._id)}
-                            disabled={isUpdating}
-                            className="flex items-center gap-1.5 rounded-lg bg-[#0A1931] px-4 py-2 text-[10px] font-bold text-white disabled:opacity-50"
-                          >
-                            {isUpdating && (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            )}
-                            Save Changes
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAudience("mentor")}
+                          className={`flex-1 rounded-lg px-5 py-3 text-[10px] font-black transition-all ${
+                            audience === "mentor"
+                              ? "bg-white border border-[#00A8CC] text-[#00A8CC] shadow-sm"
+                              : "text-gray-500 hover:text-[#0D2A38]"
+                          }`}
+                        >
+                          MENTORS ONLY
+                        </button>
                       </div>
-                    ) : (
-                      /* =================================================
-                         NORMAL ROW
-                      ================================================= */
+                    </div>
+                  </div>
 
-                      <div className="grid gap-3 px-4 py-3 transition-colors hover:bg-[#F6FAFD] md:grid-cols-[2fr_1fr_1.3fr_1fr_auto] md:items-center md:gap-4">
-                        {/* ANNOUNCEMENT */}
+                  <div className="flex justify-end pt-4">
+                    <button
+                      type="submit"
+                      disabled={isPublishing}
+                      className="flex items-center gap-2 rounded-2xl bg-[#00A8CC] px-10 py-4 text-xs font-black uppercase tracking-[0.15em] text-white shadow-xl shadow-[#00A8CC]/20 transition hover:bg-[#0088A6] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isPublishing ? (
+                        <>
+                          <Loader2 size={18} className="animate-spin" />
+                          Publishing...
+                        </>
+                      ) : (
+                        <>
+                          <Send size={18} />
+                          Publish Announcement
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div
+                  id={`announcement-edit-${editingId}`}
+                  className="space-y-6"
+                >
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                        Announcement Title
+                      </label>
 
-                        <div className="flex min-w-0 items-start gap-3">
-                          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EAF3F9] text-[#1A3D63]">
-                            <Megaphone className="h-4 w-4" />
-                          </div>
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-3.5 text-sm font-semibold text-[#14222B] outline-none focus:ring-2 focus:ring-[#00A8CC]/10"
+                        placeholder="Announcement title"
+                      />
+                    </div>
 
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="truncate text-xs font-extrabold text-[#0A1931]">
-                                {item.title}
-                              </h3>
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                        Message
+                      </label>
 
-                              {item.edited && (
-                                <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[8px] font-black uppercase text-amber-600">
-                                  Edited
-                                </span>
-                              )}
+                      <textarea
+                        rows={5}
+                        value={editBody}
+                        onChange={(e) => setEditBody(e.target.value)}
+                        className="w-full resize-none rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-3.5 text-sm font-semibold text-[#14222B] outline-none focus:ring-2 focus:ring-[#00A8CC]/10"
+                        placeholder="Announcement message"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                        Audience
+                      </label>
+
+                      <div className="flex w-full max-w-md rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditAudience("all")}
+                          className={`flex-1 rounded-lg px-5 py-3 text-[10px] font-black transition-all ${
+                            editAudience === "all"
+                              ? "bg-[#00A8CC] text-white"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          EVERYONE
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setEditAudience("mentor")}
+                          className={`flex-1 rounded-lg px-5 py-3 text-[10px] font-black transition-all ${
+                            editAudience === "mentor"
+                              ? "bg-[#00A8CC] text-white"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          MENTORS ONLY
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      disabled={isUpdating}
+                      className="rounded-xl border border-[#B4D7E2] px-6 py-3 text-xs font-bold text-[#14222B] transition hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      CANCEL
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleUpdate(editingId)}
+                      disabled={isUpdating}
+                      className="flex items-center gap-2 rounded-xl bg-[#00A8CC] px-8 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-[#00A8CC]/20 transition hover:bg-[#0088A6] disabled:opacity-50"
+                    >
+                      {isUpdating && (
+                        <Loader2 size={16} className="animate-spin" />
+                      )}
+
+                      {isUpdating ? "Saving..." : "Save Changes"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="p-6 md:p-8">
+            <div className="mb-8 flex flex-col items-end justify-between gap-4 md:flex-row">
+              <div>
+                <h2 className="text-xl font-bold text-[#14222B]">
+                  Announcement Directory
+                </h2>
+
+                <p className="mt-1 text-sm font-medium text-[#8FA3B0]">
+                  Manage published announcements
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadAnnouncements}
+                className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#00A8CC] transition hover:text-[#0088A6]"
+              >
+                <RefreshCw size={14} />
+                Refresh Announcements
+              </button>
+            </div>
+
+            {error && (
+              <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-600">
+                <AlertCircle size={17} />
+
+                <span className="text-xs font-bold">{error}</span>
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-237.5 border-separate border-spacing-y-4 text-left">
+                <thead>
+                  <tr className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8FA3B0]">
+                    <th className="px-6 pb-2">Announcement</th>
+
+                    <th className="px-6 pb-2">Audience</th>
+
+                    <th className="px-6 pb-2">Posted By</th>
+
+                    <th className="px-6 pb-2">Published</th>
+
+                    <th className="px-6 pb-2">Status</th>
+
+                    {isAdmin && (
+                      <th className="px-6 pb-2 text-right">
+                        Operational Actions
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td
+                        colSpan={isAdmin ? 6 : 5}
+                        className="py-20 text-center"
+                      >
+                        <Loader2 className="inline-block animate-spin text-[#00A8CC]" />
+
+                        <p className="mt-3 text-xs font-bold text-[#8FA3B0]">
+                          Loading announcements...
+                        </p>
+                      </td>
+                    </tr>
+                  ) : announcements.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={isAdmin ? 6 : 5}
+                        className="rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50 py-20 text-center font-bold text-[#8FA3B0]"
+                      >
+                        <Megaphone
+                          size={36}
+                          className="mx-auto mb-3 text-[#00A8CC]/40"
+                        />
+                        No announcements found.
+                      </td>
+                    </tr>
+                  ) : (
+                    announcements.map((item) => {
+                      const initials = getInitials(item.title);
+
+                      return (
+                        <tr
+                          key={item._id}
+                          className="group transition-transform hover:translate-x-1"
+                        >
+                          <td className="rounded-l-2xl border-l-4 border-[#00A8CC] bg-white px-6 py-5 shadow-sm">
+                            <div className="flex items-center gap-4">
+                              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E3F5F9] text-[11px] font-bold text-[#00A8CC] shadow-inner">
+                                {initials}
+                              </div>
+
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="max-w-75 truncate text-sm font-bold leading-tight text-[#14222B]">
+                                    {item.title}
+                                  </p>
+
+                                  {item.edited && (
+                                    <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[8px] font-black uppercase text-amber-600">
+                                      EDITED
+                                    </span>
+                                  )}
+                                </div>
+
+                                <p className="mt-1 max-w-90 truncate text-[10px] font-medium text-[#8FA3B0]">
+                                  {item.body}
+                                </p>
+                              </div>
                             </div>
+                          </td>
 
-                            <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-[11px] leading-relaxed text-gray-500">
-                              {item.body}
-                            </p>
+                          <td className="bg-white px-6 py-5 shadow-sm">
+                            <span
+                              className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-wide ${
+                                item.audience === "mentor"
+                                  ? "border-purple-200 bg-purple-50 text-purple-600"
+                                  : "border-[#B3E5FC] bg-[#E0F7FA] text-[#00A8CC]"
+                              }`}
+                            >
+                              {getAudienceLabel(item.audience)}
+                            </span>
+                          </td>
 
-                            {/* MOBILE META */}
+                          <td className="bg-white px-6 py-5 shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E3F5F9] text-[#00A8CC]">
+                                <User size={13} />
+                              </div>
 
-                            <div className="mt-2 flex flex-wrap items-center gap-3 text-[9px] font-bold text-gray-400 md:hidden">
-                              <span className="flex items-center gap-1">
-                                <CalendarDays size={10} />
-                                {formatDate(item.createdAt)}
-                              </span>
-
-                              <span className="flex items-center gap-1">
-                                <User size={10} />
+                              <span className="max-w-32.5 truncate text-xs font-bold text-gray-600">
                                 {getCreatorName(item)}
                               </span>
                             </div>
-                          </div>
-                        </div>
+                          </td>
 
-                        {/* AUDIENCE */}
+                          <td className="bg-white px-6 py-5 shadow-sm">
+                            <p className="text-[11px] font-bold text-[#14222B]">
+                              {formatDate(item.createdAt)}
+                            </p>
 
-                        <div>
-                          <span className="inline-flex rounded-md border border-[#B3CFE5] bg-[#EAF3F9] px-2 py-1 text-[9px] font-black uppercase text-[#1A3D63]">
-                            {getAudienceLabel(item.audience)}
-                          </span>
-                        </div>
+                            <p className="mt-0.5 text-[10px] font-medium text-[#8FA3B0]">
+                              {formatTime(item.createdAt)}
+                            </p>
+                          </td>
 
-                        {/* CREATOR */}
+                          <td className="bg-white px-6 py-5 shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100" />
 
-                        <div className="hidden min-w-0 items-center gap-2 md:flex">
-                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EAF3F9] text-[#1A3D63]">
-                            <User size={11} />
-                          </div>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                                PUBLISHED
+                              </span>
+                            </div>
+                          </td>
 
-                          <span className="truncate text-[10px] font-bold text-gray-500">
-                            {getCreatorName(item)}
-                          </span>
-                        </div>
+                          {isAdmin && (
+                            <td className="rounded-r-2xl bg-white px-6 py-5 text-right shadow-sm">
+                              <div className="flex justify-end gap-5">
+                                <button
+                                  type="button"
+                                  onClick={() => startEdit(item)}
+                                  className="flex items-center gap-1.5 text-[10px] font-black uppercase text-[#00A8CC] transition hover:opacity-70"
+                                >
+                                  <Pencil size={14} />
+                                  EDIT
+                                </button>
 
-                        {/* DATE */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteTrigger(item._id)}
+                                  className="flex items-center gap-1.5 text-[10px] font-black uppercase text-red-500 transition hover:opacity-70"
+                                >
+                                  <Trash2 size={14} />
+                                  DELETE
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                        <div className="hidden md:block">
-                          <span className="text-[9px] font-bold text-gray-400">
-                            {formatDate(item.createdAt)}
-                          </span>
-                        </div>
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-[#14222B]/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-4xl border border-[#B4D7E2] bg-white p-8 shadow-2xl">
+            <div className="flex flex-col items-center text-center">
+              <h3 className="mb-2 text-2xl font-bold text-[#14222B]">
+                Delete Announcement?
+              </h3>
 
-                        {/* ACTIONS */}
+              <p className="mb-8 px-4 text-sm leading-relaxed text-[#8FA3B0]">
+                This action cannot be undone. This announcement will be
+                permanently removed from the system.
+              </p>
 
-                        {isAdmin && (
-                          <div className="flex items-center gap-1 border-t border-gray-100 pt-2 md:border-0 md:pt-0">
-                            <button
-                              type="button"
-                              onClick={() => startEdit(item)}
-                              className="rounded-lg p-1.5 text-blue-500 transition-colors hover:bg-blue-50"
-                              title="Edit announcement"
-                            >
-                              <Pencil size={14} />
-                            </button>
+              <div className="flex w-full gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteTargetId(null);
+                  }}
+                  className="flex-1 rounded-xl border border-[#B4D7E2] py-2 text-sm font-bold text-[#1C2E3A] transition hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
 
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(item._id)}
-                              className="rounded-lg p-1.5 text-red-400 transition-colors hover:bg-red-50"
-                              title="Delete announcement"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  className="flex-1 rounded-xl bg-rose-500 py-2 text-sm font-black uppercase text-white shadow-lg shadow-rose-200 transition hover:bg-rose-600"
+                >
+                  DELETE
+                </button>
               </div>
             </div>
-          )}
-        </section>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

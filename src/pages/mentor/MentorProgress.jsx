@@ -8,6 +8,9 @@ import {
   Code2,
   Monitor,
   Loader2,
+  Users,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
 
 import api from "../../utils/api";
@@ -16,10 +19,6 @@ const MentorProgress = () => {
   const [progress, setProgress] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // ============================================================
-  // LOAD MENTOR PROGRESS
-  // ============================================================
 
   useEffect(() => {
     loadMentorProgress();
@@ -31,9 +30,6 @@ const MentorProgress = () => {
       setError("");
 
       const response = await api.get("/progress/mentor/progress");
-
-      console.log("MENTOR PROGRESS RESPONSE:", response.data);
-
       const data = response?.data;
 
       let progressData = [];
@@ -50,138 +46,150 @@ const MentorProgress = () => {
 
       setProgress(progressData);
     } catch (err) {
-      console.error("Failed to load mentor progress:", err);
-
       setError(
         err?.response?.data?.message || "Failed to load mentor progress.",
       );
-
       setProgress([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // ============================================================
-  // HELPERS
-  // ============================================================
-
-  const getCpCompleted = (student) => {
-    return Number(student?.cp?.completed ?? student?.completed ?? 0);
-  };
-
-  const getCpTotal = (student) => {
-    return Number(student?.cp?.total ?? student?.total ?? 0);
-  };
-
-  const getCpCompletion = (student) => {
-    const completion = student?.cp?.completion ?? student?.completion;
-
-    if (completion !== undefined && completion !== null) {
-      return Math.min(Math.max(Number(completion), 0), 100);
-    }
-
-    const completed = getCpCompleted(student);
-    const total = getCpTotal(student);
-
-    if (total > 0) {
-      return Math.min(Math.round((completed / total) * 100), 100);
-    }
-
-    return 0;
-  };
-
-  const getDevCompleted = (student) => {
-    return Number(student?.dev?.completed ?? 0);
-  };
-
-  const getDevTotal = (student) => {
-    return Number(student?.dev?.total ?? 0);
-  };
-
-  const getDevCompletion = (student) => {
-    const completion = student?.dev?.completion;
-
-    if (completion !== undefined && completion !== null) {
-      return Math.min(Math.max(Number(completion), 0), 100);
-    }
-
-    const completed = getDevCompleted(student);
-    const total = getDevTotal(student);
-
-    if (total > 0) {
-      return Math.min(Math.round((completed / total) * 100), 100);
-    }
-
-    return 0;
-  };
-
-  const getOverallCompletion = (student) => {
-    const cpCompletion = getCpCompletion(student);
-
-    const devCompletion = getDevCompletion(student);
-
-    const cpTotal = getCpTotal(student);
-
-    const devTotal = getDevTotal(student);
-
-    if (cpTotal > 0 && devTotal > 0) {
-      return Math.round((cpCompletion + devCompletion) / 2);
-    }
-
-    if (cpTotal > 0) {
-      return cpCompletion;
-    }
-
-    if (devTotal > 0) {
-      return devCompletion;
-    }
-
-    return 0;
-  };
-
   const getStudentName = (student) => {
-    return (
-      student?.student?.name ||
-      student?.student?.fullName ||
-      `${student?.student?.firstName || ""} ${
-        student?.student?.lastName || ""
-      }`.trim() ||
-      student?.name ||
-      student?.fullName ||
-      `${student?.firstName || ""} ${student?.lastName || ""}`.trim() ||
-      "Student"
-    );
+    const data = student?.student || student;
+
+    const firstName = data?.firstName || "";
+    const lastName = data?.lastName || "";
+
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    return data?.name || data?.fullName || fullName || "Student";
   };
 
   const getStudentEmail = (student) => {
     return student?.student?.email || student?.email || "";
   };
 
-  // ============================================================
-  // STATISTICS
-  // ============================================================
+  const getCpCompleted = (student) =>
+    Number(
+      student?.cp?.completed ?? student?.competitiveProgramming?.completed ?? 0,
+    );
 
-  const completed = progress.filter(
-    (student) => getOverallCompletion(student) >= 100,
-  ).length;
+  const getCpTotal = (student) =>
+    Number(student?.cp?.total ?? student?.competitiveProgramming?.total ?? 0);
 
-  const inProgress = progress.filter((student) => {
-    const percentage = getOverallCompletion(student);
+  const getCpNeedsHelp = (student) =>
+    Number(
+      student?.cp?.needsHelp ??
+        student?.cp?.needHelp ??
+        student?.competitiveProgramming?.needsHelp ??
+        student?.competitiveProgramming?.needHelp ??
+        0,
+    );
 
-    return percentage > 0 && percentage < 100;
-  }).length;
+  const getCpInProgress = (student) =>
+    Number(
+      student?.cp?.inProgress ??
+        student?.competitiveProgramming?.inProgress ??
+        0,
+    );
 
-  const needHelp = progress.filter((student) => {
-    const status =
-      student?.status || student?.progressStatus || student?.overallStatus;
+  const getCpNotStarted = (student) =>
+    Number(
+      student?.cp?.notStarted ??
+        student?.competitiveProgramming?.notStarted ??
+        0,
+    );
 
-    return status === "need_help" || status === "needs_help";
-  }).length;
+  const getDevCompleted = (student) =>
+    Number(student?.dev?.completed ?? student?.development?.completed ?? 0);
 
-  // ============================================================
-  // TOTALS
-  // ============================================================
+  const getDevTotal = (student) =>
+    Number(student?.dev?.total ?? student?.development?.total ?? 0);
+
+  const getDevNeedsHelp = (student) =>
+    Number(
+      student?.dev?.needsHelp ??
+        student?.dev?.needHelp ??
+        student?.development?.needsHelp ??
+        student?.development?.needHelp ??
+        0,
+    );
+
+  const getDevInProgress = (student) =>
+    Number(student?.dev?.inProgress ?? student?.development?.inProgress ?? 0);
+
+  const getDevNotStarted = (student) =>
+    Number(student?.dev?.notStarted ?? student?.development?.notStarted ?? 0);
+
+  const getCpCompletion = (student) => {
+    const value =
+      student?.cp?.completion ?? student?.competitiveProgramming?.completion;
+
+    if (value !== undefined && value !== null && !Number.isNaN(Number(value))) {
+      return Math.min(Math.max(Number(value), 0), 100);
+    }
+
+    const completed = getCpCompleted(student);
+    const total = getCpTotal(student);
+
+    return total > 0 ? Math.min(Math.round((completed / total) * 100), 100) : 0;
+  };
+
+  const getDevCompletion = (student) => {
+    const value = student?.dev?.completion ?? student?.development?.completion;
+
+    if (value !== undefined && value !== null && !Number.isNaN(Number(value))) {
+      return Math.min(Math.max(Number(value), 0), 100);
+    }
+
+    const completed = getDevCompleted(student);
+    const total = getDevTotal(student);
+
+    return total > 0 ? Math.min(Math.round((completed / total) * 100), 100) : 0;
+  };
+
+  const getOverallCompletion = (student) => {
+    const cpCompleted = getCpCompleted(student);
+    const cpTotal = getCpTotal(student);
+
+    const devCompleted = getDevCompleted(student);
+    const devTotal = getDevTotal(student);
+
+    const total = cpTotal + devTotal;
+    const completed = cpCompleted + devCompleted;
+
+    if (total === 0) return 0;
+
+    return Math.min(Math.round((completed / total) * 100), 100);
+  };
+
+  const getOverallNeedsHelp = (student) =>
+    getCpNeedsHelp(student) + getDevNeedsHelp(student);
+
+  const getOverallInProgress = (student) =>
+    getCpInProgress(student) + getDevInProgress(student);
+
+  const getOverallNotStarted = (student) =>
+    getCpNotStarted(student) + getDevNotStarted(student);
+
+  const completedItems = progress.reduce(
+    (total, student) =>
+      total + getCpCompleted(student) + getDevCompleted(student),
+    0,
+  );
+
+  const inProgressItems = progress.reduce(
+    (total, student) =>
+      total + getCpInProgress(student) + getDevInProgress(student),
+    0,
+  );
+
+  const needHelpItems = progress.reduce(
+    (total, student) =>
+      total + getCpNeedsHelp(student) + getDevNeedsHelp(student),
+    0,
+  );
 
   const totalCpCompleted = progress.reduce(
     (total, student) => total + getCpCompleted(student),
@@ -203,407 +211,524 @@ const MentorProgress = () => {
     0,
   );
 
-  const overallPercentage =
-    totalCpExpected + totalDevExpected > 0
-      ? Math.min(
-          Math.round(
-            ((totalCpCompleted + totalDevCompleted) /
-              (totalCpExpected + totalDevExpected)) *
-              100,
-          ),
-          100,
-        )
-      : 0;
+  const totalExpected = totalCpExpected + totalDevExpected;
 
-  // ============================================================
-  // LOADING
-  // ============================================================
+  const totalCompleted = totalCpCompleted + totalDevCompleted;
+
+  const overallPercentage =
+    totalExpected > 0
+      ? Math.min(Math.round((totalCompleted / totalExpected) * 100), 100)
+      : 0;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 dark:bg-gray-950">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex items-center justify-center py-32">
-            <div className="flex items-center gap-3 text-blue-600">
-              <Loader2 className="h-7 w-7 animate-spin" />
-
-              <span className="font-semibold">Loading student progress...</span>
-            </div>
-          </div>
+      <div className="flex min-h-screen items-center justify-center bg-[#EEF4F7]">
+        <div className="flex items-center gap-3 text-[#00A8CC]">
+          <Loader2 className="h-7 w-7 animate-spin" />
+          <span className="text-sm font-semibold text-[#14222B]">
+            Loading student progress...
+          </span>
         </div>
       </div>
     );
   }
 
-  // ============================================================
-  // PAGE
-  // ============================================================
-
   return (
-    <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-950 sm:p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* HEADER */}
+    <>
+      <style>{`
+        @keyframes pageEnter {
+          from {
+            opacity: 0;
+            transform: translateY(14px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
 
-        <div>
-          <div className="flex items-center gap-3">
-            <BarChart3 size={30} className="text-blue-600" />
+        @keyframes fadeUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
 
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
-              Students Progress
-            </h1>
-          </div>
+        .page-enter {
+          animation: pageEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
 
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Track the progress of your assigned students.
-          </p>
-        </div>
+        .fade-up {
+          animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+      `}</style>
 
-        {/* ERROR */}
+      <div className="page-enter min-h-screen bg-[#EEF4F7] p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-337.5 space-y-6">
+          <div className="relative overflow-hidden rounded-3xl border border-[#113E52]/40 bg-[#092B3A] px-5 py-5 text-white shadow-sm sm:px-7 sm:py-6">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-r from-[#061E27] via-[#0B303A] to-[#173F49] text-white shadow-sm">
+                  <BarChart3 className="h-6 w-6" />
+                </div>
 
-        {error && (
-          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
-            <AlertCircle size={18} />
+                <div className="min-w-0">
+                  <h1 className="truncate text-xl font-bold tracking-tight text-white sm:text-2xl">
+                    Students Progress
+                  </h1>
 
-            {error}
-          </div>
-        )}
+                  <p className="truncate text-xs font-medium text-slate-300 sm:text-sm">
+                    Track the progress of your assigned students
+                  </p>
+                </div>
+              </div>
 
-        {/* STATISTICS */}
+              <div className="flex shrink-0 items-center gap-2.5">
+                <div className="flex items-center gap-2 rounded-xl bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur">
+                  <Users size={14} />
+                  <span>{progress.length} Assigned</span>
+                </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {/* COMPLETED */}
-
-          {/* IN PROGRESS */}
-
-          {/* NEED HELP */}
-        </div>
-
-        {/* OVERALL SUMMARY */}
-
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Overall Progress
-              </h2>
-
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Combined CP and Dev progress of your assigned students.
-              </p>
+                <button
+                  type="button"
+                  onClick={loadMentorProgress}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white transition hover:bg-white/20"
+                  title="Refresh"
+                >
+                  <RefreshCw size={15} />
+                </button>
+              </div>
             </div>
-
-            <div className="text-right">
-              <p className="text-3xl font-bold text-blue-600">
-                {overallPercentage}%
-              </p>
-
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Overall completion
-              </p>
-            </div>
           </div>
 
-          {/* PROGRESS BAR */}
+          {error && (
+            <div className="fade-up flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700 shadow-sm">
+              <AlertCircle size={17} className="text-rose-500" />
+              <span>{error}</span>
+            </div>
+          )}
 
-          <div className="mt-5 h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
             <div
-              className="h-full rounded-full bg-blue-600 transition-all"
-              style={{
-                width: `${overallPercentage}%`,
-              }}
-            />
+              className="fade-up rounded-2xl border border-[#D5E5EE] bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
+              style={{ animationDelay: "60ms" }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#8FA3B0]">
+                    COMPLETED
+                  </p>
+
+                  <p className="mt-2 text-3xl font-extrabold text-[#14222B]">
+                    {completedItems}
+                  </p>
+
+                  <p className="mt-1 text-[11px] font-semibold text-emerald-600">
+                    Completed Tasks
+                  </p>
+                </div>
+
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                  <CheckCircle size={24} />
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="fade-up rounded-2xl border border-[#D5E5EE] bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
+              style={{ animationDelay: "120ms" }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#8FA3B0]">
+                    IN PROGRESS
+                  </p>
+
+                  <p className="mt-2 text-3xl font-extrabold text-[#14222B]">
+                    {inProgressItems}
+                  </p>
+
+                  <p className="mt-1 text-[11px] font-semibold text-amber-600">
+                    Actively Learning
+                  </p>
+                </div>
+
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                  <Clock size={24} />
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="fade-up rounded-2xl border border-[#D5E5EE] bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
+              style={{ animationDelay: "180ms" }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#8FA3B0]">
+                    NEED HELP
+                  </p>
+
+                  <p className="mt-2 text-3xl font-extrabold text-[#14222B]">
+                    {needHelpItems}
+                  </p>
+
+                  <p className="mt-1 text-[11px] font-semibold text-rose-600">
+                    Assistance Required
+                  </p>
+                </div>
+
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+                  <AlertCircle size={24} />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* SUMMARY */}
+          <div
+            className="fade-up rounded-2xl border border-[#D5E5EE] bg-white p-6 shadow-sm transition hover:shadow-md md:p-8"
+            style={{ animationDelay: "240ms" }}
+          >
+            <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-[#14222B]">
+                  Overall Progress
+                </h2>
 
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
-              <div className="flex items-center gap-2">
-                <Code2 size={16} className="text-blue-600" />
-
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  CP Solved
-                </span>
+                <p className="mt-0.5 text-xs text-[#8FA3B0]">
+                  Combined CP and Development progress
+                </p>
               </div>
 
-              <p className="mt-1 font-bold text-gray-900 dark:text-white">
-                {totalCpCompleted} / {totalCpExpected}
-              </p>
-            </div>
+              <div className="text-left sm:text-right">
+                <p className="text-3xl font-extrabold text-[#00A8CC]">
+                  {overallPercentage}%
+                </p>
 
-            <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
-              <div className="flex items-center gap-2">
-                <Monitor size={16} className="text-purple-600" />
-
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  Dev Done
-                </span>
-              </div>
-
-              <p className="mt-1 font-bold text-gray-900 dark:text-white">
-                {totalDevCompleted} / {totalDevExpected}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                Students
-              </span>
-
-              <p className="mt-1 font-bold text-gray-900 dark:text-white">
-                {progress.length}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                Completed
-              </span>
-
-              <p className="mt-1 font-bold text-green-600">{completed}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* ASSIGNED STUDENTS */}
-
-        <div>
-          <div className="mb-5">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Assigned Students Progress
-            </h2>
-
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Only students assigned to you are displayed.
-            </p>
-          </div>
-
-          {progress.length === 0 ? (
-            <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white text-center dark:border-gray-800 dark:bg-gray-900">
-              <TrendingUp size={40} className="text-gray-400" />
-
-              <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">
-                No student progress
-              </h3>
-
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                No progress data is available for your assigned students yet.
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] text-left">
-                  {/* TABLE HEADER */}
-
-                  <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/60">
-                    <tr>
-                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        Student
-                      </th>
-
-                      <th className="px-5 py-4 text-center text-xs font-bold uppercase tracking-wide text-blue-600">
-                        CP
-                      </th>
-
-                      <th className="px-5 py-4 text-center text-xs font-bold uppercase tracking-wide text-purple-600">
-                        Development
-                      </th>
-
-                      <th className="px-5 py-4 text-center text-xs font-bold uppercase tracking-wide text-gray-500">
-                        Overall
-                      </th>
-
-                      <th className="px-5 py-4 text-center text-xs font-bold uppercase tracking-wide text-gray-500">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-
-                  {/* TABLE BODY */}
-
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {progress.map((student, index) => {
-                      const studentName = getStudentName(student);
-
-                      const email = getStudentEmail(student);
-
-                      const cpCompleted = getCpCompleted(student);
-
-                      const cpTotal = getCpTotal(student);
-
-                      const cpCompletion = getCpCompletion(student);
-
-                      const devCompleted = getDevCompleted(student);
-
-                      const devTotal = getDevTotal(student);
-
-                      const devCompletion = getDevCompletion(student);
-
-                      const overall = getOverallCompletion(student);
-
-                      const status =
-                        student?.status ||
-                        student?.progressStatus ||
-                        student?.overallStatus;
-
-                      const initials = studentName
-                        .split(" ")
-                        .filter(Boolean)
-                        .map((name) => name[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase();
-
-                      return (
-                        <tr
-                          key={
-                            student?._id ||
-                            student?.student?._id ||
-                            student?.student?.id ||
-                            index
-                          }
-                          className="transition hover:bg-gray-50 dark:hover:bg-gray-800/40"
-                        >
-                          {/* STUDENT */}
-
-                          <td className="px-6 py-5">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-sm font-bold text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
-                                {initials}
-                              </div>
-
-                              <div className="min-w-0">
-                                <p className="font-semibold text-gray-900 dark:text-white">
-                                  {studentName}
-                                </p>
-
-                                {email && (
-                                  <p className="mt-0.5 max-w-[220px] truncate text-xs text-gray-500 dark:text-gray-400">
-                                    {email}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* CP */}
-
-                          <td className="px-5 py-5">
-                            <div className="mx-auto w-32">
-                              <div className="mb-1.5 flex items-center justify-between">
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                  {cpCompleted}/{cpTotal}
-                                </span>
-
-                                <span className="text-xs font-bold text-blue-600">
-                                  {cpCompletion}%
-                                </span>
-                              </div>
-
-                              <div className="h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-950/50">
-                                <div
-                                  className="h-full rounded-full bg-blue-600 transition-all"
-                                  style={{
-                                    width: `${cpCompletion}%`,
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* DEVELOPMENT */}
-
-                          <td className="px-5 py-5">
-                            <div className="mx-auto w-32">
-                              <div className="mb-1.5 flex items-center justify-between">
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                  {devCompleted}/{devTotal}
-                                </span>
-
-                                <span className="text-xs font-bold text-purple-600">
-                                  {devCompletion}%
-                                </span>
-                              </div>
-
-                              <div className="h-2 overflow-hidden rounded-full bg-purple-100 dark:bg-purple-950/50">
-                                <div
-                                  className="h-full rounded-full bg-purple-600 transition-all"
-                                  style={{
-                                    width: `${devCompletion}%`,
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* OVERALL */}
-
-                          <td className="px-5 py-5 text-center">
-                            <div className="flex flex-col items-center gap-2">
-                              <span className="text-lg font-bold text-gray-900 dark:text-white">
-                                {overall}%
-                              </span>
-
-                              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
-                                <div
-                                  className={`h-full rounded-full transition-all ${
-                                    overall >= 80
-                                      ? "bg-green-500"
-                                      : overall >= 50
-                                        ? "bg-yellow-500"
-                                        : "bg-red-500"
-                                  }`}
-                                  style={{
-                                    width: `${overall}%`,
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* STATUS */}
-
-                          <td className="px-5 py-5 text-center">
-                            {overall >= 100 ? (
-                              <span className="inline-flex rounded-full bg-green-100 px-3 py-1.5 text-xs font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-400">
-                                Completed
-                              </span>
-                            ) : status === "need_help" ||
-                              status === "needs_help" ? (
-                              <span className="inline-flex rounded-full bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-400">
-                                Need Help
-                              </span>
-                            ) : overall > 0 ? (
-                              <span className="inline-flex rounded-full bg-yellow-100 px-3 py-1.5 text-xs font-semibold text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400">
-                                In Progress
-                              </span>
-                            ) : (
-                              <span className="inline-flex rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                Not Started
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* FOOTER */}
-
-              <div className="border-t border-gray-100 bg-gray-50 px-6 py-3 dark:border-gray-800 dark:bg-gray-800/40">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  CP shows solved questions, Development shows completed videos,
-                  and Overall combines both tracks.
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#8FA3B0]">
+                  COHORT COMPLETION
                 </p>
               </div>
             </div>
-          )}
+
+            <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-[#00A8CC] transition-all duration-1000"
+                style={{
+                  width: `${overallPercentage}%`,
+                }}
+              />
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div className="rounded-xl border border-slate-100 bg-[#F8FAFC] p-4">
+                <div className="flex items-center gap-2">
+                  <Code2 size={16} className="text-[#00A8CC]" />
+
+                  <span className="text-xs font-bold text-slate-600">
+                    CP Solved
+                  </span>
+                </div>
+
+                <p className="mt-2 text-base font-bold text-[#14222B]">
+                  {totalCpCompleted}
+                  <span className="text-xs font-normal text-slate-400">
+                    {" "}
+                    / {totalCpExpected}
+                  </span>
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-100 bg-[#F8FAFC] p-4">
+                <div className="flex items-center gap-2">
+                  <Monitor size={16} className="text-purple-600" />
+
+                  <span className="text-xs font-bold text-slate-600">
+                    Dev Completed
+                  </span>
+                </div>
+
+                <p className="mt-2 text-base font-bold text-[#14222B]">
+                  {totalDevCompleted}
+                  <span className="text-xs font-normal text-slate-400">
+                    {" "}
+                    / {totalDevExpected}
+                  </span>
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-100 bg-[#F8FAFC] p-4">
+                <div className="flex items-center gap-2">
+                  <Users size={16} className="text-[#14222B]" />
+
+                  <span className="text-xs font-bold text-slate-600">
+                    Students
+                  </span>
+                </div>
+
+                <p className="mt-2 text-base font-bold text-[#14222B]">
+                  {progress.length} Assigned
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-100 bg-[#F8FAFC] p-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-emerald-600" />
+
+                  <span className="text-xs font-bold text-slate-600">
+                    Finished
+                  </span>
+                </div>
+
+                <p className="mt-2 text-base font-bold text-emerald-600">
+                  {completedItems} Completed
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="fade-up rounded-2xl border border-[#D5E5EE] bg-white p-6 shadow-sm md:p-8"
+            style={{ animationDelay: "300ms" }}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-5">
+              <div>
+                <h2 className="text-lg font-bold text-[#14222B]">
+                  Assigned Students Progress
+                </h2>
+
+                <p className="text-xs text-[#8FA3B0]">
+                  Only students assigned to you are displayed
+                </p>
+              </div>
+
+              <span className="rounded-xl border border-[#B4D7E2]/50 bg-[#F4F8FA] px-3.5 py-1.5 text-xs font-semibold text-[#14222B]">
+                {progress.length} Students
+              </span>
+            </div>
+
+            <div className="mt-6">
+              <div className="hidden md:grid md:grid-cols-[1.5fr_1fr_1fr_1fr_120px] gap-4 px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-[#8FA3B0]">
+                <span>STUDENT</span>
+                <span>CP PROGRESS</span>
+                <span>DEV PROGRESS</span>
+                <span>OVERALL RATE</span>
+                <span className="text-right">STATUS</span>
+              </div>
+
+              {progress.length === 0 ? (
+                <div className="flex min-h-60 flex-col items-center justify-center p-8 text-center">
+                  <TrendingUp size={36} className="text-slate-300" />
+
+                  <h3 className="mt-3 text-sm font-bold text-[#14222B]">
+                    No student progress
+                  </h3>
+
+                  <p className="mt-1 text-xs text-[#8FA3B0]">
+                    No progress data is available for your assigned students
+                    yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-2 space-y-3.5">
+                  {progress.map((student, index) => {
+                    const studentName = getStudentName(student);
+
+                    const email = getStudentEmail(student);
+
+                    const cpCompleted = getCpCompleted(student);
+
+                    const cpTotal = getCpTotal(student);
+
+                    const cpCompletion = getCpCompletion(student);
+
+                    const devCompleted = getDevCompleted(student);
+
+                    const devTotal = getDevTotal(student);
+
+                    const devCompletion = getDevCompletion(student);
+
+                    const overall = getOverallCompletion(student);
+
+                    const studentNeedsHelp = getOverallNeedsHelp(student);
+
+                    const studentInProgress = getOverallInProgress(student);
+
+                    const initials = studentName
+                      .split(" ")
+                      .filter(Boolean)
+                      .map((name) => name[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase();
+
+                    let status = "NOT STARTED";
+
+                    if (studentNeedsHelp > 0) {
+                      status = "NEED HELP";
+                    } else if (studentInProgress > 0) {
+                      status = "IN PROGRESS";
+                    } else if (overall >= 100) {
+                      status = "COMPLETED";
+                    }
+
+                    return (
+                      <div
+                        key={
+                          student?._id ||
+                          student?.student?._id ||
+                          student?.student?.id ||
+                          index
+                        }
+                        className="fade-up grid grid-cols-1 items-center gap-4 rounded-2xl border border-slate-200 border-l-[5px] border-l-[#00A8CC] bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md md:grid-cols-[1.5fr_1fr_1fr_1fr_120px]"
+                        style={{
+                          animationDelay: `${350 + index * 50}ms`,
+                        }}
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E3F5F9] text-xs font-bold text-[#00A8CC]">
+                            {initials || "ST"}
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-bold text-[#0F172A]">
+                              {studentName}
+                            </p>
+
+                            <p className="truncate text-[11px] text-[#8FA3B0]">
+                              {email || "No email"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="mb-1 block text-[10px] font-bold uppercase text-slate-400 md:hidden">
+                            CP Progress
+                          </span>
+
+                          <div className="w-full max-w-35">
+                            <div className="mb-1 flex items-center justify-between text-[10px] font-bold">
+                              <span className="text-slate-500">
+                                {cpCompleted}/{cpTotal}
+                              </span>
+
+                              <span className="text-[#00A8CC]">
+                                {cpCompletion}%
+                              </span>
+                            </div>
+
+                            <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className="h-full rounded-full bg-[#00A8CC] transition-all duration-700"
+                                style={{
+                                  width: `${cpCompletion}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="mb-1 block text-[10px] font-bold uppercase text-slate-400 md:hidden">
+                            Dev Progress
+                          </span>
+
+                          <div className="w-full max-w-35">
+                            <div className="mb-1 flex items-center justify-between text-[10px] font-bold">
+                              <span className="text-slate-500">
+                                {devCompleted}/{devTotal}
+                              </span>
+
+                              <span className="text-purple-600">
+                                {devCompletion}%
+                              </span>
+                            </div>
+
+                            <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className="h-full rounded-full bg-purple-600 transition-all duration-700"
+                                style={{
+                                  width: `${devCompletion}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="mb-1 block text-[10px] font-bold uppercase text-slate-400 md:hidden">
+                            Overall
+                          </span>
+
+                          <div className="flex items-center gap-2">
+                            <span className="min-w-8 text-xs font-bold text-[#14222B]">
+                              {overall}%
+                            </span>
+
+                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className={`h-full rounded-full transition-all duration-700 ${
+                                  overall >= 80
+                                    ? "bg-emerald-500"
+                                    : overall >= 50
+                                      ? "bg-amber-500"
+                                      : "bg-rose-500"
+                                }`}
+                                style={{
+                                  width: `${overall}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="mb-1 block text-left text-[10px] font-bold uppercase text-slate-400 md:hidden">
+                            Status
+                          </span>
+
+                          {status === "COMPLETED" && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              COMPLETED
+                            </span>
+                          )}
+
+                          {status === "NEED HELP" && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[10px] font-bold text-rose-700">
+                              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                              NEED HELP
+                            </span>
+                          )}
+
+                          {status === "IN PROGRESS" && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-700">
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                              IN PROGRESS
+                            </span>
+                          )}
+
+                          {status === "NOT STARTED" && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-600">
+                              <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                              NOT STARTED
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

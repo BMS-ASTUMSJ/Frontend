@@ -1,7 +1,21 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../utils/api";
-import { CheckCircle2, Lock } from "lucide-react";
+import logo from "./../assets/ASTUMSJ-Pp.jpg";
+import {
+  CheckCircle2,
+  Lock,
+  User,
+  Mail,
+  Phone,
+  GraduationCap,
+  Building2,
+  Code2,
+  Trophy,
+  Users,
+  BookOpen,
+  ArrowRight,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 function RegisterationPage() {
@@ -67,7 +81,6 @@ function RegisterationPage() {
 
     checkRegistrationStatus();
   }, []);
-
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -75,6 +88,10 @@ function RegisterationPage() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const handleBackToHome = () => {
+    navigate("/");
   };
 
   const handleSubmit = async (e) => {
@@ -112,6 +129,11 @@ function RegisterationPage() {
 
     if (!formData.department.trim()) {
       toast.error("Please enter your department.");
+      return;
+    }
+
+    if (!formData.experienceLevel) {
+      toast.error("Please select your experience level.");
       return;
     }
 
@@ -187,14 +209,13 @@ function RegisterationPage() {
     setShowSuccessModal(false);
     navigate("/");
   };
-
   if (checkingRegistration) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#B3CFE5]">
+      <div className="flex min-h-screen items-center justify-center bg-[#14222B]">
         <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
-          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#1A3D63] border-t-transparent"></div>
+          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#00A8CC] border-t-transparent" />
 
-          <p className="text-sm font-medium text-[#0A1931]">
+          <p className="text-sm font-medium text-[#14222B]">
             Checking registration status...
           </p>
         </div>
@@ -203,338 +224,611 @@ function RegisterationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#B3CFE5] px-4 py-10">
-      <div className="mx-auto max-w-3xl rounded-3xl bg-white p-6 shadow-lg ring-1 ring-[#B3CFE5] sm:p-10">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            to="/"
-            className="mb-6 inline-flex text-sm font-medium text-[#7A7F85] hover:text-[#1A3D63]"
-          >
-            ← Back to Home
-          </Link>
+    <div className="min-h-screen bg-[#06151c] px-2 py-2 sm:px-4 sm:py-4 lg:px-6 lg:py-5">
+      <div className="mx-auto flex min-h-[calc(100vh-16px)] max-w-330 overflow-hidden rounded-[22px] bg-[#FFFFFF] shadow-2xl sm:min-h-[calc(100vh-32px)]">
+        <div
+          className="relative hidden w-[35%] overflow-hidden lg:block"
+          style={{
+            background:
+              "linear-gradient(160deg, #1C2E3A 0%, #14222B 48%, #0E171E 100%)",
+          }}
+        >
+          <div
+            className="absolute -bottom-32 -left-28 h-92.5 w-92.5 rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle at 30% 25%, #daf3f6 0%, #b0d3da 38%, #7b9fa8 68%, #526f78 100%)",
+              boxShadow:
+                "inset -35px -35px 70px rgba(43,69,78,0.6), inset 25px 20px 50px rgba(216,241,244,0.3)",
+            }}
+          />
 
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#4A7FA7]">
-              ASTU MSJ Bootcamp
-            </p>
+          <div className="relative z-10 flex h-full flex-col p-8 xl:p-10">
+            <div>
+              <div className="h-20 w-20 overflow-hidden rounded-full">
+                <img
+                  src={logo}
+                  alt="ASTUMSJ Logo"
+                  className="h-full w-full object-cover"
+                />
+              </div>
 
-            {activeBatch && (
-              <span className="rounded-full bg-[#1A3D63]/10 px-3 py-1 text-xs font-bold text-[#1A3D63]">
-                {activeBatch.name}
-              </span>
-            )}
-          </div>
+              <div className="mt-14 max-w-sm">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#00A8CC]">
+                  Welcome to
+                </p>
 
-          <h1 className="mt-2 text-3xl font-bold text-[#0A1931]">
-            Apply for the Bootcamp
-          </h1>
+                <h2 className="mt-3 text-4xl font-black leading-[1.05] tracking-tight text-white xl:text-5xl">
+                  ASTUMSJ
+                </h2>
 
-          <p className="mt-2 text-sm leading-6 text-[#7A7F85]">
-            Fill in your information below to submit your application.
-          </p>
-        </div>
+                <p className="mt-5 text-base leading-7 text-[#9fc4cf]">
+                  Build projects.
+                  <br />
+                  Solve problems.
+                  <br />
+                  Grow together.
+                </p>
 
-        {/* Registration Closed */}
-        {!isRegistrationOpen ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-              <Lock className="h-7 w-7" />
+                <div className="mt-5 h-1 w-12 rounded-full bg-[#00A8CC]" />
+              </div>
             </div>
 
-            <h2 className="text-xl font-bold text-[#0A1931]">
-              Registration is Currently Closed
-            </h2>
+            <div className="absolute left-8 top-1/2 w-[calc(100%-64px)] -translate-y-1/2 space-y-5 xl:left-10 xl:w-[calc(100%-80px)]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f768e]/40 text-[#00A8CC]">
+                  <Users size={18} />
+                </div>
 
-            <p className="mt-2 text-sm text-[#7A7F85]">
-              Applications for the upcoming bootcamp cohort are not currently
-              being accepted. Please check back later or contact the admin.
-            </p>
+                <div>
+                  <p className="text-sm font-bold text-white">Team Projects</p>
 
-            <Link
-              to="/"
-              className="mt-6 inline-block rounded-xl bg-[#1A3D63] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7]"
-            >
-              Return to Home
-            </Link>
+                  <p className="text-[11px] text-[#9fc4cf]">
+                    Collaborate and build real-world apps
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f768e]/40 text-[#00A8CC]">
+                  <Trophy size={18} />
+                </div>
+
+                <div>
+                  <p className="text-sm font-bold text-white">
+                    Weekly Contests
+                  </p>
+
+                  <p className="text-[11px] text-[#9fc4cf]">
+                    Compete and improve your skills
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f768e]/40 text-[#00A8CC]">
+                  <BookOpen size={18} />
+                </div>
+
+                <div>
+                  <p className="text-sm font-bold text-white">Workshops</p>
+
+                  <p className="text-[11px] text-[#9fc4cf]">
+                    Learn from experts and mentors
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f768e]/40 text-[#00A8CC]">
+                  <Users size={18} />
+                </div>
+
+                <div>
+                  <p className="text-sm font-bold text-white">Networking</p>
+
+                  <p className="text-[11px] text-[#9fc4cf]">
+                    Connect and grow together
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        ) : (
-          <>
-            {/* Registration Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Full Name */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
+        </div>
 
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  placeholder="Enter your full name"
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                />
-              </div>
+        <div className="relative flex-1 overflow-hidden bg-[#F8F9FA]">
+          <div
+            className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle at 30% 25%, #d8f1f4 0%, #aacfd6 38%, #7698a1 70%, #4d6b74 100%)",
+              boxShadow:
+                "inset -25px -25px 50px rgba(43,69,78,0.45), inset 20px 15px 30px rgba(216,241,244,0.3)",
+            }}
+          />
 
-              {/* Email & Phone */}
-              <div className="grid gap-5 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="student@example.com"
-                    className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="09xxxxxxxx"
-                    className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                  />
-                </div>
-              </div>
-
-              {/* School ID & Gender */}
-              <div className="grid gap-5 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                    School / Student ID <span className="text-red-500">*</span>
-                  </label>
-
-                  <input
-                    type="text"
-                    name="schoolId"
-                    value={formData.schoolId}
-                    onChange={handleChange}
-                    placeholder="e.g., UGR/1234/14"
-                    className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                    Gender <span className="text-red-500">*</span>
-                  </label>
-
-                  <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                  >
-                    <option value="">Select gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Year & Department */}
-              <div className="grid gap-5 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                    Year <span className="text-red-500">*</span>
-                  </label>
-
-                  <select
-                    name="year"
-                    value={formData.year}
-                    onChange={handleChange}
-                    className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                  >
-                    <option value="">Select year</option>
-                    <option value="1st Year">1st Year</option>
-                    <option value="2nd Year">2nd Year</option>
-                    <option value="3rd Year">3rd Year</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                    Department <span className="text-red-500">*</span>
-                  </label>
-
-                  <input
-                    type="text"
-                    name="department"
-                    value={formData.department}
-                    onChange={handleChange}
-                    placeholder="e.g., Software Engineering"
-                    className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4 rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD]/50 p-5">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-[#1A3D63]">
-                  Coding & Competitive Profiles
-                </h3>
-
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-[#0A1931]">
-                    GitHub Profile URL <span className="text-red-500">*</span>
-                  </label>
-
-                  <input
-                    type="url"
-                    name="githubUrl"
-                    value={formData.githubUrl}
-                    onChange={handleChange}
-                    placeholder="https://github.com/your-username"
-                    className="w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-2.5 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                  />
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-[#0A1931]">
-                      LeetCode Profile URL{" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-
-                    <input
-                      type="url"
-                      name="leetcodeUrl"
-                      value={formData.leetcodeUrl}
-                      onChange={handleChange}
-                      placeholder="https://leetcode.com/your-username"
-                      className="w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-2.5 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-[#0A1931]">
-                      Codeforces Profile URL{" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-
-                    <input
-                      type="url"
-                      name="codeforcesUrl"
-                      value={formData.codeforcesUrl}
-                      onChange={handleChange}
-                      placeholder="https://codeforces.com/profile/your-username"
-                      className="w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-2.5 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  Experience Level <span className="text-red-500">*</span>
-                </label>
-
-                <select
-                  name="experienceLevel"
-                  value={formData.experienceLevel}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                >
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                </select>
-              </div>
-
-              {/* About */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-[#0A1931]">
-                  About You <span className="text-red-500">*</span>
-                </label>
-
-                <textarea
-                  name="about"
-                  value={formData.about}
-                  onChange={handleChange}
-                  rows={4}
-                  placeholder="Tell us about yourself, your coding goals, and why you want to join..."
-                  className="w-full resize-none rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] px-4 py-3 text-sm outline-none focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]"
-                />
-              </div>
-
-              {/* Agreement */}
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#B3CFE5] bg-[#F6FAFD] p-4">
-                <input
-                  type="checkbox"
-                  name="agreedToRules"
-                  checked={formData.agreedToRules}
-                  onChange={handleChange}
-                  className="mt-1 h-4 w-4 accent-[#1A3D63]"
-                />
-
-                <span className="text-sm leading-6 text-[#7A7F85]">
-                  I agree to follow the bootcamp rules, attend sessions
-                  regularly, and participate actively in contests, projects, and
-                  teamwork.
-                  <span className="ml-1 text-red-500">*</span>
-                </span>
-              </label>
-
-              {/* Submit */}
+          <div className="relative z-10 h-full overflow-y-auto px-5 py-7 sm:px-8 md:px-10 lg:px-12 xl:px-14">
+            <div className="mb-7 lg:hidden">
               <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-[#1A3D63] py-3.5 text-sm font-semibold text-white transition hover:bg-[#4A7FA7] disabled:cursor-not-allowed disabled:opacity-60"
+                type="button"
+                onClick={handleBackToHome}
+                className="inline-flex items-center gap-3"
               >
-                {loading ? "Submitting Application..." : "Submit Application"}
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#00A8CC] text-white">
+                  <Code2 size={21} />
+                </div>
               </button>
-            </form>
+            </div>
 
-            <p className="mt-7 text-center text-sm text-[#7A7F85]">
-              Already have an account?{" "}
-              <Link
-                to="/login"
-                className="font-semibold text-[#1A3D63] hover:text-[#4A7FA7]"
-              >
-                Login
-              </Link>
-            </p>
-          </>
-        )}
+            <div className="relative mb-7 max-w-4xl">
+              <div>
+                <p className="text-xs font-bold tracking-wide text-[#0f768e]">
+                  ASTU MSJ BOOTCAMP
+                </p>
 
-        {/* Success Modal */}
-        {showSuccessModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-            <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl">
-              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
-                <CheckCircle2 className="h-9 w-9 text-green-600" />
+                <button
+                  type="button"
+                  onClick={handleBackToHome}
+                  className="mt-2 inline-flex text-[14px] font-semibold text-[#00a6c0] transition hover:text-[#0b596b]"
+                >
+                  ← Back to Home
+                </button>
+
+                <h1 className="mt-2 text-3xl font-black tracking-tight text-[#14222B] sm:text-4xl">
+                  Create Your Account
+                </h1>
               </div>
 
-              <h2 className="text-xl font-bold text-[#0A1931]">
+              {activeBatch && (
+                <div className="absolute right-0 top-0 z-20 rounded-full bg-[#E3F5F9] px-5 py-2.5 text-xs font-bold text-[#0f768e] shadow-sm">
+                  {activeBatch.name}
+                </div>
+              )}
+            </div>
+
+            {!isRegistrationOpen ? (
+              <div className="relative z-20 rounded-3xl border border-[#B4D7E2] bg-white p-8 text-center shadow-sm">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E3F5F9] text-[#0f768e]">
+                  <Lock className="h-7 w-7" />
+                </div>
+
+                <h2 className="text-xl font-bold text-[#14222B]">
+                  Registration is Currently Closed
+                </h2>
+
+                <p className="mt-2 text-sm text-[#8FA3B0]">
+                  Applications for the upcoming bootcamp cohort are not
+                  currently being accepted. Please check back later or contact
+                  the admin.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleBackToHome}
+                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#00A8CC] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0088A6]"
+                >
+                  Return to Home
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <form
+                  onSubmit={handleSubmit}
+                  className="relative z-10 space-y-7"
+                >
+                  <section>
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E3F5F9] text-[#0f768e]">
+                        <User size={17} />
+                      </div>
+
+                      <div>
+                        <h2 className="text-sm font-black text-[#14222B]">
+                          Personal Information
+                        </h2>
+
+                        <p className="text-xs text-[#8FA3B0]">
+                          Tell us a little about yourself.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[#22353c]">
+                          Full Name <span className="text-red-500">*</span>
+                        </label>
+
+                        <div className="relative">
+                          <User
+                            size={17}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                          />
+
+                          <input
+                            type="text"
+                            name="fullName"
+                            value={formData.fullName}
+                            onChange={handleChange}
+                            placeholder="Enter your full name"
+                            className="w-full rounded-xl border border-[#B4D7E2] bg-white py-3.5 pl-11 pr-4 text-sm text-[#14222B] outline-none transition placeholder:text-[#9bb0b8] focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[#22353c]">
+                          Email Address <span className="text-red-500">*</span>
+                        </label>
+
+                        <div className="relative">
+                          <Mail
+                            size={17}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                          />
+
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="yourmail@gmail.com"
+                            className="w-full rounded-xl border border-[#B4D7E2] bg-white py-3.5 pl-11 pr-4 text-sm text-[#14222B] outline-none transition placeholder:text-[#9bb0b8] focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[#22353c]">
+                          Phone Number <span className="text-red-500">*</span>
+                        </label>
+
+                        <div className="relative">
+                          <Phone
+                            size={17}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                          />
+
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            placeholder="+251 9XX XXX XXX"
+                            className="w-full rounded-xl border border-[#B4D7E2] bg-white py-3.5 pl-11 pr-4 text-sm text-[#14222B] outline-none transition placeholder:text-[#9bb0b8] focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[#22353c]">
+                          School / Student ID{" "}
+                          <span className="text-red-500">*</span>
+                        </label>
+
+                        <div className="relative">
+                          <GraduationCap
+                            size={17}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                          />
+
+                          <input
+                            type="text"
+                            name="schoolId"
+                            value={formData.schoolId}
+                            onChange={handleChange}
+                            placeholder="e.g. UGR/37681/17"
+                            className="w-full rounded-xl border border-[#B4D7E2] bg-white py-3.5 pl-11 pr-4 text-sm text-[#14222B] outline-none transition placeholder:text-[#9bb0b8] focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[#22353c]">
+                          Academic Year <span className="text-red-500">*</span>
+                        </label>
+
+                        <div className="relative">
+                          <GraduationCap
+                            size={17}
+                            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                          />
+
+                          <select
+                            name="year"
+                            value={formData.year}
+                            onChange={handleChange}
+                            className="w-full appearance-none rounded-xl border border-[#B4D7E2] bg-white py-3.5 pl-11 pr-4 text-sm text-[#14222B] outline-none transition focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                          >
+                            <option value="">Select year</option>
+                            <option value="1st Year">1st Year</option>
+                            <option value="2nd Year">2nd Year</option>
+                            <option value="3rd Year">3rd Year</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[#22353c]">
+                          Department <span className="text-red-500">*</span>
+                        </label>
+
+                        <div className="relative">
+                          <Building2
+                            size={17}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                          />
+
+                          <input
+                            type="text"
+                            name="department"
+                            value={formData.department}
+                            onChange={handleChange}
+                            placeholder="e.g. Software Engineering"
+                            className="w-full rounded-xl border border-[#B4D7E2] bg-white py-3.5 pl-11 pr-4 text-sm text-[#14222B] outline-none transition placeholder:text-[#9bb0b8] focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[#22353c]">
+                          Gender <span className="text-red-500">*</span>
+                        </label>
+
+                        <select
+                          name="gender"
+                          value={formData.gender}
+                          onChange={handleChange}
+                          className="w-full rounded-xl border border-[#B4D7E2] bg-white px-4 py-3.5 text-sm text-[#14222B] outline-none transition focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                        >
+                          <option value="">Select gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section>
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E3F5F9] text-[#0f768e]">
+                        <Code2 size={17} />
+                      </div>
+
+                      <div>
+                        <h2 className="text-sm font-black text-[#14222B]">
+                          Coding Profiles
+                        </h2>
+
+                        <p className="text-xs text-[#8FA3B0]">
+                          Share your competitive programming profiles.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[#22353c]">
+                          GitHub URL <span className="text-red-500">*</span>
+                        </label>
+
+                        <div className="relative">
+                          <Code2
+                            size={17}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                          />
+
+                          <input
+                            type="url"
+                            name="githubUrl"
+                            value={formData.githubUrl}
+                            onChange={handleChange}
+                            placeholder="https://github.com/username"
+                            className="w-full rounded-xl border border-[#B4D7E2] bg-white py-3.5 pl-11 pr-4 text-xs text-[#14222B] outline-none transition placeholder:text-[#9bb0b8] focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[#22353c]">
+                          LeetCode URL <span className="text-red-500">*</span>
+                        </label>
+
+                        <div className="relative">
+                          <Code2
+                            size={17}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                          />
+
+                          <input
+                            type="url"
+                            name="leetcodeUrl"
+                            value={formData.leetcodeUrl}
+                            onChange={handleChange}
+                            placeholder="https://leetcode.com/username"
+                            className="w-full rounded-xl border border-[#B4D7E2] bg-white py-3.5 pl-11 pr-4 text-xs text-[#14222B] outline-none transition placeholder:text-[#9bb0b8] focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[#22353c]">
+                          Codeforces URL <span className="text-red-500">*</span>
+                        </label>
+
+                        <div className="relative">
+                          <Trophy
+                            size={17}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8FA3B0]"
+                          />
+
+                          <input
+                            type="url"
+                            name="codeforcesUrl"
+                            value={formData.codeforcesUrl}
+                            onChange={handleChange}
+                            placeholder="https://codeforces.com/profile/username"
+                            className="w-full rounded-xl border border-[#B4D7E2] bg-white py-3.5 pl-11 pr-4 text-xs text-[#14222B] outline-none transition placeholder:text-[#9bb0b8] focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section>
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E3F5F9] text-[#0f768e]">
+                        <Trophy size={17} />
+                      </div>
+
+                      <div>
+                        <h2 className="text-sm font-black text-[#14222B]">
+                          Experience Level{" "}
+                          <span className="text-red-500">*</span>
+                        </h2>
+
+                        <p className="text-xs text-[#8FA3B0]">
+                          Choose the option that best describes you.
+                        </p>
+                      </div>
+                    </div>
+
+                    <select
+                      name="experienceLevel"
+                      value={formData.experienceLevel}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-[#B4D7E2] bg-white px-4 py-3.5 text-sm text-[#14222B] outline-none transition focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                    >
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                    </select>
+                  </section>
+
+                  <section>
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E3F5F9] text-[#0f768e]">
+                        <User size={17} />
+                      </div>
+
+                      <div>
+                        <h2 className="text-sm font-black text-[#14222B]">
+                          About You <span className="text-red-500">*</span>
+                        </h2>
+
+                        <p className="text-xs text-[#8FA3B0]">
+                          Tell us about your coding goals.
+                        </p>
+                      </div>
+                    </div>
+
+                    <textarea
+                      name="about"
+                      value={formData.about}
+                      onChange={handleChange}
+                      rows={4}
+                      required
+                      placeholder="Tell us about yourself, your coding goals, and why you want to join..."
+                      className="w-full resize-none rounded-xl border border-[#B4D7E2] bg-white px-4 py-3.5 text-sm text-[#14222B] outline-none transition placeholder:text-[#9bb0b8] focus:border-[#0f768e] focus:ring-2 focus:ring-[#B4D7E2]/40"
+                    />
+                  </section>
+
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#B4D7E2] bg-white p-4">
+                    <input
+                      type="checkbox"
+                      name="agreedToRules"
+                      checked={formData.agreedToRules}
+                      onChange={handleChange}
+                      className="mt-1 h-4 w-4 accent-[#00A8CC]"
+                    />
+
+                    <span className="text-xs leading-6 text-[#51646c]">
+                      I agree to follow the bootcamp rules, attend sessions
+                      regularly, and participate actively in contests, projects,
+                      and teamwork.
+                      <span className="ml-1 text-red-500">*</span>
+                    </span>
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#00A8CC] py-4 text-sm font-bold text-white shadow-lg shadow-[#00A8CC]/20 transition hover:bg-[#0088A6] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {loading ? (
+                      <>
+                        <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Submitting Application...
+                      </>
+                    ) : (
+                      <>
+                        Create Account
+                        <ArrowRight size={17} />
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                <p className="relative z-10 mt-6 pb-5 text-center text-sm text-[#8FA3B0]">
+                  Already have an account?{" "}
+                  <Link
+                    to="/login"
+                    className="font-bold text-[#0f768e] hover:text-[#0b596b]"
+                  >
+                    Sign In
+                  </Link>
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#06151c]/80 px-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white p-8 text-center shadow-2xl">
+            <div
+              className="absolute -right-12 -top-12 h-32 w-32 rounded-full"
+              style={{
+                background:
+                  "radial-gradient(circle at 30% 25%, #d8f1f4 0%, #aacfd6 40%, #7698a1 75%, #4d6b74 100%)",
+              }}
+            />
+
+            <div
+              className="absolute -bottom-16 -left-10 h-32 w-32 rounded-full"
+              style={{
+                background:
+                  "radial-gradient(circle at 30% 25%, #daf3f6 0%, #b0d3da 40%, #7b9fa8 75%, #526f78 100%)",
+              }}
+            />
+
+            <div className="relative z-10">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#E3F5F9]">
+                <CheckCircle2 className="h-9 w-9 text-[#00A8CC]" />
+              </div>
+
+              <h2 className="text-xl font-bold text-[#14222B]">
                 Registration Successful!
               </h2>
 
-              <p className="mt-3 text-sm leading-6 text-[#7A7F85]">
+              <p className="mt-3 text-sm leading-6 text-[#8FA3B0]">
                 {successMessage}
               </p>
 
               <button
+                type="button"
                 onClick={handleCloseModal}
-                className="mt-7 w-full rounded-xl bg-[#1A3D63] py-3 text-sm font-semibold text-white transition hover:bg-[#4A7FA7]"
+                className="mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-[#00A8CC] py-3.5 text-sm font-semibold text-white transition hover:bg-[#0088A6]"
               >
                 Go to Home
+                <ArrowRight size={16} />
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

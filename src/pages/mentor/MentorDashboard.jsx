@@ -10,6 +10,9 @@ import {
   Search,
   AlertCircle,
   Loader2,
+  Award,
+  ArrowUpRight,
+  BarChart3,
 } from "lucide-react";
 
 function MentorDashboard() {
@@ -21,10 +24,6 @@ function MentorDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-
-  // ============================================================
-  // HELPERS
-  // ============================================================
 
   const getId = (value) => {
     if (!value) return null;
@@ -50,10 +49,6 @@ function MentorDashboard() {
     return getId(student._id) || getId(student.id) || getId(student.userId);
   };
 
-  // ============================================================
-  // CALCULATE STUDENT COMPLETION
-  // ============================================================
-
   const calculateCompletion = (completed, total) => {
     const completedNumber = Math.max(Number(completed) || 0, 0);
     const totalNumber = Math.max(Number(total) || 0, 0);
@@ -69,10 +64,6 @@ function MentorDashboard() {
       100,
     );
   };
-
-  // ============================================================
-  // LOAD MENTOR DATA
-  // ============================================================
 
   useEffect(() => {
     let isMounted = true;
@@ -90,10 +81,6 @@ function MentorDashboard() {
 
         if (!isMounted) return;
 
-        // ========================================================
-        // MENTOR PROFILE
-        // ========================================================
-
         let mentor = null;
 
         if (profileRes.status === "fulfilled") {
@@ -101,10 +88,6 @@ function MentorDashboard() {
 
           setMentorProfile(mentor);
         }
-
-        // ========================================================
-        // FIND ASSIGNED TEAM
-        // ========================================================
 
         let myTeam = null;
 
@@ -136,10 +119,6 @@ function MentorDashboard() {
           if (myTeam) {
             setAssignedTeam(myTeam);
 
-            // ====================================================
-            // FIND CO-MENTOR
-            // ====================================================
-
             const partner = Array.isArray(myTeam.mentors)
               ? myTeam.mentors.find((mentorItem) => {
                   return getId(mentorItem) !== mentorId;
@@ -153,10 +132,6 @@ function MentorDashboard() {
           }
         }
 
-        // ========================================================
-        // PROGRESS DATA
-        // ========================================================
-
         if (progressRes.status === "fulfilled") {
           const responseData = progressRes.value.data || {};
 
@@ -167,10 +142,6 @@ function MentorDashboard() {
             responseData;
 
           const progressArray = Array.isArray(progressData) ? progressData : [];
-
-          // ======================================================
-          // NORMALIZE PROGRESS
-          // ======================================================
 
           const normalizedProgress = progressArray
             .map((item) => {
@@ -185,17 +156,31 @@ function MentorDashboard() {
                 return null;
               }
 
-              // IMPORTANT:
-              // Always calculate the percentage from completed / total.
-              // Do NOT trust item.completion from the backend.
+              const cpCompleted = Math.max(Number(item?.cp?.completed) || 0, 0);
+              const cpTotal = Math.max(Number(item?.cp?.total) || 0, 0);
+              const cpSafeCompleted = Math.min(cpCompleted, cpTotal);
 
-              const completed = Math.max(Number(item?.completed) || 0, 0);
+              const devCompleted = Math.max(
+                Number(item?.dev?.completed) || 0,
+                0,
+              );
+              const devTotal = Math.max(Number(item?.dev?.total) || 0, 0);
+              const devSafeCompleted = Math.min(devCompleted, devTotal);
 
-              const total = Math.max(Number(item?.total) || 0, 0);
+              const overallCompleted =
+                item?.overall?.completed !== undefined
+                  ? Math.max(Number(item?.overall?.completed) || 0, 0)
+                  : Math.max(Number(item?.completed) || 0, 0);
 
-              const safeCompleted = Math.min(completed, total);
+              const overallTotal =
+                item?.overall?.total !== undefined
+                  ? Math.max(Number(item?.overall?.total) || 0, 0)
+                  : Math.max(Number(item?.total) || 0, 0);
 
-              const completion = calculateCompletion(safeCompleted, total);
+              const overallSafeCompleted = Math.min(
+                overallCompleted,
+                overallTotal,
+              );
 
               return {
                 ...item,
@@ -206,16 +191,36 @@ function MentorDashboard() {
                   id: studentId,
                 },
 
-                completed: safeCompleted,
-                total,
-                completion,
+                cp: {
+                  completed: cpSafeCompleted,
+                  total: cpTotal,
+                  completion: calculateCompletion(cpSafeCompleted, cpTotal),
+                },
+
+                dev: {
+                  completed: devSafeCompleted,
+                  total: devTotal,
+                  completion: calculateCompletion(devSafeCompleted, devTotal),
+                },
+
+                overall: {
+                  completed: overallSafeCompleted,
+                  total: overallTotal,
+                  completion: calculateCompletion(
+                    overallSafeCompleted,
+                    overallTotal,
+                  ),
+                },
+
+                completed: overallSafeCompleted,
+                total: overallTotal,
+                completion: calculateCompletion(
+                  overallSafeCompleted,
+                  overallTotal,
+                ),
               };
             })
             .filter(Boolean);
-
-          // ======================================================
-          // TEAM STUDENTS
-          // ======================================================
 
           const teamStudents = Array.isArray(myTeam?.students)
             ? myTeam.students
@@ -228,19 +233,11 @@ function MentorDashboard() {
                 .filter(Boolean),
             );
 
-            // ====================================================
-            // ONLY KEEP STUDENTS FROM THIS TEAM
-            // ====================================================
-
             const filteredProgress = normalizedProgress.filter((item) => {
               const studentId = getStudentId(item.student);
 
               return studentId && assignedStudentIds.has(studentId);
             });
-
-            // ====================================================
-            // CREATE PROGRESS FOR EVERY TEAM STUDENT
-            // ====================================================
 
             const mergedProgress = teamStudents
               .map((teamStudent) => {
@@ -258,13 +255,29 @@ function MentorDashboard() {
                   return existing;
                 }
 
-                // Student exists in team but has no progress yet.
-
                 return {
                   student: {
                     ...teamStudent,
                     _id: studentId,
                     id: studentId,
+                  },
+
+                  cp: {
+                    completed: 0,
+                    total: 0,
+                    completion: 0,
+                  },
+
+                  dev: {
+                    completed: 0,
+                    total: 0,
+                    completion: 0,
+                  },
+
+                  overall: {
+                    completed: 0,
+                    total: 0,
+                    completion: 0,
                   },
 
                   completed: 0,
@@ -277,10 +290,6 @@ function MentorDashboard() {
 
             setAssignedStudentsProgress(mergedProgress);
           } else {
-            // ====================================================
-            // FALLBACK
-            // ====================================================
-
             setAssignedStudentsProgress(normalizedProgress);
           }
         }
@@ -307,55 +316,55 @@ function MentorDashboard() {
     };
   }, []);
 
-  // ============================================================
-  // TOTAL STUDENTS
-  // ============================================================
-
   const totalStudents = assignedStudentsProgress.length;
 
-  // ============================================================
-  // TOTAL TASKS EXPECTED
-  // ============================================================
-
-  const totalTasksExpected = assignedStudentsProgress.reduce(
-    (acc, student) => acc + Math.max(Number(student?.total) || 0, 0),
+  const cpCompleted = assignedStudentsProgress.reduce(
+    (sum, s) => sum + (s.cp?.completed || 0),
     0,
   );
 
-  // ============================================================
-  // TOTAL COMPLETED TASKS
-  // ============================================================
-
-  const totalTasksSolved = assignedStudentsProgress.reduce(
-    (acc, student) =>
-      acc +
-      Math.min(
-        Math.max(Number(student?.completed) || 0, 0),
-        Math.max(Number(student?.total) || 0, 0),
-      ),
+  const cpTotal = assignedStudentsProgress.reduce(
+    (sum, s) => sum + (s.cp?.total || 0),
     0,
   );
 
-  // ============================================================
-  // TEAM COMPLETION
-  //
-  // completed tasks / total tasks
-  // ============================================================
+  const cpCompletion = calculateCompletion(cpCompleted, cpTotal);
 
-  const avgCompletion =
-    totalTasksExpected > 0
-      ? Math.min(Math.round((totalTasksSolved / totalTasksExpected) * 100), 100)
-      : 0;
+  const devCompleted = assignedStudentsProgress.reduce(
+    (sum, s) => sum + (s.dev?.completed || 0),
+    0,
+  );
 
-  // ============================================================
-  // SORT STUDENTS BY PERFORMANCE
-  // ============================================================
+  const devTotal = assignedStudentsProgress.reduce(
+    (sum, s) => sum + (s.dev?.total || 0),
+    0,
+  );
+
+  const devCompletion = calculateCompletion(devCompleted, devTotal);
+
+  const overallCompleted = assignedStudentsProgress.reduce(
+    (sum, s) => sum + (s.overall?.completed || 0),
+    0,
+  );
+
+  const overallTotal = assignedStudentsProgress.reduce(
+    (sum, s) => sum + (s.overall?.total || 0),
+    0,
+  );
+
+  const overallCompletion = calculateCompletion(overallCompleted, overallTotal);
 
   const rankedStudents = [...assignedStudentsProgress]
     .map((item) => {
-      const completed = Math.max(Number(item?.completed) || 0, 0);
+      const completed = Math.max(
+        Number(item?.overall?.completed ?? item?.completed) || 0,
+        0,
+      );
 
-      const total = Math.max(Number(item?.total) || 0, 0);
+      const total = Math.max(
+        Number(item?.overall?.total ?? item?.total) || 0,
+        0,
+      );
 
       const safeCompleted = Math.min(completed, total);
 
@@ -368,7 +377,6 @@ function MentorDashboard() {
     })
     .sort((a, b) => {
       const completionA = Number(a?.completion) || 0;
-
       const completionB = Number(b?.completion) || 0;
 
       if (completionB !== completionA) {
@@ -382,17 +390,10 @@ function MentorDashboard() {
       rank: index + 1,
     }));
 
-  // ============================================================
-  // SEARCH
-  // ============================================================
-
   const filteredStudents = rankedStudents.filter((item) => {
     const name = item?.student?.name?.toLowerCase() || "";
-
     const email = item?.student?.email?.toLowerCase() || "";
-
     const firstName = item?.student?.firstName?.toLowerCase() || "";
-
     const lastName = item?.student?.lastName?.toLowerCase() || "";
 
     const search = searchTerm.toLowerCase().trim();
@@ -405,17 +406,13 @@ function MentorDashboard() {
     );
   });
 
-  // ============================================================
-  // LOADING
-  // ============================================================
-
   if (loading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="flex items-center gap-3 text-[#1A3D63]">
-          <Loader2 className="h-7 w-7 animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-[#EEF4F7]">
+        <div className="flex items-center gap-2.5 rounded-2xl border border-cyan-100/60 bg-white p-6 shadow-xl shadow-cyan-950/5">
+          <Loader2 className="h-6 w-6 animate-spin text-[#00A8CC]" />
 
-          <span className="text-base font-semibold">
+          <span className="text-sm font-semibold tracking-wide text-[#14222B]">
             Loading assigned team progress...
           </span>
         </div>
@@ -423,444 +420,377 @@ function MentorDashboard() {
     );
   }
 
-  // ============================================================
-  // RETURN
-  // ============================================================
-
   return (
-    <div className="min-h-screen space-y-8 bg-[#F6FAFD] p-6 sm:p-8">
-      {/* ========================================================
-          HEADER
-      ======================================================== */}
+    <div className="min-h-screen bg-[#EEF4F7] p-4 font-sans antialiased text-slate-800 sm:p-6 lg:p-8">
+      <div className="mx-auto w-full max-w-6xl space-y-6">
+        <div className="group relative overflow-hidden rounded-2xl border border-[#293E4C]/40 bg-linear-to-b from-[#1b3c47] via-[#0f2b34] to-[#071b23] p-5 shadow-xl shadow-cyan-950/20 sm:p-6">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#00A8CC]/20 opacity-40 blur-3xl transition-opacity duration-500 group-hover:opacity-80" />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-[#1A3D63]/10 px-3 py-0.5 text-xs font-bold text-[#1A3D63]">
-              {mentorProfile?.gender === "Female"
-                ? "👩 Female Mentor Portal"
-                : "👨 Male Mentor Portal"}
-            </span>
+          <div className="pointer-events-none absolute -bottom-20 left-1/3 h-32 w-32 rounded-full bg-cyan-500/10 blur-3xl" />
 
-            <span className="text-xs text-[#7A7F85]">
-              • Assigned Students Only
-            </span>
-          </div>
+          <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#00A8CC] text-white shadow-md shadow-[#00A8CC]/30 transition-transform duration-300 group-hover:scale-105">
+                <Shield size={23} strokeWidth={2.2} />
+              </div>
 
-          <h1 className="mt-1 text-2xl font-bold text-[#0A1931] sm:text-3xl">
-            Welcome back, {mentorProfile?.firstName || "Mentor"}!
-          </h1>
-
-          <p className="text-sm text-[#7A7F85]">
-            Track your assigned {mentorProfile?.gender?.toLowerCase()} students'
-            weekly learning milestones and ranking.
-          </p>
-        </div>
-
-        {/* Mentor Avatar */}
-
-        <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-2.5 pr-4 shadow-sm">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-[#1A3D63] to-[#4A7FA7] text-sm font-bold text-white shadow">
-            {mentorProfile?.firstName?.[0]}
-            {mentorProfile?.lastName?.[0]}
-          </div>
-
-          <div className="text-xs">
-            <p className="font-bold text-[#0A1931]">
-              {mentorProfile?.firstName} {mentorProfile?.lastName}
-            </p>
-
-            <p className="font-semibold text-[#4A7FA7]">
-              {mentorProfile?.role?.toUpperCase()} • {mentorProfile?.gender}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================
-          ERROR
-      ======================================================== */}
-
-      {error && (
-        <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* ========================================================
-          STATS
-      ======================================================== */}
-
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Assigned Students */}
-
-        <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
-              Assigned Students
-            </span>
-
-            <h3 className="mt-1 text-3xl font-bold text-[#0A1931]">
-              {totalStudents}
-            </h3>
-
-            <p className="mt-1 text-[11px] font-semibold text-blue-600">
-              {mentorProfile?.gender === "Female"
-                ? "100% Female Group"
-                : mentorProfile?.gender === "Male"
-                  ? "100% Male Group"
-                  : "Assigned Group"}
-            </p>
-          </div>
-
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1A3D63]">
-            <Users className="h-6 w-6" />
-          </div>
-        </div>
-
-        {/* Assigned Team */}
-
-        <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
-              Assigned Team
-            </span>
-
-            <h3 className="mt-1 max-w-37.5 truncate text-xl font-bold text-[#0A1931]">
-              {assignedTeam?.name || "Team Assigned"}
-            </h3>
-
-            <p className="mt-1 text-[11px] text-[#7A7F85]">
-              {assignedTeam?.batch?.name ||
-                assignedTeam?.batch?.batchName ||
-                "Active Batch"}
-            </p>
-          </div>
-
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F6FAFD] text-[#4A7FA7]">
-            <Shield className="h-6 w-6" />
-          </div>
-        </div>
-
-        {/* Co-Mentor */}
-
-        <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
-              Assigned Co-Mentor
-            </span>
-
-            <h3 className="mt-1 max-w-37.5 truncate text-lg font-bold text-[#0A1931]">
-              {coMentor
-                ? `${coMentor.firstName || ""} ${
-                    coMentor.lastName || ""
-                  }`.trim()
-                : "2nd Mentor Pair"}
-            </h3>
-
-            <p className="mt-1 text-[11px] font-semibold text-green-600">
-              Active Co-Pilot
-            </p>
-          </div>
-
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
-            <UserCheck className="h-6 w-6" />
-          </div>
-        </div>
-
-        {/* Average Performance */}
-
-        <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#7A7F85]">
-              Team Avg Completion
-            </span>
-
-            <h3 className="mt-1 text-3xl font-bold text-[#1A3D63]">
-              {avgCompletion}%
-            </h3>
-
-            <p className="mt-1 text-[11px] font-semibold text-green-600">
-              {totalTasksSolved} tasks completed
-            </p>
-          </div>
-
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-700">
-            <TrendingUp className="h-6 w-6" />
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================
-          MIDDLE SECTION
-      ======================================================== */}
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Progress Overview */}
-
-        <div className="space-y-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8 lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-[#0A1931]">
-                Assigned Team Progress Overview
-              </h2>
-
-              <p className="mt-0.5 text-xs text-[#7A7F85]">
-                Real-time metrics for your assigned{" "}
-                {mentorProfile?.gender?.toLowerCase()} students.
-              </p>
-            </div>
-
-            <span className="rounded-full bg-[#1A3D63]/10 px-3 py-1 text-xs font-bold text-[#1A3D63]">
-              Live Stats
-            </span>
-          </div>
-
-          <div className="grid gap-6 pt-2 sm:grid-cols-2">
-            {/* CP */}
-
-            <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-[#F6FAFD]/60 p-5">
-              <div className="space-y-2">
+              <div>
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-[#1A3D63]">
-                    <Code2 className="h-4 w-4" />
-                  </div>
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-[#00A8CC]" />
 
-                  <span className="text-sm font-bold text-[#0A1931]">
-                    CP Problems
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-300">
+                    Mentor Portal
                   </span>
                 </div>
 
-                <div className="pt-2">
-                  <p className="text-xs text-[#7A7F85]">Problems Solved</p>
+                <h1 className="mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">
+                  Welcome back, {mentorProfile?.firstName || "Mentor"}!
+                </h1>
 
-                  <p className="text-xl font-bold text-[#0A1931]">
-                    {totalTasksSolved}{" "}
-                    <span className="text-xs font-normal text-gray-400">
-                      / {totalTasksExpected}
-                    </span>
+                <p className="mt-0.5 text-xs text-slate-300">
+                  Track your assigned students' progress and performance.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-2.5 pr-4 shadow-lg backdrop-blur-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#00A8CC] text-sm font-bold text-white shadow-md shadow-[#00A8CC]/20">
+                {mentorProfile?.firstName?.[0] || "M"}
+                {mentorProfile?.lastName?.[0] || ""}
+              </div>
+
+              <div className="text-xs">
+                <p className="font-bold text-white">
+                  {mentorProfile?.firstName || "Mentor"}{" "}
+                  {mentorProfile?.lastName || ""}
+                </p>
+
+                <p className="mt-0.5 font-semibold text-cyan-300">
+                  {mentorProfile?.role?.toUpperCase() || "MENTOR"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-2xl border border-rose-200/80 bg-rose-50/90 p-4 text-xs font-semibold text-rose-700 shadow-sm">
+            <AlertCircle size={16} className="shrink-0 text-rose-500" />
+
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#00A8CC]/40 hover:shadow-lg hover:shadow-cyan-900/5">
+            <div className="pointer-events-none absolute bottom-0 left-0 h-0.75 w-0 bg-[#00A8CC] transition-all duration-500 group-hover:w-full" />
+
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Assigned Students
+                </p>
+
+                <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0F172A] transition-colors duration-300 group-hover:text-[#00A8CC]">
+                  {totalStudents}
+                </h2>
+
+                <p className="mt-1 text-[11px] font-medium text-slate-400">
+                  Students in your team
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EAF7FA] text-[#00A8CC] transition-all duration-300 group-hover:scale-110 group-hover:bg-[#00A8CC] group-hover:text-white group-hover:shadow-md group-hover:shadow-[#00A8CC]/30">
+                <Users size={20} />
+              </div>
+            </div>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#00A8CC]/40 hover:shadow-lg hover:shadow-cyan-900/5">
+            <div className="pointer-events-none absolute bottom-0 left-0 h-0.75 w-0 bg-[#00A8CC] transition-all duration-500 group-hover:w-full" />
+
+            <div className="flex items-start justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Assigned Team
+                </p>
+
+                <h2 className="mt-2 max-w-40 truncate text-xl font-extrabold tracking-tight text-[#0F172A] transition-colors duration-300 group-hover:text-[#00A8CC]">
+                  {assignedTeam?.name || "Team Assigned"}
+                </h2>
+
+                <p className="mt-1 truncate text-[11px] font-medium text-slate-400">
+                  {assignedTeam?.batch?.name ||
+                    assignedTeam?.batch?.batchName ||
+                    "Active Batch"}
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#EAF7FA] text-[#00A8CC] transition-all duration-300 group-hover:scale-110 group-hover:bg-[#00A8CC] group-hover:text-white group-hover:shadow-md group-hover:shadow-[#00A8CC]/30">
+                <Shield size={20} />
+              </div>
+            </div>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#00A8CC]/40 hover:shadow-lg hover:shadow-cyan-900/5">
+            <div className="pointer-events-none absolute bottom-0 left-0 h-0.75 w-0 bg-[#00A8CC] transition-all duration-500 group-hover:w-full" />
+
+            <div className="flex items-start justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Co-Mentor
+                </p>
+
+                <h2 className="mt-2 max-w-40 truncate text-lg font-extrabold tracking-tight text-[#0F172A] transition-colors duration-300 group-hover:text-[#00A8CC]">
+                  {coMentor
+                    ? `${coMentor.firstName || ""} ${
+                        coMentor.lastName || ""
+                      }`.trim()
+                    : "2nd Mentor Pair"}
+                </h2>
+
+                <p className="mt-1 text-[11px] font-semibold text-emerald-500">
+                  Active Co-Pilot
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#EAF7FA] text-[#00A8CC] transition-all duration-300 group-hover:scale-110 group-hover:bg-[#00A8CC] group-hover:text-white group-hover:shadow-md group-hover:shadow-[#00A8CC]/30">
+                <UserCheck size={20} />
+              </div>
+            </div>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#00A8CC]/40 hover:shadow-lg hover:shadow-cyan-900/5">
+            <div className="pointer-events-none absolute bottom-0 left-0 h-0.75 w-0 bg-[#00A8CC] transition-all duration-500 group-hover:w-full" />
+
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Team Completion
+                </p>
+
+                <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0F172A] transition-colors duration-300 group-hover:text-[#00A8CC]">
+                  {overallCompletion}%
+                </h2>
+
+                <p className="mt-1 text-[11px] font-semibold text-emerald-500">
+                  {overallCompleted} tasks completed
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EAF7FA] text-[#00A8CC] transition-all duration-300 group-hover:scale-110 group-hover:bg-[#00A8CC] group-hover:text-white group-hover:shadow-md group-hover:shadow-[#00A8CC]/30">
+                <TrendingUp size={20} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:border-[#00A8CC]/30 hover:shadow-md sm:p-7 lg:col-span-2">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E3F5F9] text-[#00A8CC] transition-transform duration-300 group-hover:scale-105">
+                  <BarChart3 size={18} />
+                </div>
+
+                <div>
+                  <h2 className="text-sm font-bold text-[#0F172A]">
+                    Assigned Team Progress Overview
+                  </h2>
+
+                  <p className="mt-0.5 text-[11px] text-[#8FA3B0]">
+                    Real-time metrics for your assigned students.
                   </p>
                 </div>
               </div>
 
-              <div className="relative flex h-24 w-24 items-center justify-center">
-                <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-gray-200"
-                    strokeWidth="3.5"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-
-                  <path
-                    className="text-[#1A3D63]"
-                    strokeDasharray={`${avgCompletion}, 100`}
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-
-                <div className="absolute text-center">
-                  <span className="text-base font-bold text-[#0A1931]">
-                    {avgCompletion}%
-                  </span>
-
-                  <span className="block text-[9px] text-[#7A7F85]">
-                    Avg. Done
-                  </span>
-                </div>
-              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                Live Stats
+              </span>
             </div>
 
-            {/* Development */}
-
-            <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-[#F6FAFD]/60 p-5">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
-                    <Monitor className="h-4 w-4" />
-                  </div>
-
-                  <span className="text-sm font-bold text-[#0A1931]">
-                    Dev Lectures
-                  </span>
-                </div>
-
-                <div className="pt-2">
-                  <p className="text-xs text-[#7A7F85]">Current Progress</p>
-
-                  <p className="text-xl font-bold text-[#0A1931]">
-                    {avgCompletion}%
-                  </p>
-                </div>
-              </div>
-
-              <div className="relative flex h-24 w-24 items-center justify-center">
-                <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-gray-200"
-                    strokeWidth="3.5"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-
-                  <path
-                    className="text-[#4A7FA7]"
-                    strokeDasharray={`${avgCompletion}, 100`}
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-
-                <div className="absolute text-center">
-                  <span className="text-base font-bold text-[#0A1931]">
-                    {avgCompletion}%
-                  </span>
-
-                  <span className="block text-[9px] text-[#7A7F85]">
-                    Progress
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ======================================================
-            TOP PERFORMERS
-        ====================================================== */}
-
-        <div className="space-y-4 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-            <h3 className="text-base font-bold text-[#0A1931]">
-              Top Performers
-            </h3>
-
-            <span className="text-xs font-bold text-[#4A7FA7]">Rankings</span>
-          </div>
-
-          {rankedStudents.length === 0 ? (
-            <p className="py-8 text-center text-xs text-[#7A7F85]">
-              No assigned students yet.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {rankedStudents.slice(0, 5).map((item, idx) => {
-                const student = item?.student || {};
-
-                const studentName =
-                  student.name ||
-                  `${student.firstName || ""} ${
-                    student.lastName || ""
-                  }`.trim() ||
-                  "Unknown Student";
-
-                return (
-                  <div
-                    key={getStudentId(student) || idx}
-                    className="flex items-center justify-between rounded-xl bg-[#F6FAFD] p-3 text-xs"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1A3D63] text-[11px] font-bold text-white">
-                        {idx + 1}
-                      </span>
-
-                      <div>
-                        <p className="font-bold text-[#0A1931]">
-                          {studentName}
-                        </p>
-
-                        <p className="text-[11px] text-[#7A7F85]">
-                          {item?.completed || 0}/{item?.total || 0} tasks
-                        </p>
+            <div className="grid gap-5 pt-5 sm:grid-cols-2">
+              <div className="group/cp relative overflow-hidden rounded-2xl border border-slate-200/80 bg-[#F8FBFC] p-5 transition-all duration-300 hover:border-[#00A8CC]/30 hover:bg-white hover:shadow-md">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E3F5F9] text-[#00A8CC]">
+                        <Code2 size={16} />
                       </div>
+
+                      <span className="text-sm font-bold text-[#0F172A]">
+                        CP Problems
+                      </span>
                     </div>
 
-                    <span className="rounded-md bg-blue-50 px-2 py-1 font-bold text-[#1A3D63]">
-                      {item?.completion || 0}%
-                    </span>
+                    <p className="mt-4 text-[10px] font-bold uppercase tracking-wider text-[#8FA3B0]">
+                      Problems Solved
+                    </p>
+
+                    <p className="mt-1 text-xl font-extrabold text-[#0F172A]">
+                      {cpCompleted}
+                      <span className="text-xs font-normal text-slate-400">
+                        {" "}
+                        / {cpTotal}
+                      </span>
+                    </p>
                   </div>
-                );
-              })}
+
+                  <div className="relative flex h-20 w-20 items-center justify-center">
+                    <svg
+                      className="h-full w-full -rotate-90"
+                      viewBox="0 0 36 36"
+                    >
+                      <path
+                        className="text-slate-200"
+                        strokeWidth="3.5"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+
+                      <path
+                        className="text-[#00A8CC]"
+                        strokeDasharray={`${cpCompletion}, 100`}
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+
+                    <div className="absolute text-center">
+                      <span className="text-sm font-extrabold text-[#0F172A]">
+                        {cpCompletion}%
+                      </span>
+
+                      <span className="block text-[8px] font-medium text-slate-400">
+                        AVG DONE
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className="h-full rounded-full bg-[#00A8CC] transition-all duration-700"
+                    style={{
+                      width: `${cpCompletion}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="group/dev relative overflow-hidden rounded-2xl border border-slate-200/80 bg-[#F8FBFC] p-5 transition-all duration-300 hover:border-[#00A8CC]/30 hover:bg-white hover:shadow-md">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E3F5F9] text-[#00A8CC]">
+                        <Monitor size={16} />
+                      </div>
+
+                      <span className="text-sm font-bold text-[#0F172A]">
+                        Dev Lectures
+                      </span>
+                    </div>
+
+                    <p className="mt-4 text-[10px] font-bold uppercase tracking-wider text-[#8FA3B0]">
+                      Current Progress
+                    </p>
+
+                    <p className="mt-1 text-xl font-extrabold text-[#0F172A]">
+                      {devCompleted}
+                      <span className="text-xs font-normal text-slate-400">
+                        {" "}
+                        / {devTotal}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="relative flex h-20 w-20 items-center justify-center">
+                    <svg
+                      className="h-full w-full -rotate-90"
+                      viewBox="0 0 36 36"
+                    >
+                      <path
+                        className="text-slate-200"
+                        strokeWidth="3.5"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+
+                      <path
+                        className="text-[#00A8CC]"
+                        strokeDasharray={`${devCompletion}, 100`}
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+
+                    <div className="absolute text-center">
+                      <span className="text-sm font-extrabold text-[#0F172A]">
+                        {devCompletion}%
+                      </span>
+
+                      <span className="block text-[8px] font-medium text-slate-400">
+                        PROGRESS
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className="h-full rounded-full bg-[#00A8CC] transition-all duration-700"
+                    style={{
+                      width: `${devCompletion}%`,
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* ========================================================
-          DETAILED PROGRESS
-      ======================================================== */}
-
-      <div className="space-y-6 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-4 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-[#0A1931]">
-              My Assigned Students Progress
-            </h2>
-
-            <p className="mt-0.5 text-xs text-[#7A7F85]">
-              Only students assigned to your team.
-            </p>
           </div>
 
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:border-[#00A8CC]/30 hover:shadow-md sm:p-7">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E3F5F9] text-[#00A8CC]">
+                  <Award size={18} />
+                </div>
 
-            <input
-              type="text"
-              placeholder="Search student name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 py-2 pl-9 pr-4 text-xs outline-none focus:border-[#4A7FA7]"
-            />
-          </div>
-        </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#0F172A]">
+                    Top Performers
+                  </h3>
 
-        {filteredStudents.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#7A7F85]">
-            No assigned students match your search.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-gray-100 bg-[#F6FAFD] text-[11px] font-bold uppercase text-[#7A7F85]">
-                <tr>
-                  <th className="px-6 py-4">Student</th>
+                  <p className="text-[10px] text-[#8FA3B0]">
+                    Best team rankings
+                  </p>
+                </div>
+              </div>
 
-                  <th className="px-6 py-4">Gender</th>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#00A8CC]">
+                Rankings
+              </span>
+            </div>
 
-                  <th className="px-6 py-4">Completed / Total</th>
+            {rankedStudents.length === 0 ? (
+              <div className="py-10 text-center">
+                <Award className="mx-auto h-7 w-7 text-slate-300" />
 
-                  <th className="px-6 py-4">Completion Bar</th>
-
-                  <th className="px-6 py-4">Team Rank</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-gray-100">
-                {filteredStudents.map((item, index) => {
+                <p className="mt-2 text-xs font-bold text-slate-500">
+                  No assigned students yet.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-4 space-y-2.5">
+                {rankedStudents.slice(0, 5).map((item, idx) => {
                   const student = item?.student || {};
-
-                  // Recalculate here as well so the displayed
-                  // percentage can never depend on stale data.
-
-                  const completed = Math.max(Number(item?.completed) || 0, 0);
-
-                  const total = Math.max(Number(item?.total) || 0, 0);
-
-                  const safeCompleted = Math.min(completed, total);
-
-                  const completion = calculateCompletion(safeCompleted, total);
 
                   const studentName =
                     student.name ||
@@ -870,75 +800,217 @@ function MentorDashboard() {
                     "Unknown Student";
 
                   return (
-                    <tr
-                      key={getStudentId(student) || index}
-                      className="transition hover:bg-gray-50/60"
+                    <div
+                      key={getStudentId(student) || idx}
+                      className="group/item flex items-center justify-between rounded-xl border border-transparent bg-[#F6FAFD] p-3 transition-all duration-300 hover:border-[#00A8CC]/20 hover:bg-white hover:shadow-sm"
                     >
-                      {/* Student */}
-
-                      <td className="px-6 py-4">
-                        <p className="font-bold text-[#0A1931]">
-                          {studentName}
-                        </p>
-
-                        <p className="text-[11px] text-gray-400">
-                          {student.email || "No email"}
-                        </p>
-                      </td>
-
-                      {/* Gender */}
-
-                      <td className="px-6 py-4">
+                      <div className="flex min-w-0 items-center gap-3">
                         <span
-                          className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
-                            student.gender === "Female"
-                              ? "border-pink-200 bg-pink-50 text-pink-700"
-                              : "border-blue-200 bg-blue-50 text-blue-700"
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black ${
+                            idx === 0
+                              ? "bg-[#00A8CC] text-white shadow-sm shadow-[#00A8CC]/30"
+                              : "bg-slate-200 text-slate-600"
                           }`}
                         >
-                          {student.gender === "Female"
-                            ? "👩 Female"
-                            : "👨 Male"}
+                          {idx + 1}
                         </span>
-                      </td>
 
-                      {/* Completed / Total */}
+                        <div className="min-w-0">
+                          <p className="truncate text-[11px] font-bold text-[#0F172A] group-hover/item:text-[#00A8CC]">
+                            {studentName}
+                          </p>
 
-                      <td className="px-6 py-4 font-bold text-[#0A1931]">
-                        {safeCompleted} / {total} tasks
-                      </td>
-
-                      {/* Completion */}
-
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-2 w-32 overflow-hidden rounded-full bg-gray-100">
-                            <div
-                              className="h-full rounded-full bg-[#1A3D63] transition-all duration-500"
-                              style={{
-                                width: `${completion}%`,
-                              }}
-                            />
-                          </div>
-
-                          <span className="font-bold text-[#0A1931]">
-                            {completion}%
-                          </span>
+                          <p className="text-[10px] text-[#8FA3B0]">
+                            {item?.completed || 0}/{item?.total || 0} tasks
+                          </p>
                         </div>
-                      </td>
+                      </div>
 
-                      {/* Rank */}
-
-                      <td className="px-6 py-4 font-bold text-[#1A3D63]">
-                        #{item?.rank || index + 1}
-                      </td>
-                    </tr>
+                      <span className="ml-2 shrink-0 rounded-lg bg-[#EAF7FA] px-2 py-1 text-[10px] font-extrabold text-[#00A8CC]">
+                        {item?.completion || 0}%
+                      </span>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:border-[#00A8CC]/30 hover:shadow-md sm:p-7">
+          <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E3F5F9] text-[#00A8CC]">
+                <Users size={18} />
+              </div>
+
+              <div>
+                <h2 className="text-base font-bold text-[#0F172A]">
+                  My Assigned Students Progress
+                </h2>
+
+                <p className="mt-0.5 text-[11px] text-[#8FA3B0]">
+                  Only students assigned to your team.
+                </p>
+              </div>
+            </div>
+
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+
+              <input
+                type="text"
+                placeholder="Search student name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-[#F8FBFC] py-2.5 pl-9 pr-4 text-xs font-medium text-slate-700 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[#00A8CC] focus:bg-white focus:ring-2 focus:ring-[#00A8CC]/10"
+              />
+            </div>
+          </div>
+
+          {filteredStudents.length === 0 ? (
+            <div className="p-12 text-center">
+              <Users className="mx-auto h-8 w-8 text-slate-300" />
+
+              <p className="mt-2 text-xs font-bold text-slate-500">
+                No assigned students match your search.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-5 overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-slate-100 bg-[#F8FBFC] text-[10px] font-bold uppercase tracking-wider text-[#8FA3B0]">
+                  <tr>
+                    <th className="rounded-l-xl px-5 py-4">Student</th>
+
+                    <th className="px-5 py-4">Gender</th>
+
+                    <th className="px-5 py-4">Completed / Total</th>
+
+                    <th className="px-5 py-4">Completion</th>
+
+                    <th className="rounded-r-xl px-5 py-4 text-right">
+                      Team Rank
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-slate-100">
+                  {filteredStudents.map((item, index) => {
+                    const student = item?.student || {};
+
+                    const completed = Number(
+                      item?.overall?.completed ?? item?.completed ?? 0,
+                    );
+
+                    const total = Number(
+                      item?.overall?.total ?? item?.total ?? 0,
+                    );
+
+                    const safeCompleted = Math.min(completed, total);
+
+                    const completion = calculateCompletion(
+                      safeCompleted,
+                      total,
+                    );
+
+                    const studentName =
+                      student.name ||
+                      `${student.firstName || ""} ${
+                        student.lastName || ""
+                      }`.trim() ||
+                      "Unknown Student";
+
+                    return (
+                      <tr
+                        key={getStudentId(student) || index}
+                        className="group/row transition-all duration-200 hover:bg-[#F8FBFC]"
+                      >
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EAF7FA] text-[10px] font-black text-[#00A8CC] transition-all duration-200 group-hover/row:bg-[#00A8CC] group-hover/row:text-white">
+                              {(
+                                student.firstName?.[0] ||
+                                student.name?.[0] ||
+                                "S"
+                              ).toUpperCase()}
+                              {(student.lastName?.[0] || "").toUpperCase()}
+                            </div>
+
+                            <div className="min-w-0">
+                              <p className="truncate font-bold text-[#0F172A] transition-colors group-hover/row:text-[#00A8CC]">
+                                {studentName}
+                              </p>
+
+                              <p className="truncate text-[10px] text-slate-400">
+                                {student.email || "No email"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold ${
+                              student.gender === "Female"
+                                ? "border-pink-100 bg-pink-50 text-pink-600"
+                                : "border-blue-100 bg-blue-50 text-blue-600"
+                            }`}
+                          >
+                            {student.gender === "Female"
+                              ? "👩 Female"
+                              : "👨 Male"}
+                          </span>
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <span className="font-bold text-[#0F172A]">
+                            {safeCompleted}
+                          </span>
+
+                          <span className="text-slate-400"> / {total}</span>
+
+                          <p className="mt-0.5 text-[9px] uppercase tracking-wider text-slate-400">
+                            tasks
+                          </p>
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <div className="flex min-w-40 items-center gap-3">
+                            <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className="h-full rounded-full bg-[#00A8CC] transition-all duration-700"
+                                style={{
+                                  width: `${completion}%`,
+                                }}
+                              />
+                            </div>
+
+                            <span className="w-9 text-right text-[10px] font-extrabold text-[#0F172A]">
+                              {completion}%
+                            </span>
+                          </div>
+                        </td>
+
+                        <td className="px-5 py-4 text-right">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10px] font-extrabold ${
+                              item?.rank === 1
+                                ? "bg-[#EAF7FA] text-[#00A8CC]"
+                                : "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            #{item?.rank || index + 1}
+                            {item?.rank === 1 && <ArrowUpRight size={11} />}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

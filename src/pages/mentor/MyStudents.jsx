@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../utils/api";
 
 import {
@@ -12,483 +12,598 @@ import {
   Loader2,
   CalendarX,
   FileX,
+  RefreshCw,
 } from "lucide-react";
 
 const MyStudents = () => {
+  const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
-
-  const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  // ============================================================
-  // FETCH ONLY ASSIGNED STUDENTS
-  // ============================================================
+  const fetchStudents = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      setError("");
+
+      const response = await api.get("/at-risk/my-students");
+
+      if (response.data?.success) {
+        setStudents(
+          Array.isArray(response.data.students) ? response.data.students : [],
+        );
+      } else {
+        setStudents([]);
+      }
+    } catch (err) {
+      console.error("Fetch mentor students error:", err);
+
+      setError(
+        err.response?.data?.message || "Failed to load your assigned students.",
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const response = await api.get("/at-risk/my-students");
-
-        if (response.data.success) {
-          setStudents(response.data.students || []);
-        }
-      } catch (err) {
-        console.error("Fetch mentor students error:", err);
-
-        setError(
-          err.response?.data?.message ||
-            "Failed to load your assigned students.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchStudents();
   }, []);
 
-  // ============================================================
-  // SEARCH
-  // ============================================================
+  const filteredStudents = useMemo(() => {
+    const query = search.trim().toLowerCase();
 
-  const filteredStudents = students.filter((student) => {
-    const searchValue = search.toLowerCase().trim();
+    if (!query) {
+      return students;
+    }
 
-    if (!searchValue) return true;
+    return students.filter((student) => {
+      const fullName = `${student.firstName || ""} ${
+        student.lastName || ""
+      }`.toLowerCase();
 
-    const name =
-      `${student.firstName || ""} ${student.lastName || ""}`.toLowerCase();
+      const email = String(student.email || "").toLowerCase();
 
-    const email = student.email?.toLowerCase() || "";
-    const schoolId = student.schoolId?.toLowerCase() || "";
+      const schoolId = String(student.schoolId || "").toLowerCase();
 
+      const batchName =
+        typeof student.batch === "object"
+          ? String(student.batch?.name || "").toLowerCase()
+          : String(student.batch || "").toLowerCase();
+
+      return (
+        fullName.includes(query) ||
+        email.includes(query) ||
+        schoolId.includes(query) ||
+        batchName.includes(query)
+      );
+    });
+  }, [students, search]);
+
+  const atRiskStudents = useMemo(
+    () => students.filter((student) => student.atRisk === true),
+    [students],
+  );
+
+  const getAbsenceCount = (student) => {
+    return student?.risk?.absenceCount ?? student?.risk?.attendanceIssues ?? 0;
+  };
+
+  const getMissedAssignmentCount = (student) => {
     return (
-      name.includes(searchValue) ||
-      email.includes(searchValue) ||
-      schoolId.includes(searchValue)
+      student?.risk?.missedAssignmentCount ??
+      student?.risk?.assignmentIssues ??
+      0
     );
-  });
+  };
 
-  // ============================================================
-  // AT-RISK COUNT
-  // ============================================================
+  const getBatchName = (student) => {
+    if (!student?.batch) {
+      return "No batch";
+    }
 
-  const atRiskStudents = students.filter((student) => student.atRisk === true);
+    if (typeof student.batch === "object") {
+      return student.batch.name || "No batch";
+    }
 
-  // ============================================================
-  // LOADING
-  // ============================================================
+    return student.batch;
+  };
+
+  const getInitials = (student) => {
+    const first = student?.firstName?.trim()?.[0] || "";
+    const last = student?.lastName?.trim()?.[0] || "";
+
+    return `${first}${last}`.toUpperCase() || "ST";
+  };
+
+  const closeModal = () => {
+    setSelectedStudent(null);
+  };
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="flex items-center gap-3 text-[#1A3D63]">
-          <Loader2 className="h-6 w-6 animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-[#F4F8FA]">
+        <div className="flex items-center gap-3 rounded-xl border border-[#B4D7E2] bg-white px-5 py-4 shadow-sm">
+          <Loader2 className="h-5 w-5 animate-spin text-[#00A8CC]" />
 
-          <span className="text-sm font-medium">Loading your students...</span>
+          <span className="text-sm font-semibold text-[#14222B]">
+            Loading your students...
+          </span>
         </div>
       </div>
     );
   }
 
-  // ============================================================
-  // PAGE
-  // ============================================================
-
   return (
-    <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-950 sm:p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* =====================================================
-            HEADER
-        ===================================================== */}
+    <div className="min-h-screen bg-[#F4F8FA] text-[#14222B]">
+      <header className="relative mx-auto mt-4 w-[calc(100%-2rem)] max-w-7xl overflow-hidden rounded-[20px] bg-linear-to-b from-[#173A45] via-[#0F2B34] to-[#071B23] shadow-md">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-[#00A8CC]/10" />
 
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
-            My Students
-          </h1>
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-[#4A7FA7]/10" />
 
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            View only your assigned students and monitor their attendance and
-            assignment status.
-          </p>
-        </div>
-
-        {/* =====================================================
-            ERROR
-        ===================================================== */}
-
-        {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
-            {error}
-          </div>
-        )}
-
-        {/* =====================================================
-            SUMMARY
-        ===================================================== */}
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* TOTAL ASSIGNED */}
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  My Assigned Students
-                </p>
-
-                <h2 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                  {students.length}
-                </h2>
+        <div className="relative px-5 py-5 sm:px-7 sm:py-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-r from-[#061E27] via-[#0B303A] to-[#173F49] shadow-sm text-white">
+                <Users className="h-6 w-6" />
               </div>
 
-              <div className="rounded-xl bg-blue-100 p-3 dark:bg-blue-950">
-                <Users size={24} className="text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </div>
+              <div className="min-w-0">
+                <h1 className="truncate text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                  My Students
+                </h1>
 
-          {/* AT RISK */}
-
-          <div className="rounded-2xl border border-red-200 bg-white p-5 shadow-sm dark:border-red-900 dark:bg-gray-900">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Students At Risk
-                </p>
-
-                <h2 className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
-                  {atRiskStudents.length}
-                </h2>
-              </div>
-
-              <div className="rounded-xl bg-red-100 p-3 dark:bg-red-950">
-                <AlertTriangle
-                  size={24}
-                  className="text-red-600 dark:text-red-400"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* =====================================================
-            STUDENTS LIST
-        ===================================================== */}
-
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          {/* TOP */}
-
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Assigned Students
-              </h2>
-
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Students with 2 or more absences or 2 or more missed assignments
-                are marked at risk.
-              </p>
-            </div>
-
-            {/* SEARCH */}
-
-            <div className="relative w-full sm:w-72">
-              <Search
-                size={18}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              />
-
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search student..."
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              />
-            </div>
-          </div>
-
-          {/* ===================================================
-              LIST
-          =================================================== */}
-
-          <div className="mt-6 space-y-3">
-            {filteredStudents.length === 0 ? (
-              <div className="flex min-h-60 flex-col items-center justify-center text-center">
-                <Users size={42} className="text-gray-400" />
-
-                <h3 className="mt-3 font-semibold text-gray-900 dark:text-white">
-                  No students found
-                </h3>
-
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  You currently have no assigned students.
+                <p className="mt-1 text-xs font-medium text-[#B3CFE5]">
+                  Manage and monitor your assigned students
                 </p>
               </div>
-            ) : (
-              filteredStudents.map((student) => {
-                const absenceCount =
-                  student.risk?.absenceCount ??
-                  student.risk?.attendanceIssues ??
-                  0;
+            </div>
 
-                const missedAssignmentCount =
-                  student.risk?.missedAssignmentCount ??
-                  student.risk?.assignmentIssues ??
-                  0;
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="hidden items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-sm sm:flex">
+                <Users className="h-4 w-4 text-[#B3CFE5]" />
 
-                return (
-                  <div
-                    key={student._id}
-                    className={`rounded-2xl border p-5 transition hover:shadow-sm ${
-                      student.atRisk
-                        ? "border-red-300 bg-red-50/60 dark:border-red-900 dark:bg-red-950/20"
-                        : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
-                    }`}
-                  >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      {/* STUDENT INFO */}
-
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
-                            student.atRisk
-                              ? "bg-red-100 text-red-600 dark:bg-red-950"
-                              : "bg-[#1A3D63] text-white"
-                          }`}
-                        >
-                          {student.atRisk ? (
-                            <AlertTriangle size={25} />
-                          ) : (
-                            <UserCircle size={26} />
-                          )}
-                        </div>
-
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="font-semibold text-gray-900 dark:text-white">
-                              {student.firstName} {student.lastName}
-                            </h3>
-
-                            {student.atRisk ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700 dark:bg-red-900 dark:text-red-300">
-                                <AlertTriangle size={12} />
-                                At Risk
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700 dark:bg-green-900 dark:text-green-300">
-                                <CheckCircle size={12} />
-                                On Track
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                            <span className="flex items-center gap-1">
-                              <Mail size={14} />
-                              {student.email}
-                            </span>
-
-                            {student.schoolId && (
-                              <span>ID: {student.schoolId}</span>
-                            )}
-
-                            {student.batch?.name && (
-                              <span>{student.batch.name}</span>
-                            )}
-                          </div>
-
-                          {/* RISK DETAILS */}
-
-                          {student.atRisk && (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {absenceCount >= 2 && (
-                                <span className="inline-flex items-center gap-1 rounded-lg bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
-                                  <CalendarX size={13} />
-                                  {absenceCount} Absences
-                                </span>
-                              )}
-
-                              {missedAssignmentCount >= 2 && (
-                                <span className="inline-flex items-center gap-1 rounded-lg bg-red-100 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
-                                  <FileX size={13} />
-                                  {missedAssignmentCount} Missed Assignments
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* VIEW STUDENT */}
-
-                      <button
-                        type="button"
-                        onClick={() => setSelectedStudent(student)}
-                        className="rounded-xl bg-[#1A3D63] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#4A7FA7]"
-                      >
-                        View Student
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* =======================================================
-          STUDENT MODAL
-      ======================================================= */}
-
-      {selectedStudent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-900">
-            {/* MODAL HEADER */}
-
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Student Details
-              </h2>
+                <span>{students.length} Assigned</span>
+              </div>
 
               <button
                 type="button"
-                onClick={() => setSelectedStudent(null)}
-                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                onClick={() => fetchStudents(true)}
+                disabled={refreshing}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                title="Refresh students"
               >
-                <X size={20} />
+                <RefreshCw
+                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 pb-10 pt-5 sm:px-6 lg:px-8">
+        {error && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50/70 px-4 py-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
+
+              <p className="text-xs font-semibold text-red-600">{error}</p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setError("")}
+              className="shrink-0 rounded-lg p-1 text-red-400 transition hover:bg-red-100 hover:text-red-500"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex items-center justify-between rounded-xl border border-[#B4D7E2] bg-white px-4 py-3.5 shadow-sm">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#8FA3B0]">
+                Assigned Students
+              </p>
+
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-2xl font-bold leading-none text-[#14222B]">
+                  {students.length}
+                </span>
+
+                <span className="text-[10px] font-medium text-[#8FA3B0]">
+                  currently assigned
+                </span>
+              </div>
+            </div>
+
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#B4D7E2] bg-[#E3F5F9]">
+              <Users className="h-5 w-5 text-[#00A8CC]" />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-red-100 bg-white px-4 py-3.5 shadow-sm">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#8FA3B0]">
+                Students At Risk
+              </p>
+
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-2xl font-bold leading-none text-red-500">
+                  {atRiskStudents.length}
+                </span>
+
+                <span className="text-[10px] font-medium text-[#8FA3B0]">
+                  requiring attention
+                </span>
+              </div>
+            </div>
+
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-100 bg-red-50/60">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+            </div>
+          </div>
+        </div>
+
+        <section className="overflow-hidden rounded-2xl border border-[#B4D7E2] bg-white shadow-sm">
+          <div className="border-b border-[#E7EEF1] px-4 py-4 sm:px-5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <h2 className="text-base font-bold text-[#14222B] sm:text-lg">
+                  Assigned Students
+                </h2>
+
+                <p className="mt-0.5 text-[11px] text-[#8FA3B0] sm:text-xs">
+                  Students with 2 or more absences or missed assignments are
+                  marked at risk.
+                </p>
+              </div>
+
+              <div className="relative w-full md:w-60">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8FA3B0]" />
+
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search student..."
+                  className="h-10 w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] pl-9 pr-9 text-xs font-medium text-[#14222B] outline-none transition placeholder:text-[#8FA3B0] focus:border-[#00A8CC] focus:bg-white focus:ring-2 focus:ring-[#00A8CC]/10"
+                />
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#8FA3B0] transition hover:bg-[#E3F5F9] hover:text-[#14222B]"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-5">
+            {filteredStudents.length === 0 ? (
+              <div className="flex min-h-55 flex-col items-center justify-center text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#B4D7E2] bg-[#E3F5F9] text-[#00A8CC]">
+                  <Users className="h-6 w-6" />
+                </div>
+
+                <h3 className="mt-3 text-sm font-bold text-[#14222B]">
+                  No students found
+                </h3>
+
+                <p className="mt-1 max-w-xs text-xs text-[#8FA3B0]">
+                  {search
+                    ? "No students match your search."
+                    : "You currently have no assigned students."}
+                </p>
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    className="mt-3 rounded-lg bg-[#14222B] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#1B3C47]"
+                  >
+                    Clear Search
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {filteredStudents.map((student) => {
+                  const absenceCount = getAbsenceCount(student);
+
+                  const missedAssignmentCount =
+                    getMissedAssignmentCount(student);
+
+                  const initials = getInitials(student);
+
+                  return (
+                    <article
+                      key={student._id}
+                      className={`rounded-xl border transition ${
+                        student.atRisk
+                          ? "border-red-100 bg-[#FFFAFA] hover:border-red-200"
+                          : "border-[#D8E7EC] bg-[#F9FBFC] hover:border-[#B4D7E2] hover:bg-white"
+                      }`}
+                    >
+                      <div className="flex flex-col gap-3 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-xs font-bold ${
+                              student.atRisk
+                                ? "border-red-100 bg-red-50/70 text-red-500"
+                                : "border-[#B4D7E2] bg-[#E3F5F9] text-[#00A8CC]"
+                            }`}
+                          >
+                            {student.atRisk ? (
+                              <AlertTriangle className="h-5 w-5" />
+                            ) : (
+                              initials
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="truncate text-sm font-bold text-[#14222B]">
+                                {student.firstName || "-"}{" "}
+                                {student.lastName || ""}
+                              </h3>
+
+                              {student.atRisk ? (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-red-100 bg-red-50/60 px-2 py-0.5 text-[9px] font-bold text-red-500">
+                                  <AlertTriangle className="h-2.5 w-2.5" />
+                                  At Risk
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-100 bg-emerald-50/60 px-2 py-0.5 text-[9px] font-bold text-emerald-600">
+                                  <CheckCircle className="h-2.5 w-2.5" />
+                                  On Track
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[#8FA3B0]">
+                              {student.email && (
+                                <span className="flex min-w-0 items-center gap-1">
+                                  <Mail className="h-3 w-3 shrink-0" />
+
+                                  <span className="max-w-52.5 truncate">
+                                    {student.email}
+                                  </span>
+                                </span>
+                              )}
+
+                              {student.schoolId && (
+                                <span className="font-medium">
+                                  ID: {student.schoolId}
+                                </span>
+                              )}
+
+                              <span className="font-medium">
+                                {getBatchName(student)}
+                              </span>
+                            </div>
+
+                            {student.atRisk && (
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {absenceCount >= 2 && (
+                                  <span className="inline-flex items-center gap-1 rounded-lg border border-red-100 bg-white px-2 py-1 text-[9px] font-bold text-red-500">
+                                    <CalendarX className="h-3 w-3" />
+                                    {absenceCount} Absences
+                                  </span>
+                                )}
+
+                                {missedAssignmentCount >= 2 && (
+                                  <span className="inline-flex items-center gap-1 rounded-lg border border-red-100 bg-white px-2 py-1 text-[9px] font-bold text-red-500">
+                                    <FileX className="h-3 w-3" />
+                                    {missedAssignmentCount} Missed Assignments
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedStudent(student)}
+                          className="shrink-0 rounded-lg bg-[#00A8CC] px-4 py-2 text-[11px] font-bold text-white shadow-sm transition hover:bg-[#0088A6] hover:shadow-md"
+                        >
+                          View Student
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+
+      {selectedStudent && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#071B23]/60 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeModal();
+            }
+          }}
+        >
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-[#B4D7E2] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#E7EEF1] bg-[#F4F8FA] px-5 py-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
+                    selectedStudent.atRisk
+                      ? "border-red-100 bg-red-50/70 text-red-500"
+                      : "border-[#B4D7E2] bg-[#E3F5F9] text-[#00A8CC]"
+                  }`}
+                >
+                  {selectedStudent.atRisk ? (
+                    <AlertTriangle className="h-5 w-5" />
+                  ) : (
+                    <UserCircle className="h-5 w-5" />
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <h2 className="text-sm font-bold text-[#14222B]">
+                    Student Details
+                  </h2>
+
+                  <p className="max-w-62.5 truncate text-[11px] text-[#8FA3B0]">
+                    {selectedStudent.firstName || ""}{" "}
+                    {selectedStudent.lastName || ""}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeModal}
+                className="rounded-lg p-1.5 text-[#8FA3B0] transition hover:bg-gray-200 hover:text-[#14222B]"
+              >
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* RISK STATUS */}
+            <div className="max-h-[70vh] overflow-y-auto p-5">
+              <div className="flex items-center gap-3 rounded-xl border border-[#B4D7E2]/70 bg-[#E3F5F9]/50 p-3">
+                <div
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                    selectedStudent.atRisk
+                      ? "bg-red-50/70 text-red-500"
+                      : "bg-[#00A8CC] text-white"
+                  }`}
+                >
+                  {selectedStudent.atRisk ? (
+                    <AlertTriangle className="h-5 w-5" />
+                  ) : (
+                    <UserCircle className="h-6 w-6" />
+                  )}
+                </div>
 
-            <div className="mt-6">
+                <div className="min-w-0">
+                  <h3 className="truncate text-sm font-bold text-[#14222B]">
+                    {selectedStudent.firstName || ""}{" "}
+                    {selectedStudent.lastName || ""}
+                  </h3>
+
+                  <p className="truncate text-[11px] text-[#8FA3B0]">
+                    {selectedStudent.email || "No email available"}
+                  </p>
+                </div>
+              </div>
+
               {selectedStudent.atRisk ? (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle className="h-6 w-6 shrink-0 text-red-600" />
+                <div className="mt-4 rounded-xl border border-red-100 bg-red-50/50 p-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white">
+                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                    </div>
 
                     <div>
-                      <p className="font-bold text-red-700 dark:text-red-400">
+                      <p className="text-sm font-bold text-red-600">
                         Student is At Risk
                       </p>
 
-                      <p className="mt-1 text-xs text-red-600 dark:text-red-300">
+                      <p className="mt-0.5 text-[10px] text-red-500">
                         This student has reached the risk threshold.
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 space-y-2">
-                    {/* ABSENCES */}
-
-                    <div className="flex items-center justify-between rounded-lg bg-white/70 p-3 text-sm dark:bg-black/20">
-                      <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                        <CalendarX size={16} />
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="rounded-lg border border-red-100 bg-white p-3">
+                      <div className="flex items-center gap-2 text-[10px] font-semibold text-[#8FA3B0]">
+                        <CalendarX className="h-3.5 w-3.5" />
                         Absences
-                      </span>
+                      </div>
 
-                      <strong className="text-red-600">
-                        {selectedStudent.risk?.absenceCount ??
-                          selectedStudent.risk?.attendanceIssues ??
-                          0}
-                      </strong>
+                      <p className="mt-1 text-lg font-bold text-red-500">
+                        {getAbsenceCount(selectedStudent)}
+                      </p>
                     </div>
 
-                    {/* MISSED ASSIGNMENTS */}
-
-                    <div className="flex items-center justify-between rounded-lg bg-white/70 p-3 text-sm dark:bg-black/20">
-                      <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                        <FileX size={16} />
+                    <div className="rounded-lg border border-red-100 bg-white p-3">
+                      <div className="flex items-center gap-2 text-[10px] font-semibold text-[#8FA3B0]">
+                        <FileX className="h-3.5 w-3.5" />
                         Missed Assignments
-                      </span>
+                      </div>
 
-                      <strong className="text-red-600">
-                        {selectedStudent.risk?.missedAssignmentCount ??
-                          selectedStudent.risk?.assignmentIssues ??
-                          0}
-                      </strong>
+                      <p className="mt-1 text-lg font-bold text-red-500">
+                        {getMissedAssignmentCount(selectedStudent)}
+                      </p>
                     </div>
                   </div>
                 </div>
-              ) : (
-                <div className="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/30">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
+              ) : null}
 
-                  <div>
-                    <p className="font-bold text-green-700 dark:text-green-400">
-                      Student is On Track
-                    </p>
+              <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                <DetailBox
+                  label="Student ID"
+                  value={selectedStudent.schoolId}
+                />
 
-                    <p className="mt-1 text-xs text-green-600 dark:text-green-300">
-                      The student has not reached the at-risk threshold.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+                <DetailBox
+                  label="Batch"
+                  value={getBatchName(selectedStudent)}
+                />
 
-            {/* STUDENT DETAILS */}
+                <DetailBox label="Email" value={selectedStudent.email} />
 
-            <div className="mt-6 space-y-4">
-              <div>
-                <p className="text-xs text-gray-500">Name</p>
-
-                <p className="font-semibold text-gray-900 dark:text-white">
-                  {selectedStudent.firstName} {selectedStudent.lastName}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">Email</p>
-
-                <p className="font-semibold text-gray-900 dark:text-white">
-                  {selectedStudent.email}
-                </p>
-              </div>
-
-              {selectedStudent.schoolId && (
-                <div>
-                  <p className="text-xs text-gray-500">Student ID</p>
-
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {selectedStudent.schoolId}
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <p className="text-xs text-gray-500">Risk Status</p>
-
-                <p
-                  className={`font-semibold ${
-                    selectedStudent.atRisk ? "text-red-600" : "text-green-600"
-                  }`}
-                >
-                  {selectedStudent.atRisk ? "At Risk" : "On Track"}
-                </p>
+                <DetailBox
+                  label="Risk Status"
+                  value={selectedStudent.atRisk ? "At Risk" : "On Track"}
+                  danger={selectedStudent.atRisk}
+                />
               </div>
             </div>
 
-            {/* CLOSE */}
-
-            <button
-              type="button"
-              onClick={() => setSelectedStudent(null)}
-              className="mt-6 w-full rounded-xl bg-[#1A3D63] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#4A7FA7]"
-            >
-              Close
-            </button>
+            <div className="flex justify-end border-t border-[#E7EEF1] bg-[#F4F8FA] px-5 py-3">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="rounded-xl bg-[#14222B] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#1B3C47]"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const DetailBox = ({ label, value, danger = false }) => {
+  return (
+    <div className="rounded-xl border border-[#B4D7E2]/70 bg-[#F8FAFB] p-3">
+      <p className="text-[9px] font-bold uppercase tracking-wider text-[#8FA3B0]">
+        {label}
+      </p>
+
+      <p
+        className={`mt-1 truncate text-xs font-bold ${
+          danger ? "text-red-500" : "text-[#14222B]"
+        }`}
+      >
+        {value || "Not available"}
+      </p>
     </div>
   );
 };

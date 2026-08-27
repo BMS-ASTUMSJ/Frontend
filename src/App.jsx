@@ -9,7 +9,6 @@ import {
 import ChangePassword from "./pages/ChangePassword";
 import Navbar from "./components/layout/Navbar";
 
-// Admin Imports
 import AdminSessions from "./pages/admin/AdminSession";
 import BatchManagement from "./pages/admin/BatchManagement";
 import AdminBatchHistory from "./pages/admin/BatchHistory";
@@ -23,7 +22,6 @@ import AdminProfile from "./pages/admin/AdminProfile";
 import UserManagement from "./pages/admin/UserManagement";
 import AdminAssignment from "./pages/admin/Assignment";
 
-// Mentor Imports
 import MentorDashboard from "./pages/mentor/MentorDashboard";
 import MentorAttendance from "./pages/mentor/MentorAttendance";
 import MentorAnnouncements from "./pages/mentor/Announcements";
@@ -33,7 +31,6 @@ import MentorAssignment from "./pages/mentor/Assignment";
 import MentorBatchHistory from "./pages/mentor/BatchHistory";
 import MentorProfile from "./pages/mentor/MentorProfile";
 
-// Student Imports
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentAttendance from "./pages/student/StudentAttendance";
 import StudentProgress from "./pages/student/StudentProgress";
@@ -41,13 +38,11 @@ import StudentAnnouncements from "./pages/student/Announcement";
 import StudentAssignment from "./pages/student/Assignment";
 import StudentProfile from "./pages/student/StudentProfile";
 
-// General Imports
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterationPage from "./pages/RegisterationPage";
 import ForgotPassword from "./pages/ForgotPassword";
 
-// Layouts & Protection
 import AdminLayout from "./layouts/AdminLayout";
 import MentorLayout from "./layouts/MentorLayout";
 import StudentLayout from "./layouts/StudentLayout";
@@ -64,18 +59,12 @@ function AppContent() {
       <Toaster position="top-right" reverseOrder={false} />
 
       <Routes>
-        {/* =====================================================
-            PUBLIC ROUTES
-        ====================================================== */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterationPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/change-password" element={<ChangePassword />} />
 
-        {/* =====================================================
-            ADMIN ROUTES
-        ====================================================== */}
         <Route element={<ProtectedRoute allowedRole="admin" />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
@@ -94,9 +83,6 @@ function AppContent() {
           </Route>
         </Route>
 
-        {/* =====================================================
-            MENTOR ROUTES
-        ====================================================== */}
         <Route element={<ProtectedRoute allowedRole="mentor" />}>
           <Route path="/mentor" element={<MentorLayout />}>
             <Route index element={<MentorDashboard />} />
@@ -111,9 +97,6 @@ function AppContent() {
           </Route>
         </Route>
 
-        {/* =====================================================
-            STUDENT ROUTES
-        ====================================================== */}
         <Route element={<ProtectedRoute allowedRole="student" />}>
           <Route path="/student" element={<StudentLayout />}>
             <Route index element={<StudentDashboard />} />
@@ -125,10 +108,6 @@ function AppContent() {
             <Route path="profile" element={<StudentProfile />} />
           </Route>
         </Route>
-
-        {/* =====================================================
-            404 NOT FOUND
-        ====================================================== */}
         <Route
           path="*"
           element={
