@@ -48,7 +48,36 @@ const AIAssistant = () => {
   // ======================================================
 
   const token = localStorage.getItem("token");
+  const storedUser = localStorage.getItem("user");
+
   const isAuthenticated = Boolean(token);
+
+  let currentUserId = null;
+
+  try {
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    currentUserId = user?._id || user?.id || null;
+  } catch {
+    currentUserId = null;
+  }
+
+  // ======================================================
+  // RESET CHAT WHEN USER CHANGES
+  // ======================================================
+
+  const previousUserIdRef = useRef(currentUserId);
+
+  useEffect(() => {
+    if (previousUserIdRef.current !== currentUserId) {
+      // User changed or logged out
+      setMessages([]);
+      setCurrentChatId(null);
+      setInput("");
+      setChats([]);
+
+      previousUserIdRef.current = currentUserId;
+    }
+  }, [currentUserId]);
 
   // ======================================================
   // HELPER FUNCTIONS
@@ -353,6 +382,7 @@ const AIAssistant = () => {
       const data = response.data;
 
       const answer =
+        data?.assistantMessage?.content ||
         data?.answer ||
         data?.data?.answer ||
         data?.message?.answer ||
@@ -360,7 +390,11 @@ const AIAssistant = () => {
         OUT_OF_SCOPE_MESSAGE;
 
       const sources =
-        data?.sources || data?.data?.sources || data?.message?.sources || [];
+        data?.assistantMessage?.sources ||
+        data?.sources ||
+        data?.data?.sources ||
+        data?.message?.sources ||
+        [];
 
       const assistantMessage = {
         id: `assistant-${Date.now()}`,
@@ -512,10 +546,12 @@ const AIAssistant = () => {
         <div
           className="
             fixed
-            bottom-6
-            right-6
+            bottom-4
+            right-4
             z-[9999]
             flex
+            h-[620px]
+            max-h-[calc(100vh-32px)]
             w-[440px]
             max-w-[calc(100vw-32px)]
             flex-col
@@ -525,7 +561,9 @@ const AIAssistant = () => {
             border-slate-200
             bg-white
             shadow-2xl
-          "
+            sm:bottom-6
+            sm:right-6
+            "
         >
           {/* ==============================================
               HEADER
@@ -605,7 +643,7 @@ const AIAssistant = () => {
           </div>
 
           {!minimized && (
-            <div className="flex min-h-0">
+            <div className="flex min-h-0 flex-1">
               {/* ==========================================
                   CHAT HISTORY SIDEBAR
               ========================================== */}
@@ -614,6 +652,7 @@ const AIAssistant = () => {
                 <aside
                   className="
                     flex
+                    min-h-0
                     w-[155px]
                     shrink-0
                     flex-col
@@ -826,7 +865,7 @@ const AIAssistant = () => {
                   MAIN CHAT AREA
               ========================================== */}
 
-              <div className="min-w-0 flex-1">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 {/* Show History Button */}
 
                 {isAuthenticated && !historyOpen && (
@@ -862,7 +901,8 @@ const AIAssistant = () => {
 
                 <div
                   className="
-                    h-[340px]
+                    min-h-0
+                    flex-1
                     overflow-y-auto
                     bg-slate-50
                     px-4
@@ -982,58 +1022,6 @@ const AIAssistant = () => {
                                   {message.content}
                                 </div>
                               </div>
-
-                              {/* Sources */}
-
-                              {message.role === "assistant" &&
-                                message.sources?.length > 0 && (
-                                  <div className="mt-2">
-                                    <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-slate-500">
-                                      <Sparkles
-                                        size={12}
-                                        className="text-[#344f59]"
-                                      />
-                                      Sources
-                                    </div>
-
-                                    <div className="space-y-1">
-                                      {message.sources
-                                        .slice(0, 5)
-                                        .map((source, index) => (
-                                          <div
-                                            key={
-                                              source.chunkId ||
-                                              `${message.id}-${index}`
-                                            }
-                                            className="
-                                                flex
-                                                items-center
-                                                justify-between
-                                                rounded-lg
-                                                border
-                                                border-slate-200
-                                                bg-white
-                                                px-2.5
-                                                py-1.5
-                                                text-[11px]
-                                                text-slate-500
-                                              "
-                                          >
-                                            <span>
-                                              Source{" "}
-                                              {source.sourceNumber || index + 1}
-                                            </span>
-
-                                            {source.score !== undefined && (
-                                              <span className="font-medium text-[#344f59]">
-                                                {formatScore(source.score)}
-                                              </span>
-                                            )}
-                                          </div>
-                                        ))}
-                                    </div>
-                                  </div>
-                                )}
                             </div>
                           </div>
                         </div>
