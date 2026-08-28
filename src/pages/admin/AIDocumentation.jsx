@@ -20,9 +20,6 @@ import {
 import api from "../../utils/api";
 
 function AIDocumentation() {
-  // =========================================================
-  // STATE
-  // =========================================================
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,16 +32,10 @@ function AIDocumentation() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [dragging, setDragging] = useState(false);
 
-  // =========================================================
-  // DELETE CONFIRMATION STATE
-  // =========================================================
   const [deleteDocumentId, setDeleteDocumentId] = useState(null);
 
   const fileInputRef = useRef(null);
 
-  // =========================================================
-  // LOAD DOCUMENTS
-  // =========================================================
   const loadDocuments = async () => {
     try {
       setLoading(true);
@@ -71,9 +62,6 @@ function AIDocumentation() {
     loadDocuments();
   }, []);
 
-  // =========================================================
-  // OPEN CREATE
-  // =========================================================
   const handleCreate = () => {
     setEditingDocument(null);
     setTitle("");
@@ -86,10 +74,6 @@ function AIDocumentation() {
 
     setShowModal(true);
   };
-
-  // =========================================================
-  // OPEN EDIT
-  // =========================================================
   const handleEdit = (document) => {
     setEditingDocument(document);
     setTitle(document.title || "");
@@ -103,9 +87,6 @@ function AIDocumentation() {
     setShowModal(true);
   };
 
-  // =========================================================
-  // CLOSE MODAL
-  // =========================================================
   const closeModal = () => {
     if (saving) {
       return;
@@ -122,9 +103,6 @@ function AIDocumentation() {
     }
   };
 
-  // =========================================================
-  // FILE VALIDATION
-  // =========================================================
   const validateFile = (file) => {
     if (!file) {
       return false;
@@ -160,9 +138,6 @@ function AIDocumentation() {
     return true;
   };
 
-  // =========================================================
-  // SELECT FILE
-  // =========================================================
   const handleFileSelect = (file) => {
     if (!validateFile(file)) {
       return;
@@ -176,9 +151,6 @@ function AIDocumentation() {
     }
   };
 
-  // =========================================================
-  // FILE INPUT
-  // =========================================================
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
 
@@ -187,9 +159,6 @@ function AIDocumentation() {
     }
   };
 
-  // =========================================================
-  // DRAG & DROP
-  // =========================================================
   const handleDragOver = (event) => {
     event.preventDefault();
     setDragging(true);
@@ -211,9 +180,6 @@ function AIDocumentation() {
     }
   };
 
-  // =========================================================
-  // CREATE / UPDATE
-  // =========================================================
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -225,9 +191,6 @@ function AIDocumentation() {
     try {
       setSaving(true);
 
-      // =====================================================
-      // EDIT EXISTING DOCUMENT
-      // =====================================================
       if (editingDocument) {
         const response = await api.put(`/documents/${editingDocument._id}`, {
           title: title.trim(),
@@ -240,7 +203,6 @@ function AIDocumentation() {
               title: title.trim(),
             };
 
-          // Update current UI immediately
           setDocuments((current) =>
             current.map((document) =>
               document._id === editingDocument._id
@@ -260,10 +222,6 @@ function AIDocumentation() {
 
         return;
       }
-
-      // =====================================================
-      // CREATE NEW UPLOAD
-      // =====================================================
       if (!selectedFile) {
         toast.error("Please select a PDF, DOCX, or TXT file.");
         return;
@@ -280,17 +238,12 @@ function AIDocumentation() {
         const newDocument =
           response.data.document || response.data.data?.document;
 
-        // ===================================================
-        // UPDATE UI IMMEDIATELY
-        // ===================================================
         if (newDocument) {
           setDocuments((current) => [
             newDocument,
             ...current.filter((document) => document._id !== newDocument._id),
           ]);
         } else {
-          // Backend didn't return document object
-          // so reload only the document list.
           await loadDocuments();
         }
 
@@ -307,9 +260,6 @@ function AIDocumentation() {
     } catch (error) {
       console.error("Save document error:", error);
 
-      // =====================================================
-      // DUPLICATE DOCUMENT
-      // =====================================================
       if (error.response?.status === 409) {
         toast.error(
           error.response?.data?.message ||
@@ -319,9 +269,6 @@ function AIDocumentation() {
         return;
       }
 
-      // =====================================================
-      // VOYAGE RATE LIMIT
-      // =====================================================
       if (error.response?.status === 429) {
         toast.error(
           "Voyage AI rate limit reached. Please wait a moment and try again.",
@@ -330,9 +277,6 @@ function AIDocumentation() {
         return;
       }
 
-      // =====================================================
-      // GENERAL ERROR
-      // =====================================================
       toast.error(
         error.response?.data?.message ||
           error.response?.data?.error ||
@@ -343,16 +287,10 @@ function AIDocumentation() {
     }
   };
 
-  // =========================================================
-  // REPROCESS
-  // =========================================================
   const handleReprocess = async (documentId) => {
     try {
       setProcessingId(documentId);
 
-      // =====================================================
-      // UPDATE UI IMMEDIATELY
-      // =====================================================
       setDocuments((current) =>
         current.map((document) =>
           document._id === documentId
@@ -397,9 +335,6 @@ function AIDocumentation() {
     } catch (error) {
       console.error("Reprocess document error:", error);
 
-      // =====================================================
-      // SHOW FAILED STATE WITHOUT RELOAD
-      // =====================================================
       setDocuments((current) =>
         current.map((document) =>
           document._id === documentId
@@ -431,9 +366,6 @@ function AIDocumentation() {
     }
   };
 
-  // =========================================================
-  // DELETE DOCUMENT
-  // =========================================================
   const handleDelete = async (documentId) => {
     try {
       setDeletingId(documentId);
@@ -441,12 +373,8 @@ function AIDocumentation() {
       const response = await api.delete(`/documents/${documentId}`);
 
       if (response.data?.success) {
-        // Success confirmation
         toast.success("Document deleted successfully.");
 
-        // ===================================================
-        // REMOVE FROM UI IMMEDIATELY
-        // ===================================================
         setDocuments((current) =>
           current.filter((document) => document._id !== documentId),
         );
@@ -462,16 +390,10 @@ function AIDocumentation() {
     }
   };
 
-  // =========================================================
-  // OPEN DELETE CONFIRMATION
-  // =========================================================
   const openDeleteConfirmation = (documentId) => {
     setDeleteDocumentId(documentId);
   };
 
-  // =========================================================
-  // CANCEL DELETE
-  // =========================================================
   const cancelDelete = () => {
     if (deletingId) {
       return;
@@ -480,9 +402,6 @@ function AIDocumentation() {
     setDeleteDocumentId(null);
   };
 
-  // =========================================================
-  // CONFIRM DELETE
-  // =========================================================
   const confirmDelete = async () => {
     if (!deleteDocumentId) {
       return;
@@ -490,16 +409,11 @@ function AIDocumentation() {
 
     const documentId = deleteDocumentId;
 
-    // Close confirmation modal
     setDeleteDocumentId(null);
 
-    // Perform actual deletion
     await handleDelete(documentId);
   };
 
-  // =========================================================
-  // FILTER
-  // =========================================================
   const filteredDocuments = documents.filter((document) => {
     const query = search.toLowerCase().trim();
 
@@ -515,9 +429,6 @@ function AIDocumentation() {
     );
   });
 
-  // =========================================================
-  // STATUS
-  // =========================================================
   const renderStatus = (status) => {
     if (status === "processed") {
       return (
@@ -553,9 +464,6 @@ function AIDocumentation() {
     );
   };
 
-  // =========================================================
-  // FORMAT FILE SIZE
-  // =========================================================
   const formatFileSize = (bytes) => {
     if (!bytes) {
       return "";
@@ -572,14 +480,8 @@ function AIDocumentation() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // =========================================================
-  // RENDER
-  // =========================================================
   return (
     <div className="min-h-screen bg-[#F4F8FA] px-4 py-5 sm:px-6 lg:px-8">
-      {/* =====================================================
-          HEADER
-      ====================================================== */}
       <div className="mb-6 overflow-hidden rounded-b-2xl bg-[#092F38] shadow-lg">
         <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <div className="flex items-center gap-4">
