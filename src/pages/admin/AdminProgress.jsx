@@ -919,13 +919,33 @@ function AdminProgress() {
                         >
                           <div className="flex min-w-0 items-center gap-3">
                             <div
-                              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
                                 idx === 0
-                                  ? "bg-[#00A8CC] text-white"
-                                  : "bg-white text-[#71838E]"
+                                  ? "bg-[#FFF7D6]"
+                                  : idx === 1
+                                    ? "bg-[#F1F3F5]"
+                                    : idx === 2
+                                      ? "bg-[#F8E8D8]"
+                                      : "bg-white"
                               }`}
                             >
-                              {idx + 1}
+                              {idx === 0 ? (
+                                <span className="text-lg" title="1st Place">
+                                  🏆
+                                </span>
+                              ) : idx === 1 ? (
+                                <span className="text-lg" title="2nd Place">
+                                  🥈
+                                </span>
+                              ) : idx === 2 ? (
+                                <span className="text-lg" title="3rd Place">
+                                  🥉
+                                </span>
+                              ) : (
+                                <span className="text-xs font-bold text-[#71838E]">
+                                  {idx + 1}
+                                </span>
+                              )}
                             </div>
 
                             <div className="min-w-0">
