@@ -190,7 +190,6 @@ const AdminAttendance = () => {
               </div>
             ) : !error ? (
               <div>
-                {/* TABLE */}
                 <div className="overflow-x-auto">
                   <table className="w-full border-separate border-spacing-y-4 text-left">
                     <thead>
@@ -292,7 +291,6 @@ const BatchRow = ({
 
   return (
     <tr className="group transition-transform hover:translate-x-1">
-      {/* BATCH */}
       <td className="rounded-l-2xl border-l-4 border-[#00A8CC] bg-white px-5 py-5 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E3F5F9] text-[11px] font-bold text-[#00A8CC] shadow-inner">
@@ -650,7 +648,25 @@ const StatCard = ({ title, value, icon: Icon, color, highlight }) => {
 };
 
 const StudentReportRow = ({ student }) => {
-  const attendance = Number(student.percentage ?? student.attendanceRate ?? 0);
+  const attendance = Number(
+    student.percentage ?? student.attendanceRate ?? student.summary?.attendanceRate ?? 0,
+  );
+
+  const presentChecks = Number(
+    student.presentChecks ?? student.summary?.presentChecks ?? 0,
+  );
+
+  const lateChecks = Number(
+    student.lateChecks ?? student.summary?.lateChecks ?? 0,
+  );
+
+  const absentChecks = Number(
+    student.absentChecks ?? student.summary?.absentChecks ?? 0,
+  );
+
+  const excusedChecks = Number(
+    student.excusedChecks ?? student.summary?.excusedChecks ?? 0,
+  );
 
   const getRiskStatus = (value) => {
     if (value < 50) return "At Risk";
@@ -693,7 +709,6 @@ const StudentReportRow = ({ student }) => {
 
   return (
     <tr className={`transition ${styles.row}`}>
-      {/* STUDENT */}
       <td className="px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E3F5F9] text-[10px] font-bold text-[#00A8CC]">
@@ -720,25 +735,25 @@ const StudentReportRow = ({ student }) => {
 
       <td className="px-5 py-4 text-center">
         <span className="text-xs font-black text-emerald-600">
-          {student.presentChecks ?? 0}
+          {presentChecks}
         </span>
       </td>
 
       <td className="px-5 py-4 text-center">
         <span className="text-xs font-black text-amber-600">
-          {student.lateChecks ?? 0}
+          {lateChecks}
         </span>
       </td>
 
       <td className="px-5 py-4 text-center">
         <span className="text-xs font-black text-red-600">
-          {student.absentChecks ?? 0}
+          {absentChecks}
         </span>
       </td>
 
       <td className="px-5 py-4 text-center">
         <span className="text-xs font-black text-blue-600">
-          {student.excusedChecks ?? 0}
+          {excusedChecks}
         </span>
       </td>
 

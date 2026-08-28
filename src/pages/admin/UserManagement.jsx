@@ -264,6 +264,16 @@ function UserManagement() {
     }`.toUpperCase();
   };
 
+  const getUserAvatar = (user) => {
+    if (typeof user.profileImage === "string" && user.profileImage.trim() !== "") {
+      return user.profileImage;
+    }
+    if (user.profileImage && typeof user.profileImage === "object" && user.profileImage.url) {
+      return user.profileImage.url;
+    }
+    return null;
+  };
+
   return (
     <>
       <Toaster
@@ -569,287 +579,311 @@ function UserManagement() {
                     </thead>
 
                     <tbody>
-                      {filteredUsers.map((user) => (
-                        <tr
-                          key={user._id}
-                          className="group transition-transform hover:translate-x-1"
-                        >
-                          <td className="rounded-l-2xl border-l-4 border-[#00A8CC] bg-white px-6 py-5 shadow-sm">
-                            <div className="flex items-center gap-4">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#E3F5F9] text-[11px] font-bold text-[#00A8CC] shadow-inner">
-                                {getInitials(user)}
-                              </div>
+                      {filteredUsers.map((user) => {
+                        const avatarUrl = getUserAvatar(user);
 
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-bold leading-tight text-[#14222B]">
-                                  {user.firstName} {user.lastName}
-                                </p>
-
-                                {user.batch?.name && (
-                                  <p className="mt-1 text-[10px] font-bold uppercase tracking-tighter text-[#00A8CC]">
-                                    {user.batch.name}
-                                  </p>
+                        return (
+                          <tr
+                            key={user._id}
+                            className="group transition-transform hover:translate-x-1"
+                          >
+                            <td className="rounded-l-2xl border-l-4 border-[#00A8CC] bg-white px-6 py-5 shadow-sm">
+                              <div className="flex items-center gap-4">
+                                {avatarUrl ? (
+                                  <img
+                                    src={avatarUrl}
+                                    alt={`${user.firstName} ${user.lastName}`}
+                                    className="h-10 w-10 shrink-0 rounded-lg object-cover shadow-inner"
+                                  />
+                                ) : (
+                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E3F5F9] text-[11px] font-bold text-[#00A8CC] shadow-inner">
+                                    {getInitials(user)}
+                                  </div>
                                 )}
+
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-bold leading-tight text-[#14222B]">
+                                    {user.firstName} {user.lastName}
+                                  </p>
+
+                                  {user.batch?.name && (
+                                    <p className="mt-1 text-[10px] font-bold uppercase tracking-tighter text-[#00A8CC]">
+                                      {user.batch.name}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </td>
+                            </td>
 
-                          <td className="bg-white px-6 py-5 shadow-sm">
-                            <span
-                              className={`inline-flex rounded-lg px-3 py-1.5 text-[10px] font-black uppercase ${
-                                user.gender?.toLowerCase() === "female"
-                                  ? "bg-pink-50 text-pink-600"
-                                  : "bg-[#E3F5F9] text-[#0088A6]"
-                              }`}
-                            >
-                              {user.gender?.toLowerCase() === "female"
-                                ? "Female"
-                                : "Male"}
-                            </span>
-                          </td>
+                            <td className="bg-white px-6 py-5 shadow-sm">
+                              <span
+                                className={`inline-flex rounded-lg px-3 py-1.5 text-[10px] font-black uppercase ${
+                                  user.gender?.toLowerCase() === "female"
+                                    ? "bg-pink-50 text-pink-600"
+                                    : "bg-[#E3F5F9] text-[#0088A6]"
+                                }`}
+                              >
+                                {user.gender?.toLowerCase() === "female"
+                                  ? "Female"
+                                  : "Male"}
+                              </span>
+                            </td>
 
-                          <td className="bg-white px-6 py-5 shadow-sm">
-                            <div className="space-y-1.5">
-                              <div className="flex max-w-55 items-center gap-2">
-                                <Mail
-                                  size={14}
-                                  className="shrink-0 text-[#9AAAB4]"
-                                />
-
-                                <span className="truncate text-[11px] font-medium text-[#596A73]">
-                                  {user.email || "-"}
-                                </span>
-                              </div>
-
-                              {user.phone && (
-                                <div className="flex items-center gap-2">
-                                  <Phone
+                            <td className="bg-white px-6 py-5 shadow-sm">
+                              <div className="space-y-1.5">
+                                <div className="flex max-w-55 items-center gap-2">
+                                  <Mail
                                     size={14}
                                     className="shrink-0 text-[#9AAAB4]"
                                   />
 
-                                  <span className="text-[10px] font-medium text-[#596A73]">
-                                    {user.phone}
+                                  <span className="truncate text-[11px] font-medium text-[#596A73]">
+                                    {user.email || "-"}
                                   </span>
                                 </div>
-                              )}
-                            </div>
-                          </td>
 
-                          {activeTab === "students" && (
-                            <td className="bg-white px-6 py-5 shadow-sm">
-                              {user.assignedMentors?.length > 0 ? (
-                                <div className="flex max-w-52.5 flex-wrap gap-1.5">
-                                  {user.assignedMentors.map((mentor) => (
-                                    <span
-                                      key={mentor._id}
-                                      className="rounded-lg bg-[#E3F5F9] px-2.5 py-1.5 text-[10px] font-bold text-[#0088A6]"
-                                    >
-                                      {mentor.firstName} {mentor.lastName || ""}
+                                {user.phone && (
+                                  <div className="flex items-center gap-2">
+                                    <Phone
+                                      size={14}
+                                      className="shrink-0 text-[#9AAAB4]"
+                                    />
+
+                                    <span className="text-[10px] font-medium text-[#596A73]">
+                                      {user.phone}
                                     </span>
-                                  ))}
-                                </div>
-                              ) : (
-                                <span className="text-[10px] font-medium italic text-[#9AAAB4]">
-                                  No mentors assigned
-                                </span>
-                              )}
+                                  </div>
+                                )}
+                              </div>
                             </td>
-                          )}
 
-                          {activeTab === "mentors" && (
+                            {activeTab === "students" && (
+                              <td className="bg-white px-6 py-5 shadow-sm">
+                                {user.assignedMentors?.length > 0 ? (
+                                  <div className="flex max-w-52.5 flex-wrap gap-1.5">
+                                    {user.assignedMentors.map((mentor) => (
+                                      <span
+                                        key={mentor._id}
+                                        className="rounded-lg bg-[#E3F5F9] px-2.5 py-1.5 text-[10px] font-bold text-[#0088A6]"
+                                      >
+                                        {mentor.firstName} {mentor.lastName || ""}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-[10px] font-medium italic text-[#9AAAB4]">
+                                    No mentors assigned
+                                  </span>
+                                )}
+                              </td>
+                            )}
+
+                            {activeTab === "mentors" && (
+                              <td className="bg-white px-6 py-5 shadow-sm">
+                                <div className="flex items-center gap-2">
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E3F5F9]">
+                                    <Shield
+                                      size={15}
+                                      className="text-[#00A8CC]"
+                                    />
+                                  </div>
+                                  <span className="text-[11px] font-black uppercase text-[#0088A6]">
+                                    Mentor
+                                  </span>
+                                </div>
+                              </td>
+                            )}
+
                             <td className="bg-white px-6 py-5 shadow-sm">
                               <div className="flex items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E3F5F9]">
-                                  <Shield
-                                    size={15}
-                                    className="text-[#00A8CC]"
-                                  />
-                                </div>
-                                <span className="text-[11px] font-black uppercase text-[#0088A6]">
-                                  Mentor
+                                <div
+                                  className={`h-2.5 w-2.5 rounded-full ring-4 ${
+                                    user.status === "approved"
+                                    ? "bg-emerald-500 ring-emerald-100"
+                                    : "bg-red-500 ring-red-100"
+                                  }`}
+                                />
+                                <span
+                                  className={`text-[10px] font-black uppercase tracking-widest ${
+                                    user.status === "approved"
+                                      ? "text-emerald-600"
+                                      : "text-red-600"
+                                  }`}
+                                >
+                                  {(user.status || "approved").toUpperCase()}
                                 </span>
                               </div>
                             </td>
-                          )}
 
-                          <td className="bg-white px-6 py-5 shadow-sm">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`h-2.5 w-2.5 rounded-full ring-4 ${
-                                  user.status === "approved"
-                                    ? "bg-emerald-500 ring-emerald-100"
-                                    : "bg-red-500 ring-red-100"
-                                }`}
-                              />
-                              <span
-                                className={`text-[10px] font-black uppercase tracking-widest ${
-                                  user.status === "approved"
-                                    ? "text-emerald-600"
-                                    : "text-red-600"
-                                }`}
-                              >
-                                {(user.status || "approved").toUpperCase()}
-                              </span>
-                            </div>
-                          </td>
+                            <td className="rounded-r-2xl bg-white px-6 py-5 text-right shadow-sm">
+                              <div className="flex justify-end gap-5">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleToggleStatus(user._id, user.status)
+                                  }
+                                  disabled={actionId === user._id}
+                                  className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase transition hover:opacity-70 disabled:opacity-50 ${
+                                    user.status === "approved"
+                                      ? "text-amber-500"
+                                      : "text-emerald-600"
+                                  }`}
+                                >
+                                  {actionId === user._id ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                  ) : user.status === "approved" ? (
+                                    <Ban size={14} />
+                                  ) : (
+                                    <CheckCircle size={14} />
+                                  )}
+                                  {user.status === "approved"
+                                    ? "Suspend"
+                                    : "Approve"}
+                                </button>
 
-                          <td className="rounded-r-2xl bg-white px-6 py-5 text-right shadow-sm">
-                            <div className="flex justify-end gap-5">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleToggleStatus(user._id, user.status)
-                                }
-                                disabled={actionId === user._id}
-                                className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase transition hover:opacity-70 disabled:opacity-50 ${
-                                  user.status === "approved"
-                                    ? "text-amber-500"
-                                    : "text-emerald-600"
-                                }`}
-                              >
-                                {actionId === user._id ? (
-                                  <Loader2 size={14} className="animate-spin" />
-                                ) : user.status === "approved" ? (
-                                  <Ban size={14} />
-                                ) : (
-                                  <CheckCircle size={14} />
-                                )}
-                                {user.status === "approved"
-                                  ? "Suspend"
-                                  : "Approve"}
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => setDeleteUserModal(user)}
-                                disabled={actionId === user._id}
-                                className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-red-500 transition hover:opacity-70 disabled:opacity-50"
-                              >
-                                <Trash2 size={14} />
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteUserModal(user)}
+                                  disabled={actionId === user._id}
+                                  className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-red-500 transition hover:opacity-70 disabled:opacity-50"
+                                >
+                                  <Trash2 size={14} />
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
 
                 <div className="space-y-3 p-4 md:hidden">
-                  {filteredUsers.map((user) => (
-                    <div
-                      key={user._id}
-                      className="rounded-xl border border-[#DCE7EC] bg-[#F7FAFC] p-4"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E3F5F9] text-xs font-extrabold text-[#00A8CC]">
-                            {getInitials(user)}
-                          </div>
+                  {filteredUsers.map((user) => {
+                    const avatarUrl = getUserAvatar(user);
 
-                          <div className="min-w-0">
-                            <p className="truncate text-xs font-bold text-[#14222B]">
-                              {user.firstName} {user.lastName}
-                            </p>
-                            <p className="mt-0.5 truncate text-[10px] text-[#71838E]">
-                              {user.email}
-                            </p>
-                          </div>
-                        </div>
+                    return (
+                      <div
+                        key={user._id}
+                        className="rounded-xl border border-[#DCE7EC] bg-[#F7FAFC] p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            {avatarUrl ? (
+                              <img
+                                src={avatarUrl}
+                                alt={`${user.firstName} ${user.lastName}`}
+                                className="h-10 w-10 shrink-0 rounded-xl object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E3F5F9] text-xs font-extrabold text-[#00A8CC]">
+                                {getInitials(user)}
+                              </div>
+                            )}
 
-                        <span
-                          className={`shrink-0 rounded-lg px-2 py-1 text-[8px] font-extrabold ${
-                            user.status === "approved"
-                              ? "bg-green-50 text-green-600"
-                              : "bg-red-50 text-red-600"
-                          }`}
-                        >
-                          {(user.status || "approved").toUpperCase()}
-                        </span>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-2">
-                        <div className="rounded-xl border border-[#DCE7EC] bg-white p-3">
-                          <p className="text-[8px] font-bold uppercase tracking-wide text-[#8FA3B0]">
-                            Gender
-                          </p>
-                          <p className="mt-1 text-[10px] font-bold text-[#14222B]">
-                            {user.gender || "-"}
-                          </p>
-                        </div>
-
-                        <div className="rounded-xl border border-[#DCE7EC] bg-white p-3">
-                          <p className="text-[8px] font-bold uppercase tracking-wide text-[#8FA3B0]">
-                            Phone
-                          </p>
-                          <p className="mt-1 truncate text-[10px] font-bold text-[#14222B]">
-                            {user.phone || "-"}
-                          </p>
-                        </div>
-                      </div>
-
-                      {activeTab === "students" && (
-                        <div className="mt-2 rounded-xl border border-[#DCE7EC] bg-white p-3">
-                          <p className="text-[8px] font-bold uppercase tracking-wide text-[#8FA3B0]">
-                            Assigned Mentors
-                          </p>
-
-                          {user.assignedMentors?.length > 0 ? (
-                            <div className="mt-1.5 flex flex-wrap gap-1">
-                              {user.assignedMentors.map((mentor) => (
-                                <span
-                                  key={mentor._id}
-                                  className="rounded-lg bg-[#E3F5F9] px-2 py-1 text-[9px] font-bold text-[#0088A6]"
-                                >
-                                  {mentor.firstName} {mentor.lastName || ""}
-                                </span>
-                              ))}
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-bold text-[#14222B]">
+                                {user.firstName} {user.lastName}
+                              </p>
+                              <p className="mt-0.5 truncate text-[10px] text-[#71838E]">
+                                {user.email}
+                              </p>
                             </div>
-                          ) : (
-                            <p className="mt-1 text-[9px] italic text-[#9AAAB4]">
-                              No mentors assigned
-                            </p>
-                          )}
+                          </div>
+
+                          <span
+                            className={`shrink-0 rounded-lg px-2 py-1 text-[8px] font-extrabold ${
+                              user.status === "approved"
+                                ? "bg-green-50 text-green-600"
+                                : "bg-red-50 text-red-600"
+                            }`}
+                          >
+                            {(user.status || "approved").toUpperCase()}
+                          </span>
                         </div>
-                      )}
 
-                      <div className="mt-4 flex gap-2 border-t border-[#DCE7EC] pt-3">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleToggleStatus(user._id, user.status)
-                          }
-                          disabled={actionId === user._id}
-                          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2.5 text-[9px] font-bold ${
-                            user.status === "approved"
-                              ? "border-amber-200 bg-amber-50 text-amber-600"
-                              : "border-green-200 bg-green-50 text-green-600"
-                          } disabled:opacity-50`}
-                        >
-                          {actionId === user._id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : user.status === "approved" ? (
-                            <Ban className="h-3 w-3" />
-                          ) : (
-                            <CheckCircle className="h-3 w-3" />
-                          )}
-                          {user.status === "approved" ? "Suspend" : "Approve"}
-                        </button>
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                          <div className="rounded-xl border border-[#DCE7EC] bg-white p-3">
+                            <p className="text-[8px] font-bold uppercase tracking-wide text-[#8FA3B0]">
+                              Gender
+                            </p>
+                            <p className="mt-1 text-[10px] font-bold text-[#14222B]">
+                              {user.gender || "-"}
+                            </p>
+                          </div>
 
-                        <button
-                          type="button"
-                          onClick={() => setDeleteUserModal(user)}
-                          disabled={actionId === user._id}
-                          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 py-2.5 text-[9px] font-bold text-red-600 disabled:opacity-50"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          Delete
-                        </button>
+                          <div className="rounded-xl border border-[#DCE7EC] bg-white p-3">
+                            <p className="text-[8px] font-bold uppercase tracking-wide text-[#8FA3B0]">
+                              Phone
+                            </p>
+                            <p className="mt-1 truncate text-[10px] font-bold text-[#14222B]">
+                              {user.phone || "-"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {activeTab === "students" && (
+                          <div className="mt-2 rounded-xl border border-[#DCE7EC] bg-white p-3">
+                            <p className="text-[8px] font-bold uppercase tracking-wide text-[#8FA3B0]">
+                              Assigned Mentors
+                            </p>
+
+                            {user.assignedMentors?.length > 0 ? (
+                              <div className="mt-1.5 flex flex-wrap gap-1">
+                                {user.assignedMentors.map((mentor) => (
+                                  <span
+                                    key={mentor._id}
+                                    className="rounded-lg bg-[#E3F5F9] px-2 py-1 text-[9px] font-bold text-[#0088A6]"
+                                  >
+                                    {mentor.firstName} {mentor.lastName || ""}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="mt-1 text-[9px] italic text-[#9AAAB4]">
+                                No mentors assigned
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="mt-4 flex gap-2 border-t border-[#DCE7EC] pt-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleToggleStatus(user._id, user.status)
+                            }
+                            disabled={actionId === user._id}
+                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2.5 text-[9px] font-bold ${
+                              user.status === "approved"
+                                ? "border-amber-200 bg-amber-50 text-amber-600"
+                                : "border-green-200 bg-green-50 text-green-600"
+                            } disabled:opacity-50`}
+                          >
+                            {actionId === user._id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : user.status === "approved" ? (
+                              <Ban className="h-3 w-3" />
+                            ) : (
+                              <CheckCircle className="h-3 w-3" />
+                            )}
+                            {user.status === "approved" ? "Suspend" : "Approve"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setDeleteUserModal(user)}
+                            disabled={actionId === user._id}
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 py-2.5 text-[9px] font-bold text-red-600 disabled:opacity-50"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            Delete
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}
