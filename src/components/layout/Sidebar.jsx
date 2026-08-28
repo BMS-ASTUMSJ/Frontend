@@ -6,6 +6,7 @@ import { useTheme } from "../../context/ThemeContext";
 
 import {
   LayoutDashboard,
+  Library,
   Users,
   ClipboardCheck,
   BarChart3,
@@ -102,6 +103,13 @@ function Sidebar({ role }) {
         { name: "Assignments", path: "/admin/assignments", icon: FileText },
       ],
     },
+    {
+      name: "Documentation",
+      path: "/admin/documentation",
+      icon: Library,
+      type: "link",
+    },
+
     {
       name: "Attendance",
       path: "/admin/attendance",
