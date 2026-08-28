@@ -218,8 +218,11 @@ function Sidebar({ role }) {
       console.error("Logout error:", error);
     } finally {
       localStorage.removeItem("token");
+      localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
-      navigate("/");
+
+      navigate("/", { replace: true });
+      window.location.reload();
     }
   };
 
