@@ -1,1 +1,209 @@
 @import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+.nav-tab-item {
+  position: relative;
+  z-index: 1;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-tab-active {
+  background-color: #cce2ed;
+  color: #14222b;
+  border-top-left-radius: 1.25rem;
+  border-bottom-left-radius: 1.25rem;
+  z-index: 2;
+}
+
+.nav-tab-active * {
+  color: #14222b;
+}
+
+.nav-tab-active::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  border-bottom-right-radius: 20px;
+  box-shadow: 6px 6px 0 6px #cce2ed;
+}
+
+.nav-tab-active::after {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  border-top-right-radius: 20px;
+  box-shadow: 6px -6px 0 6px #cce2ed;
+}
+
+.nav-tab-item:not(.nav-tab-active):hover {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  color: white;
+  border-top-left-radius: 1.25rem;
+  border-bottom-left-radius: 1.25rem;
+}
+
+.nav-tab-item:not(.nav-tab-active):hover * {
+  color: #00a6c0;
+}
+
+@layer utilities {
+  html.dark,
+  html.dark body,
+  html.dark #root,
+  html.dark main,
+  html.dark section,
+  html.dark div[class*="min-h-"],
+  html.dark div[class*="h-screen"] {
+    background-color: #070e17;
+    color: #e2e8f0;
+  }
+
+  html.dark [class*="bg-[#E"],
+  html.dark [class*="bg-[#e"],
+  html.dark [class*="bg-[#F"],
+  html.dark [class*="bg-[#f"],
+  html.dark [class*="bg-[#D"],
+  html.dark [class*="bg-[#d"] {
+    background-color: #070e17;
+  }
+
+  html.dark .bg-white,
+  html.dark [class*="bg-white"],
+  html.dark .dashboard-card,
+  html.dark .content-card,
+  html.dark .rounded-2xl,
+  html.dark .rounded-xl {
+    background-color: #0d1724;
+    border-color: #1e2f3d;
+    color: #e2e8f0;
+  }
+
+  html.dark .bg-gray-50,
+  html.dark .bg-gray-100,
+  html.dark .bg-slate-50,
+  html.dark .bg-zinc-50 {
+    background-color: #0b1724;
+  }
+
+  html.dark aside {
+    background-color: #08141f;
+    border-color: #1b2b38;
+  }
+
+  html.dark header {
+    background-color: #0b1622;
+    border-color: #1c2b38;
+  }
+
+  html.dark h1,
+  html.dark h2,
+  html.dark h3,
+  html.dark h4,
+  html.dark [class*="text-[#0"],
+  html.dark [class*="text-[#1"] {
+    color: #f1f5f9;
+  }
+
+  html.dark p,
+  html.dark span,
+  html.dark label,
+  html.dark [class*="text-[#4"],
+  html.dark [class*="text-[#7"],
+  html.dark [class*="text-[#8"],
+  html.dark [class*="text-[#A"] {
+    color: #94a3b8;
+  }
+
+  html.dark table {
+    background-color: #0d1724;
+    color: #e2e8f0;
+  }
+
+  html.dark thead tr,
+  html.dark tr[class*="bg-"] {
+    background-color: #0b1724;
+  }
+
+  html.dark tbody tr {
+    background-color: #0d1724;
+    border-color: #1e2f3d;
+  }
+
+  html.dark tbody tr:hover {
+    background-color: #132536;
+  }
+
+  html.dark th,
+  html.dark td {
+    border-color: #1e2f3d;
+  }
+
+  html.dark input,
+  html.dark textarea,
+  html.dark select {
+    background-color: #0b1724;
+    color: #e2e8f0;
+    border-color: #294052;
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: #64748b;
+  }
+
+  html.dark .bg-amber-50 {
+    background-color: #30230c;
+  }
+  html.dark .bg-red-50 {
+    background-color: #321318;
+  }
+  html.dark .bg-green-50,
+  html.dark .bg-emerald-50 {
+    background-color: #09271c;
+  }
+
+  html.dark .text-amber-600 {
+    color: #fbbf24;
+  }
+  html.dark .text-red-600 {
+    color: #f87171;
+  }
+  html.dark .text-emerald-600 {
+    color: #34d399;
+  }
+
+  html.dark .nav-tab-active {
+    background-color: #162c3d;
+  }
+
+  html.dark .nav-tab-active * {
+    color: #00a6c0;
+  }
+
+  html.dark .nav-tab-active::before {
+    box-shadow: 6px 6px 0 6px #162c3d;
+  }
+
+  html.dark .nav-tab-active::after {
+    box-shadow: 6px -6px 0 6px #162c3d;
+  }
+
+  html.dark ::-webkit-scrollbar {
+    width: 8px;
+  }
+  html.dark ::-webkit-scrollbar-track {
+    background: #070e17;
+  }
+  html.dark ::-webkit-scrollbar-thumb {
+    background: #294052;
+    border-radius: 999px;
+  }
+}

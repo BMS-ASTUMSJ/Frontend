@@ -1,122 +1,204 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Toaster } from "react-hot-toast";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 
-function App() {
-  const [count, setCount] = useState(0)
+import ChangePassword from "./pages/ChangePassword";
+import Navbar from "./components/layout/Navbar";
+
+// Admin Imports
+import AdminSessions from "./pages/admin/AdminSession";
+import BatchManagement from "./pages/admin/BatchManagement";
+import AdminBatchHistory from "./pages/admin/BatchHistory";
+import TeamManagement from "./pages/admin/TeamManagement";
+import ApplicantsPage from "./pages/admin/ApplicantsPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminAttendance from "./pages/admin/AdminAttendance";
+import AdminProgress from "./pages/admin/AdminProgress";
+import AdminAnnouncements from "./pages/admin/Announcements";
+import AdminProfile from "./pages/admin/AdminProfile";
+import UserManagement from "./pages/admin/UserManagement";
+import AdminAssignment from "./pages/admin/Assignment";
+import AIDocumentation from "./pages/admin/AIDocumentation";
+// Mentor Imports
+import MentorDashboard from "./pages/mentor/MentorDashboard";
+import MentorAttendance from "./pages/mentor/MentorAttendance";
+import MentorAnnouncements from "./pages/mentor/Announcements";
+import MentorProgress from "./pages/mentor/MentorProgress";
+import MyStudents from "./pages/mentor/MyStudents";
+import MentorAssignment from "./pages/mentor/Assignment";
+import MentorBatchHistory from "./pages/mentor/BatchHistory";
+import MentorProfile from "./pages/mentor/MentorProfile";
+
+// Student Imports
+import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentAttendance from "./pages/student/StudentAttendance";
+import StudentProgress from "./pages/student/StudentProgress";
+import StudentAnnouncements from "./pages/student/Announcement";
+import StudentAssignment from "./pages/student/Assignment";
+import StudentProfile from "./pages/student/StudentProfile";
+
+// General Imports
+import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterationPage from "./pages/RegisterationPage";
+import ForgotPassword from "./pages/ForgotPassword";
+
+// Layouts & Protection
+import AdminLayout from "./layouts/AdminLayout";
+import MentorLayout from "./layouts/MentorLayout";
+import StudentLayout from "./layouts/StudentLayout";
+import ProtectedRoute from "./routes/ProtectedRoute";
+
+// AI Assistant
+import AIAssistant from "./components/ai/AIAssistant";
+
+function AppContent() {
+  const location = useLocation();
+
+  const showNavbar = location.pathname === "/";
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      {showNavbar && <Navbar />}
 
-      <div className="ticks"></div>
+      <Toaster position="top-right" reverseOrder={false} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <Routes>
+        {/* =====================================================
+            PUBLIC ROUTES
+        ====================================================== */}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+        <Route path="/" element={<LandingPage />} />
+
+        <Route path="/login" element={<LoginPage />} />
+
+        <Route path="/register" element={<RegisterationPage />} />
+
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        <Route path="/change-password" element={<ChangePassword />} />
+
+        {/* =====================================================
+            ADMIN ROUTES
+        ====================================================== */}
+
+        <Route element={<ProtectedRoute allowedRole="admin" />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+
+            <Route path="dashboard" element={<AdminDashboard />} />
+
+            <Route path="sessions" element={<AdminSessions />} />
+
+            <Route path="batches" element={<BatchManagement />} />
+
+            <Route path="batch-history" element={<AdminBatchHistory />} />
+
+            <Route path="teams" element={<TeamManagement />} />
+
+            <Route path="applicants" element={<ApplicantsPage />} />
+
+            <Route path="users" element={<UserManagement />} />
+
+            <Route path="attendance" element={<AdminAttendance />} />
+
+            <Route path="progress" element={<AdminProgress />} />
+
+            <Route path="announcements" element={<AdminAnnouncements />} />
+
+            <Route path="assignments" element={<AdminAssignment />} />
+
+            <Route path="profile" element={<AdminProfile />} />
+            <Route path="documentation" element={<AIDocumentation />} />
+          </Route>
+        </Route>
+
+        {/* =====================================================
+            MENTOR ROUTES
+        ====================================================== */}
+
+        <Route element={<ProtectedRoute allowedRole="mentor" />}>
+          <Route path="/mentor" element={<MentorLayout />}>
+            <Route index element={<MentorDashboard />} />
+
+            <Route path="dashboard" element={<MentorDashboard />} />
+
+            <Route path="students" element={<MyStudents />} />
+
+            <Route path="attendance" element={<MentorAttendance />} />
+
+            <Route path="progress" element={<MentorProgress />} />
+
+            <Route path="assignments" element={<MentorAssignment />} />
+
+            <Route path="announcements" element={<MentorAnnouncements />} />
+
+            <Route path="my-batch" element={<MentorBatchHistory />} />
+
+            <Route path="profile" element={<MentorProfile />} />
+          </Route>
+        </Route>
+
+        {/* =====================================================
+            STUDENT ROUTES
+        ====================================================== */}
+
+        <Route element={<ProtectedRoute allowedRole="student" />}>
+          <Route path="/student" element={<StudentLayout />}>
+            <Route index element={<StudentDashboard />} />
+
+            <Route path="dashboard" element={<StudentDashboard />} />
+
+            <Route path="progress" element={<StudentProgress />} />
+
+            <Route path="attendance" element={<StudentAttendance />} />
+
+            <Route path="announcements" element={<StudentAnnouncements />} />
+
+            <Route path="assignments" element={<StudentAssignment />} />
+
+            <Route path="profile" element={<StudentProfile />} />
+          </Route>
+        </Route>
+
+        {/* =====================================================
+            404
+        ====================================================== */}
+
+        <Route
+          path="*"
+          element={
+            <div className="flex min-h-screen items-center justify-center p-20 text-center">
+              <div>
+                <h1 className="text-3xl font-bold text-slate-800">404</h1>
+
+                <p className="mt-2 text-slate-500">Page Not Found</p>
+              </div>
+            </div>
+          }
+        />
+      </Routes>
+
+      {/* =====================================================
+          AI ASSISTANT
+          Available globally
+      ====================================================== */}
+
+      <AIAssistant />
     </>
-  )
+  );
 }
 
-export default App
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}
+
+export default App;
