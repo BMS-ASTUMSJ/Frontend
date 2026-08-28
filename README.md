@@ -456,22 +456,26 @@ If needed, you can also update the CORS settings in the backend if your frontend
 
  ## --Login Page--
 
-https://drive.google.com/file/d/1cDThwrF59XrEVoHh_lZh8GdFOXap2YCX/view?usp=sharing
+<img width="1280" height="608" alt="image" src="https://github.com/user-attachments/assets/4e99e369-94df-421f-8ebc-e3ee49987f6f" />
+
 
  ## --Admin Dashboard--
  
-https://drive.google.com/file/d/1HRu7scZa78AHJIHnLvMY2MpPetblP-28/view?usp=sharing
+<img width="1280" height="629" alt="image" src="https://github.com/user-attachments/assets/ae5f12e9-4ff1-44aa-95e1-a2cf31766dd8" />
+
 
 
  ## --Responsive Mentor Side--
+<img width="699" height="842" alt="image" src="https://github.com/user-attachments/assets/8fe3e8d5-b9f4-42a4-a7ea-ee6066be67af" />
 
-https://drive.google.com/file/d/1nlvUb4w-Y_wtp5vGmSX1Ghall0gOS2ai/view?usp=sharing
 
  ## --Responsive Dark-mode Student Dashboard--
 
-https://drive.google.com/file/d/1b3I4AxPEVwAL7QTJtI1wo1x1cNkYAYTH/view?usp=sharing
+<img width="888" height="884" alt="image" src="https://github.com/user-attachments/assets/d6b0c43b-ac4c-4aa6-9333-fa271357a5f1" />
+
 
  ## --Mentor Dashboard--
 
- https://drive.google.com/file/d/1FueQkM1C8IRBsAcNkn5IXcbLZ46aym--/view?usp=sharing
+<img width="1280" height="621" alt="image" src="https://github.com/user-attachments/assets/981b2e63-9291-4bd3-b7c4-aaf973e25ed9" />
+
 
