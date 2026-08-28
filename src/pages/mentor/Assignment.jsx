@@ -248,9 +248,12 @@ const Assignment = () => {
 
     if (!raw) return null;
 
+    const backendBase =
+      import.meta.env.VITE_BACKEND_URL || "https://bms-backend-6ali.onrender.com";
+
     return raw.startsWith("http")
       ? raw
-      : `http://localhost:5000/${raw.replace(/^\/+/, "")}`;
+      : `${backendBase}/${raw.replace(/^\/+/, "")}`;
   };
 
   // Check whether current score is invalid
