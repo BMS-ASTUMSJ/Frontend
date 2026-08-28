@@ -29,9 +29,7 @@ const AIAssistant = () => {
   const [loading, setLoading] = useState(false);
   const [minimized, setMinimized] = useState(false);
 
-  // ======================================================
-  // CHAT HISTORY
-  // ======================================================
+
 
   const [chats, setChats] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
@@ -43,11 +41,11 @@ const AIAssistant = () => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // ======================================================
-  // AUTHENTICATION
-  // ======================================================
 
-  const token = localStorage.getItem("token");
+
+  const token =
+    localStorage.getItem("accessToken") || localStorage.getItem("token");
+
   const storedUser = localStorage.getItem("user");
 
   const isAuthenticated = Boolean(token);
@@ -61,15 +59,12 @@ const AIAssistant = () => {
     currentUserId = null;
   }
 
-  // ======================================================
-  // RESET CHAT WHEN USER CHANGES
-  // ======================================================
+
 
   const previousUserIdRef = useRef(currentUserId);
 
   useEffect(() => {
     if (previousUserIdRef.current !== currentUserId) {
-      // User changed or logged out
       setMessages([]);
       setCurrentChatId(null);
       setInput("");
@@ -79,9 +74,6 @@ const AIAssistant = () => {
     }
   }, [currentUserId]);
 
-  // ======================================================
-  // HELPER FUNCTIONS
-  // ======================================================
 
   const getChatId = (chat) => {
     return chat?._id || chat?.id || chat?.chatId;
@@ -94,11 +86,14 @@ const AIAssistant = () => {
   const normalizeMessage = (message, index = 0) => {
     return {
       id: message?._id || message?.id || `message-${Date.now()}-${index}`,
+
       role:
         message?.role ||
         message?.sender ||
         (message?.isUser ? "user" : "assistant"),
+
       content: message?.content || message?.message || message?.text || "",
+
       sources: message?.sources || [],
       error: message?.error || false,
     };
@@ -111,9 +106,7 @@ const AIAssistant = () => {
     return Array.isArray(possibleChats) ? possibleChats : [];
   };
 
-  // ======================================================
-  // SCROLL TO BOTTOM
-  // ======================================================
+ 
 
   useEffect(() => {
     if (open && !minimized) {
@@ -123,9 +116,7 @@ const AIAssistant = () => {
     }
   }, [messages, open, minimized]);
 
-  // ======================================================
-  // FOCUS INPUT
-  // ======================================================
+
 
   useEffect(() => {
     if (open && !minimized) {
@@ -135,9 +126,6 @@ const AIAssistant = () => {
     }
   }, [open, minimized, currentChatId]);
 
-  // ======================================================
-  // LOAD CHAT HISTORY
-  // ======================================================
 
   const loadChatHistory = async () => {
     if (!isAuthenticated) {
@@ -164,9 +152,6 @@ const AIAssistant = () => {
     }
   };
 
-  // ======================================================
-  // LOAD HISTORY WHEN ASSISTANT OPENS
-  // ======================================================
 
   useEffect(() => {
     if (open && isAuthenticated) {
@@ -174,9 +159,7 @@ const AIAssistant = () => {
     }
   }, [open, isAuthenticated]);
 
-  // ======================================================
-  // LOAD SELECTED CHAT
-  // ======================================================
+ 
 
   const loadChat = async (chatId) => {
     if (!isAuthenticated || !chatId) {
@@ -215,9 +198,7 @@ const AIAssistant = () => {
     }
   };
 
-  // ======================================================
-  // CREATE NEW CHAT
-  // ======================================================
+  
 
   const createNewChat = async () => {
     if (!isAuthenticated || creatingChat) {
@@ -267,9 +248,7 @@ const AIAssistant = () => {
     }
   };
 
-  // ======================================================
-  // DELETE CHAT
-  // ======================================================
+ 
 
   const deleteChat = async (event, chatId) => {
     event?.stopPropagation();
@@ -298,9 +277,7 @@ const AIAssistant = () => {
     }
   };
 
-  // ======================================================
-  // SEND MESSAGE
-  // ======================================================
+
 
   const sendMessage = async (event) => {
     event?.preventDefault();
@@ -325,9 +302,7 @@ const AIAssistant = () => {
     try {
       let response;
 
-      // ==================================================
-      // GUEST
-      // ==================================================
+      
 
       if (!isAuthenticated) {
         response = await api.post("/chat/public", {
@@ -335,9 +310,7 @@ const AIAssistant = () => {
         });
       }
 
-      // ==================================================
-      // AUTHENTICATED
-      // ==================================================
+     
       else {
         let chatId = currentChatId;
 
@@ -378,6 +351,8 @@ const AIAssistant = () => {
           message: cleanMessage,
         });
       }
+
+     
 
       const data = response.data;
 
@@ -433,13 +408,13 @@ const AIAssistant = () => {
     }
   };
 
-  // ======================================================
-  // CLEAR CURRENT CHAT
-  // ======================================================
+
 
   const clearChat = () => {
     setMessages([]);
   };
+
+
 
   const formatChatDate = (chat) => {
     const date = chat?.updatedAt || chat?.createdAt || chat?.date;
@@ -458,16 +433,11 @@ const AIAssistant = () => {
     }
   };
 
-  // ======================================================
-  // RENDER
-  // ======================================================
+  
 
   return (
     <>
-      {/* ==================================================
-          FLOATING BUTTON
-      ================================================== */}
-
+      
       {!open && (
         <button
           type="button"
@@ -522,9 +492,7 @@ const AIAssistant = () => {
         </button>
       )}
 
-      {/* ==================================================
-          ASSISTANT WINDOW
-      ================================================== */}
+  
 
       {open && (
         <div
@@ -547,11 +515,9 @@ const AIAssistant = () => {
             shadow-2xl
             sm:bottom-6
             sm:right-6
-            "
+          "
         >
-          {/* ==============================================
-              HEADER
-          ============================================== */}
+         
 
           <div
             className="
@@ -628,9 +594,7 @@ const AIAssistant = () => {
 
           {!minimized && (
             <div className="flex min-h-0 flex-1">
-              {/* ==========================================
-                  CHAT HISTORY SIDEBAR
-              ========================================== */}
+      
 
               {isAuthenticated && historyOpen && (
                 <aside
@@ -645,7 +609,7 @@ const AIAssistant = () => {
                     bg-white
                   "
                 >
-                  {/* Sidebar Header */}
+                 
 
                   <div
                     className="
@@ -683,7 +647,7 @@ const AIAssistant = () => {
                     </button>
                   </div>
 
-                  {/* New Chat */}
+                 
 
                   <div className="p-2">
                     <button
@@ -719,8 +683,7 @@ const AIAssistant = () => {
                     </button>
                   </div>
 
-                  {/* Chat List */}
-
+             
                   <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
                     {historyLoading ? (
                       <div className="flex items-center justify-center py-8">
@@ -816,7 +779,7 @@ const AIAssistant = () => {
                                 </div>
                               </button>
 
-                              {/* Delete */}
+                             
 
                               <button
                                 type="button"
@@ -845,12 +808,10 @@ const AIAssistant = () => {
                 </aside>
               )}
 
-              {/* ==========================================
-                  MAIN CHAT AREA
-              ========================================== */}
+              
 
               <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                {/* Show History Button */}
+               
 
                 {isAuthenticated && !historyOpen && (
                   <div className="flex items-center border-b border-slate-200 bg-white px-3 py-2">
@@ -879,9 +840,7 @@ const AIAssistant = () => {
                   </div>
                 )}
 
-                {/* ========================================
-                    CHAT BODY
-                ======================================== */}
+               
 
                 <div
                   className="
@@ -893,7 +852,7 @@ const AIAssistant = () => {
                     py-4
                   "
                 >
-                  {/* Loading */}
+                 
 
                   {chatLoading ? (
                     <div className="flex h-full items-center justify-center">
@@ -909,7 +868,7 @@ const AIAssistant = () => {
                       </div>
                     </div>
                   ) : messages.length === 0 ? (
-                    /* Empty State */
+                 
 
                     <div className="flex h-full items-center justify-center">
                       <div className="max-w-70 text-center">
@@ -960,7 +919,7 @@ const AIAssistant = () => {
                                 : "flex-row"
                             }`}
                           >
-                            {/* Avatar */}
+                           
 
                             <div
                               className={`
@@ -985,7 +944,7 @@ const AIAssistant = () => {
                               )}
                             </div>
 
-                            {/* Message */}
+                           
 
                             <div>
                               <div
@@ -1011,7 +970,7 @@ const AIAssistant = () => {
                         </div>
                       ))}
 
-                      {/* Loading */}
+                   
 
                       {loading && (
                         <div className="mb-4 flex justify-start">
@@ -1060,9 +1019,7 @@ const AIAssistant = () => {
                   )}
                 </div>
 
-                {/* ========================================
-                    FOOTER
-                ======================================== */}
+               
 
                 <div className="border-t border-slate-200 bg-white p-3">
                   <div className="mb-2 flex justify-end">
@@ -1169,7 +1126,7 @@ const AIAssistant = () => {
                     </button>
                   </form>
 
-                  {/* Guest */}
+             
 
                   {!isAuthenticated && (
                     <p className="mt-2 text-center text-[10px] text-slate-400">
@@ -1177,7 +1134,7 @@ const AIAssistant = () => {
                     </p>
                   )}
 
-                  {/* Authenticated */}
+                  
 
                   {isAuthenticated && (
                     <p className="mt-2 text-center text-[10px] text-slate-400">

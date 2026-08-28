@@ -806,13 +806,23 @@ function MentorDashboard() {
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <span
-                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black ${
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-base font-black ${
                             idx === 0
-                              ? "bg-[#00A8CC] text-white shadow-sm shadow-[#00A8CC]/30"
-                              : "bg-slate-200 text-slate-600"
+                              ? "bg-[#FFF7D6] shadow-sm"
+                              : idx === 1
+                                ? "bg-slate-100"
+                                : idx === 2
+                                  ? "bg-orange-50"
+                                  : "bg-slate-100"
                           }`}
                         >
-                          {idx + 1}
+                          {idx === 0
+                            ? "🥇"
+                            : idx === 1
+                              ? "🥈"
+                              : idx === 2
+                                ? "🥉"
+                                : `#${idx + 1}`}
                         </span>
 
                         <div className="min-w-0">
