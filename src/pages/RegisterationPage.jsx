@@ -838,5 +838,5 @@ function RegisterationPage() {
     </div>
   );
 }
-
+//expot
 export default RegisterationPage;
