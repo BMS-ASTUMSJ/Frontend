@@ -451,7 +451,8 @@ If needed, you can also update the CORS settings in the backend if your frontend
 
  ## --Landing Page--
 
-https://drive.google.com/file/d/15fJyTvhpq5z05VfQfsAsyRrxINEdDMew/view?usp=sharing
+<img width="1280" height="610" alt="image" src="https://github.com/user-attachments/assets/0ab93c8a-0c99-46d4-b290-b48b6594a575" />
+
 
  ## --Login Page--
 
