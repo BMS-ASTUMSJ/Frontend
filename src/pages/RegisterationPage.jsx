@@ -81,6 +81,7 @@ function RegisterationPage() {
 
     checkRegistrationStatus();
   }, []);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -209,6 +210,7 @@ function RegisterationPage() {
     setShowSuccessModal(false);
     navigate("/");
   };
+
   if (checkingRegistration) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#14222B]">
@@ -234,7 +236,7 @@ function RegisterationPage() {
           }}
         >
           <div
-            className="absolute -bottom-32 -left-28 h-92.5 w-92.5 rounded-full"
+            className="pointer-events-none absolute -bottom-32 -left-28 h-92.5 w-92.5 rounded-full"
             style={{
               background:
                 "radial-gradient(circle at 30% 25%, #daf3f6 0%, #b0d3da 38%, #7b9fa8 68%, #526f78 100%)",
@@ -243,9 +245,9 @@ function RegisterationPage() {
             }}
           />
 
-          <div className="relative z-10 flex h-full flex-col p-8 xl:p-10">
+          <div className="relative z-10 flex h-full flex-col justify-between p-8 xl:p-10">
             <div>
-              <div className="h-20 w-20 overflow-hidden rounded-full">
+              <div className="h-16 w-16 overflow-hidden rounded-full xl:h-20 xl:w-20">
                 <img
                   src={logo}
                   alt="ASTUMSJ Logo"
@@ -253,16 +255,16 @@ function RegisterationPage() {
                 />
               </div>
 
-              <div className="mt-14 max-w-sm">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#00A8CC]">
+              <div className="mt-8 max-w-sm xl:mt-10">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00A8CC] xl:text-sm">
                   Welcome to
                 </p>
 
-                <h2 className="mt-3 text-4xl font-black leading-[1.05] tracking-tight text-white xl:text-5xl">
+                <h2 className="mt-2 text-3xl font-black leading-[1.05] tracking-tight text-white xl:text-5xl">
                   ASTUMSJ
                 </h2>
 
-                <p className="mt-5 text-base leading-7 text-[#9fc4cf]">
+                <p className="mt-3 text-sm leading-6 text-[#9fc4cf] xl:mt-4 xl:text-base xl:leading-7">
                   Build projects.
                   <br />
                   Solve problems.
@@ -270,11 +272,11 @@ function RegisterationPage() {
                   Grow together.
                 </p>
 
-                <div className="mt-5 h-1 w-12 rounded-full bg-[#00A8CC]" />
+                <div className="mt-4 h-1 w-12 rounded-full bg-[#00A8CC]" />
               </div>
             </div>
 
-            <div className="absolute left-8 top-1/2 w-[calc(100%-64px)] -translate-y-1/2 space-y-5 xl:left-10 xl:w-[calc(100%-80px)]">
+            <div className="my-6 space-y-4 xl:space-y-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f768e]/40 text-[#00A8CC]">
                   <Users size={18} />
@@ -333,6 +335,8 @@ function RegisterationPage() {
                 </div>
               </div>
             </div>
+
+            <div />
           </div>
         </div>
 
@@ -347,7 +351,7 @@ function RegisterationPage() {
             }}
           />
 
-          <div className="relative z-10 h-full overflow-y-auto px-5 py-7 sm:px-8 md:px-10 lg:px-12 xl:px-14">
+          <div className="relative z-10 flex h-full flex-col overflow-y-auto px-5 py-7 sm:px-8 md:px-10 lg:px-12 xl:px-14">
             <div className="mb-7 lg:hidden">
               <button
                 type="button"
@@ -380,36 +384,38 @@ function RegisterationPage() {
               </div>
 
               {activeBatch && (
-                <div className="absolute right-0 top-0 z-20 rounded-full bg-[#E3F5F9] px-5 py-2.5 text-xs font-bold text-[#0f768e] shadow-sm">
+                <div className="mt-3 inline-block rounded-full bg-[#E3F5F9] px-5 py-2.5 text-xs font-bold text-[#0f768e] shadow-sm sm:absolute sm:right-0 sm:top-0 sm:mt-0">
                   {activeBatch.name}
                 </div>
               )}
             </div>
 
             {!isRegistrationOpen ? (
-              <div className="relative z-20 rounded-3xl border border-[#B4D7E2] bg-white p-8 text-center shadow-sm">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E3F5F9] text-[#0f768e]">
-                  <Lock className="h-7 w-7" />
+              <div className="my-auto py-8">
+                <div className="relative z-20 mx-auto max-w-xl rounded-3xl border border-[#B4D7E2] bg-white p-8 text-center shadow-sm">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E3F5F9] text-[#0f768e]">
+                    <Lock className="h-7 w-7" />
+                  </div>
+
+                  <h2 className="text-xl font-bold text-[#14222B]">
+                    Registration is Currently Closed
+                  </h2>
+
+                  <p className="mt-2 text-sm leading-relaxed text-[#8FA3B0]">
+                    Applications for the upcoming bootcamp cohort are not
+                    currently being accepted. Please check back later or contact
+                    the admin.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleBackToHome}
+                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#00A8CC] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0088A6]"
+                  >
+                    Return to Home
+                    <ArrowRight size={16} />
+                  </button>
                 </div>
-
-                <h2 className="text-xl font-bold text-[#14222B]">
-                  Registration is Currently Closed
-                </h2>
-
-                <p className="mt-2 text-sm text-[#8FA3B0]">
-                  Applications for the upcoming bootcamp cohort are not
-                  currently being accepted. Please check back later or contact
-                  the admin.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={handleBackToHome}
-                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#00A8CC] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0088A6]"
-                >
-                  Return to Home
-                  <ArrowRight size={16} />
-                </button>
               </div>
             ) : (
               <>
