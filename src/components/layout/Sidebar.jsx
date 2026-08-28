@@ -6,6 +6,7 @@ import { useTheme } from "../../context/ThemeContext";
 
 import {
   LayoutDashboard,
+  Library,
   Users,
   ClipboardCheck,
   BarChart3,
@@ -23,7 +24,6 @@ import {
   X,
   Sun,
   Moon,
-  Library,
 } from "lucide-react";
 
 function Sidebar({ role }) {
@@ -32,10 +32,6 @@ function Sidebar({ role }) {
   const { theme, toggleTheme } = useTheme();
 
   const currentRole = role?.toLowerCase();
-
-  // =========================================================
-  // STUDENT MENU
-  // =========================================================
 
   const studentMenuItems = [
     {
@@ -76,98 +72,37 @@ function Sidebar({ role }) {
     },
   ];
 
-  // =========================================================
-  // ADMIN MENU
-  // =========================================================
-
   const adminMenuItems = [
-    {
-      name: "Dashboard",
-      path: "/admin",
-      icon: LayoutDashboard,
-      type: "link",
-    },
-
-    // -------------------------------------------------------
-    // USER MANAGEMENT
-    // -------------------------------------------------------
-
+    { name: "Dashboard", path: "/admin", icon: LayoutDashboard, type: "link" },
     {
       name: "User Management",
       icon: UserCog,
       type: "group",
       children: [
-        {
-          name: "Applicants",
-          path: "/admin/applicants",
-          icon: Users,
-        },
-        {
-          name: "Users",
-          path: "/admin/users",
-          icon: UserCircle,
-        },
+        { name: "Applicants", path: "/admin/applicants", icon: Users },
+        { name: "Users", path: "/admin/users", icon: UserCircle },
       ],
     },
-
-    // -------------------------------------------------------
-    // BOOTCAMP
-    // -------------------------------------------------------
-
     {
       name: "Bootcamp",
       icon: GraduationCap,
       type: "group",
       children: [
-        {
-          name: "Batch",
-          path: "/admin/batches",
-          icon: Users,
-        },
-        {
-          name: "Teams",
-          path: "/admin/teams",
-          icon: Users,
-        },
-        {
-          name: "Batch History",
-          path: "/admin/batch-history",
-          icon: Archive,
-        },
+        { name: "Batch", path: "/admin/batches", icon: Users },
+        { name: "Teams", path: "/admin/teams", icon: Users },
+        { name: "Batch History", path: "/admin/batch-history", icon: Archive },
       ],
     },
-
-    // -------------------------------------------------------
-    // LEARNING
-    // -------------------------------------------------------
-
     {
       name: "Learning",
       icon: BookOpen,
       type: "group",
       children: [
-        {
-          name: "Weekly Sessions",
-          path: "/admin/sessions",
-          icon: Layers,
-        },
-        {
-          name: "Progress",
-          path: "/admin/progress",
-          icon: BarChart3,
-        },
-        {
-          name: "Assignments",
-          path: "/admin/assignments",
-          icon: FileText,
-        },
+        { name: "Weekly Sessions", path: "/admin/sessions", icon: Layers },
+        { name: "Progress", path: "/admin/progress", icon: BarChart3 },
+        { name: "Assignments", path: "/admin/assignments", icon: FileText },
       ],
     },
-
-    // -------------------------------------------------------
-    // AI DOCUMENTATION
-    // -------------------------------------------------------
-
     {
       name: "Documentation",
       path: "/admin/documentation",
@@ -175,51 +110,23 @@ function Sidebar({ role }) {
       type: "link",
     },
 
-    // -------------------------------------------------------
-    // ATTENDANCE
-    // -------------------------------------------------------
-
     {
       name: "Attendance",
       path: "/admin/attendance",
       icon: ClipboardCheck,
       type: "link",
     },
-
-    // -------------------------------------------------------
-    // ANNOUNCEMENTS
-    // -------------------------------------------------------
-
     {
       name: "Announcements",
       path: "/admin/announcements",
       icon: Megaphone,
       type: "link",
     },
-
-    // -------------------------------------------------------
-    // PROFILE
-    // -------------------------------------------------------
-
-    {
-      name: "Profile",
-      path: "/admin/profile",
-      icon: UserCircle,
-      type: "link",
-    },
+    { name: "Profile", path: "/admin/profile", icon: UserCircle, type: "link" },
   ];
 
-  // =========================================================
-  // MENTOR MENU
-  // =========================================================
-
   const mentorMenuItems = [
-    {
-      name: "Dashboard",
-      path: "/mentor",
-      icon: LayoutDashboard,
-      type: "link",
-    },
+    { name: "Dashboard", path: "/mentor", icon: LayoutDashboard, type: "link" },
     {
       name: "My Students",
       path: "/mentor/students",
@@ -256,35 +163,18 @@ function Sidebar({ role }) {
       icon: UserCircle,
       type: "link",
     },
-    {
-      name: "My Batch",
-      path: "/mentor/my-batch",
-      icon: Archive,
-      type: "link",
-    },
+    { name: "My Batch", path: "/mentor/my-batch", icon: Archive, type: "link" },
   ];
 
-  // =========================================================
-  // SELECT MENU BASED ON ROLE
-  // =========================================================
-
   let menuItems = studentMenuItems;
-
   if (currentRole === "admin") {
     menuItems = adminMenuItems;
   } else if (currentRole === "mentor") {
     menuItems = mentorMenuItems;
   }
 
-  // =========================================================
-  // FIND ACTIVE ADMIN GROUP
-  // =========================================================
-
   const getActiveGroup = () => {
-    if (currentRole !== "admin") {
-      return null;
-    }
-
+    if (currentRole !== "admin") return null;
     const activeGroup = adminMenuItems.find(
       (item) =>
         item.type === "group" &&
@@ -292,41 +182,24 @@ function Sidebar({ role }) {
           location.pathname.startsWith(child.path),
         ),
     );
-
     return activeGroup?.name || null;
   };
-
-  // =========================================================
-  // STATE
-  // =========================================================
 
   const [openGroup, setOpenGroup] = useState(getActiveGroup);
   const [hoveredGroup, setHoveredGroup] = useState(null);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // =========================================================
-  // KEEP ACTIVE GROUP OPEN
-  // =========================================================
-
   useEffect(() => {
     const activeGroup = getActiveGroup();
-
     if (activeGroup) {
       setOpenGroup(activeGroup);
     }
   }, [location.pathname, currentRole]);
 
-  // =========================================================
-  // CLOSE MOBILE SIDEBAR AFTER NAVIGATION
-  // =========================================================
-
+  // Close the drawer whenever the route changes
   useEffect(() => {
     setIsMobileOpen(false);
   }, [location.pathname]);
-
-  // =========================================================
-  // CHECK ACTIVE GROUP
-  // =========================================================
 
   const isGroupActive = (item) => {
     return item.children?.some((child) =>
@@ -334,17 +207,9 @@ function Sidebar({ role }) {
     );
   };
 
-  // =========================================================
-  // TOGGLE GROUP
-  // =========================================================
-
   const toggleGroup = (groupName) => {
     setOpenGroup((current) => (current === groupName ? null : groupName));
   };
-
-  // =========================================================
-  // LOGOUT
-  // =========================================================
 
   const handleLogout = async () => {
     try {
@@ -354,43 +219,26 @@ function Sidebar({ role }) {
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      localStorage.removeItem("role");
-
       navigate("/");
     }
   };
 
-  // =========================================================
-  // RENDER
-  // =========================================================
-
   return (
     <>
-      {/* =====================================================
-          MOBILE / TABLET TOP BAR
-      ====================================================== */}
-
       <div className="fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b border-[#293E4C] bg-[#1b3c47] px-4 lg:hidden">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full">
-            <img
-              src={logo}
-              alt="ASTU MSJ Logo"
-              className="h-full w-full object-cover"
-            />
+            <img src={logo} alt="Logo" className="h-full w-full object-cover" />
           </div>
-
           <div>
-            <h1 className="text-base font-bold leading-tight tracking-wide text-white">
+            <h1 className="text-base font-bold leading-tight tracking-wide text-[#FFFFFF]">
               ASTU MSJ
             </h1>
-
             <p className="text-[9px] font-semibold tracking-[0.2em] text-[#00a6c0]">
               BOOTCAMP
             </p>
           </div>
         </div>
-
         <button
           type="button"
           onClick={() => setIsMobileOpen((prev) => !prev)}
@@ -405,10 +253,6 @@ function Sidebar({ role }) {
         </button>
       </div>
 
-      {/* =====================================================
-          MOBILE BACKDROP
-      ====================================================== */}
-
       {isMobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -417,56 +261,32 @@ function Sidebar({ role }) {
         />
       )}
 
-      {/* =====================================================
-          SIDEBAR
-      ====================================================== */}
-
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-[#293E4C] bg-[#1b3c47] text-white transition-transform duration-300 ease-in-out lg:z-40 lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-[#293E4C] bg-[#1b3c47] text-[#FFFFFF] transition-transform duration-300 ease-in-out lg:z-40 lg:translate-x-0 ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* ===================================================
-            SIDEBAR HEADER
-        ==================================================== */}
-
         <div className="flex h-20 shrink-0 items-center justify-between border-b border-[#293E4C] px-6">
-          <div className="h-15 w-15 overflow-hidden rounded-full">
-            <img
-              src={logo}
-              alt="ASTU MSJ Logo"
-              className="h-full w-full object-cover"
-            />
+          <div className="w-15 h-15 rounded-full overflow-hidden">
+            <img src={logo} alt="Logo" className="w-full h-full object-cover" />
           </div>
-
           <div>
-            <h1 className="text-xl font-bold tracking-wide text-white">
+            <h1 className="text-xl font-bold tracking-wide text-[#FFFFFF]">
               ASTU MSJ
             </h1>
-
             <p className="text-xs font-semibold tracking-[0.2em] text-[#00a6c0]">
               BOOTCAMP
             </p>
           </div>
-
           <div className="flex h-3 w-3 items-center justify-center rounded-full bg-[#00A8CC] shadow-[0_0_8px_#00A8CC]" />
         </div>
 
-        {/* ===================================================
-            NAVIGATION
-        ==================================================== */}
-
-        <nav className="flex-1 space-y-2 overflow-y-auto py-6 pl-4 pr-0">
+        <nav className="flex-1 overflow-y-auto pl-4 py-6 pr-0 space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
 
-            // =================================================
-            // GROUP ITEM
-            // =================================================
-
             if (item.type === "group") {
               const active = isGroupActive(item);
-
               const isExpanded =
                 openGroup === item.name || hoveredGroup === item.name;
 
@@ -486,7 +306,6 @@ function Sidebar({ role }) {
                   >
                     <span className="flex items-center gap-3">
                       <Icon className="h-5 w-5 shrink-0" />
-
                       <span>{item.name}</span>
                     </span>
 
@@ -499,12 +318,8 @@ function Sidebar({ role }) {
                     />
                   </button>
 
-                  {/* =========================================
-                      GROUP CHILDREN
-                  ========================================== */}
-
                   {isExpanded && (
-                    <div className="ml-4 space-y-1 border-l-2 border-[#293E4C] py-1 pl-3">
+                    <div className="ml-4 space-y-1 border-l-2 border-[#293E4C] pl-3 py-1 transition-all duration-200">
                       {item.children.map((child) => {
                         const ChildIcon = child.icon;
 
@@ -515,13 +330,12 @@ function Sidebar({ role }) {
                             className={({ isActive }) =>
                               `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-all ${
                                 isActive
-                                  ? "bg-[#00A8CC] text-white"
+                                  ? "bg-[#00A8CC] text-[#FFFFFF]"
                                   : "text-[#8FA3B0] hover:bg-[#293E4C]/40 hover:text-[#00A8CC]"
                               }`
                             }
                           >
                             <ChildIcon className="h-4 w-4 shrink-0" />
-
                             <span>{child.name}</span>
                           </NavLink>
                         );
@@ -531,10 +345,6 @@ function Sidebar({ role }) {
                 </div>
               );
             }
-
-            // =================================================
-            // NORMAL LINK
-            // =================================================
 
             return (
               <NavLink
@@ -548,22 +358,13 @@ function Sidebar({ role }) {
                 }
               >
                 <Icon className="h-5 w-5 shrink-0" />
-
                 <span>{item.name}</span>
               </NavLink>
             );
           })}
         </nav>
 
-        {/* ===================================================
-            FOOTER
-        ==================================================== */}
-
         <div className="shrink-0 space-y-2 border-t border-[#293E4C] p-4">
-          {/* =================================================
-              THEME TOGGLE
-          ================================================== */}
-
           <button
             type="button"
             onClick={toggleTheme}
@@ -572,21 +373,15 @@ function Sidebar({ role }) {
             {theme === "light" ? (
               <>
                 <Moon className="h-5 w-5 shrink-0 text-sky-400" />
-
                 <span>Dark Mode</span>
               </>
             ) : (
               <>
                 <Sun className="h-5 w-5 shrink-0 text-amber-400" />
-
                 <span>Light Mode</span>
               </>
             )}
           </button>
-
-          {/* =================================================
-              LOGOUT
-          ================================================== */}
 
           <button
             type="button"
@@ -594,7 +389,6 @@ function Sidebar({ role }) {
             className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#8FA3B0] transition-all hover:bg-red-500/10 hover:text-red-400"
           >
             <LogOut className="h-5 w-5 shrink-0" />
-
             <span>Logout</span>
           </button>
         </div>

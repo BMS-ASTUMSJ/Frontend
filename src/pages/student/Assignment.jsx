@@ -185,8 +185,7 @@ const StudentAssignment = () => {
 
   return (
     <div className="min-h-screen bg-[#F4F8FA] p-4 sm:p-8 text-[#14222B]">
-      {/* TOP HERO CONTAINER */}
-      <div className="max-w-7xl mx-auto mb-8 bg-gradient-to-r from-[#1b3c47] via-[#0f2b34] to-[#071b23] rounded-3xl p-6 sm:p-8 shadow-xl text-white relative overflow-hidden">
+      <div className="max-w-7xl mx-auto mb-8 bg-linear-to-r from-[#1b3c47] via-[#0f2b34] to-[#071b23] rounded-3xl p-6 sm:p-8 shadow-xl text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#00A8CC]/10 rounded-full filter blur-3xl pointer-events-none" />
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
@@ -209,7 +208,6 @@ const StudentAssignment = () => {
         </div>
       </div>
 
-      {/* ASSIGNMENT TABLE CONTAINER */}
       <div className="max-w-7xl mx-auto bg-white rounded-3xl p-6 shadow-sm border border-[#B4D7E2]/40 mb-10 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-separate border-spacing-y-3">
@@ -218,10 +216,8 @@ const StudentAssignment = () => {
                 <th className="px-6 pb-2">Title</th>
                 <th className="px-6 pb-2">Instructor</th>
                 <th className="px-6 pb-2">Lock Date</th>
-                <th className="px-6 pb-2 text-center">Score</th>
-                {/* 1. SEPARATED DETAILS COLUMN HEADER */}
-                <th className="px-6 pb-2 text-center">Details</th>
-                {/* 2. SEPARATED RESOURCES COLUMN HEADER */}
+                <th className="px-6 pb-2 text-center">Out-Of</th>
+
                 <th className="px-6 pb-2 text-center">Resources</th>
                 <th className="px-6 pb-2">Status</th>
                 <th className="px-6 pb-2 text-right">Actions</th>
@@ -230,7 +226,7 @@ const StudentAssignment = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="py-20 text-center">
+                  <td colSpan="7" className="py-20 text-center">
                     <Loader2
                       className="animate-spin inline-block text-[#00A8CC]"
                       size={28}
@@ -243,7 +239,7 @@ const StudentAssignment = () => {
               ) : assignments.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="8"
+                    colSpan="7"
                     className="py-16 text-center text-[#8FA3B0] font-bold text-xs uppercase tracking-wider"
                   >
                     No assigned tasks yet.
@@ -253,13 +249,27 @@ const StudentAssignment = () => {
                 assignments.map((item) => {
                   const submission = mySubmissions[item._id];
                   return (
-                    /* HOVER SINK ANIMATION: hover:translate-y-1 hover:shadow-md */
                     <tr
                       key={item._id}
                       className="group hover:translate-y-1 hover:shadow-md transition-all duration-300 cursor-pointer"
                     >
                       <td className="px-6 py-4 bg-[#F4F8FA] group-hover:bg-[#e6f9fd] rounded-l-2xl border-l-[6px] border-[#00A8CC] transition-colors">
                         <div className="flex items-center gap-3">
+                          <span
+                            className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-black text-white ${
+                              item.assignmentType === "mentor"
+                                ? "bg-purple-500"
+                                : "bg-[#11768d]"
+                            }`}
+                            title={
+                              item.assignmentType === "mentor"
+                                ? "Mentor Assignment"
+                                : "Admin Assignment"
+                            }
+                          >
+                            {item.assignmentType === "mentor" ? "M" : "A"}
+                          </span>
+
                           <p className="text-sm font-black text-[#14222B] leading-tight">
                             {item.title}
                           </p>
@@ -276,15 +286,12 @@ const StudentAssignment = () => {
                       </td>
                       <td className="px-6 py-4 bg-[#F4F8FA] group-hover:bg-[#e6f9fd] text-center text-xs font-black text-[#14222B] transition-colors">
                         {submission?.score !== undefined ? (
-                          <span className="text-[#00A8CC]">
-                            {submission.score} / {item.maxScore}
-                          </span>
+                          <span>{item.maxScore}</span>
                         ) : (
                           <span>{item.maxScore}</span>
                         )}
                       </td>
 
-                      {/* SEPARATED DETAILS COLUMN */}
                       <td className="px-6 py-4 bg-[#F4F8FA] group-hover:bg-[#e6f9fd] text-center transition-colors">
                         <button
                           onClick={() => setDetailsAssignment(item)}
@@ -292,24 +299,6 @@ const StudentAssignment = () => {
                         >
                           <FileText size={12} /> View Details
                         </button>
-                      </td>
-
-                      {/* SEPARATED RESOURCES COLUMN */}
-                      <td className="px-6 py-4 bg-[#F4F8FA] group-hover:bg-[#e6f9fd] text-center transition-colors">
-                        {item.link ? (
-                          <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-white hover:bg-[#3d5b6d] text-[#7292a5] hover:text-white border border-[#B4D7E2] rounded-lg text-[10px] font-black uppercase tracking-wider transition hover:translate-y-0.5"
-                          >
-                            <ExternalLink size={12} /> Resource
-                          </a>
-                        ) : (
-                          <span className="text-[10px] font-bold text-[#8FA3B0]">
-                            N/A
-                          </span>
-                        )}
                       </td>
 
                       <td className="px-6 py-4 bg-[#F4F8FA] group-hover:bg-[#e6f9fd] transition-colors">
@@ -354,9 +343,8 @@ const StudentAssignment = () => {
         </div>
       </div>
 
-      {/* STUDENT SUBMISSION FORM MODAL */}
       {submitAssignment && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#14222B]/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-[#14222B]/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#B4D7E2]/60">
             <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#F4F8FA]">
               <div>
@@ -450,7 +438,7 @@ const StudentAssignment = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-8 py-3.5 bg-[#00A8CC] hover:bg-[#0092b3] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#00A8CC]/20 transition flex items-center justify-center min-w-[140px]"
+                  className="px-8 py-3.5 bg-[#00A8CC] hover:bg-[#0092b3] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#00A8CC]/20 transition flex items-center justify-center min-w-35"
                 >
                   {submitting ? (
                     <Loader2 className="animate-spin" size={18} />
@@ -464,9 +452,8 @@ const StudentAssignment = () => {
         </div>
       )}
 
-      {/* DETAILS MODAL */}
       {detailsAssignment && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-[#14222B]/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-150 flex items-center justify-center p-4 bg-[#14222B]/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-[#e6f9fd] w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#00A8CC]/30">
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -497,19 +484,50 @@ const StudentAssignment = () => {
                   href={detailsAssignment.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs font-bold text-[#00A8CC] hover:underline bg-white/70 p-3 rounded-xl border border-[#00A8CC]/20"
+                  className="flex items-center gap-3 rounded-xl bg-white p-3 border border-[#00A8CC]/20 hover:border-[#00A8CC] transition"
                 >
-                  <ExternalLink size={15} /> View Reference Link
+                  <ExternalLink size={16} className="text-[#00A8CC]" />
+
+                  <div>
+                    <p className="text-xs font-black text-[#14222B]">
+                      Reference Link
+                    </p>
+                    <p className="text-[11px] text-[#00A8CC]">Open Resource</p>
+                  </div>
                 </a>
+              )}
+
+              {detailsAssignment.file && (
+                <a
+                  href={detailsAssignment.file}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-xl bg-white p-3 border border-[#00A8CC]/20 hover:border-[#00A8CC] transition"
+                  download
+                >
+                  <FileText size={16} className="text-[#00A8CC]" />
+
+                  <div>
+                    <p className="text-xs font-black text-[#14222B]">
+                      Attached File
+                    </p>
+                    <p className="text-[11px] text-[#00A8CC]">Download File</p>
+                  </div>
+                </a>
+              )}
+
+              {!detailsAssignment.link && !detailsAssignment.file && (
+                <div className="rounded-xl bg-white p-4 text-center text-xs font-bold text-[#8FA3B0] border border-dashed border-[#B4D7E2]">
+                  No resources attached.
+                </div>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* MENTOR FEEDBACK MODAL */}
       {viewFeedbackSubmission && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-[#14222B]/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-150 flex items-center justify-center p-4 bg-[#14222B]/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#B4D7E2]/60">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-2 text-[#00A8CC] font-black text-xs uppercase tracking-widest">

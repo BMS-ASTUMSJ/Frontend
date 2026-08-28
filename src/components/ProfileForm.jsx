@@ -35,10 +35,6 @@ function ProfileForm({ role = "Student" }) {
   const [saving, setSaving] = useState(false);
   const [removingImage, setRemovingImage] = useState(false);
 
-  // ============================================================
-  // LOAD PROFILE
-  // ============================================================
-
   const loadProfile = async () => {
     try {
       setLoading(true);
@@ -87,10 +83,6 @@ function ProfileForm({ role = "Student" }) {
     loadProfile();
   }, []);
 
-  // ============================================================
-  // HANDLE TEXT INPUT
-  // ============================================================
-
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -99,11 +91,6 @@ function ProfileForm({ role = "Student" }) {
       [name]: value,
     }));
   };
-
-  // ============================================================
-  // HANDLE IMAGE SELECTION
-  // ============================================================
-
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
 
@@ -130,10 +117,6 @@ function ProfileForm({ role = "Student" }) {
     setSelectedImage(file);
     setPreviewImage(imageUrl);
   };
-
-  // ============================================================
-  // REMOVE PROFILE IMAGE
-  // ============================================================
 
   const handleRemoveImage = async () => {
     try {
@@ -174,10 +157,6 @@ function ProfileForm({ role = "Student" }) {
     }
   };
 
-  // ============================================================
-  // SAVE PROFILE
-  // ============================================================
-
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -186,7 +165,6 @@ function ProfileForm({ role = "Student" }) {
 
       const formData = new FormData();
 
-      // Students cannot modify these fields
       if (!isStudent) {
         formData.append("firstName", profile.firstName);
         formData.append("phone", profile.phone);
@@ -247,10 +225,6 @@ function ProfileForm({ role = "Student" }) {
     }
   };
 
-  // ============================================================
-  // CLEANUP OBJECT URL
-  // ============================================================
-
   useEffect(() => {
     return () => {
       if (previewImage && previewImage.startsWith("blob:")) {
@@ -258,10 +232,6 @@ function ProfileForm({ role = "Student" }) {
       }
     };
   }, [previewImage]);
-
-  // ============================================================
-  // LOADING STATE
-  // ============================================================
 
   if (loading) {
     return (
@@ -277,42 +247,33 @@ function ProfileForm({ role = "Student" }) {
     );
   }
 
-  // ============================================================
-  // MAIN UI
-  // ============================================================
-
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#F4F8FA] pb-16 pt-16 lg:pt-0">
-      {/* ========================================================
-          PAGE HEADER
-      ======================================================== */}
-
-      <div className="mx-auto w-full max-w-[1170px] px-3 pt-4 sm:px-5 sm:pt-5 md:px-6">
+      <div className="mx-auto w-full max-w-290 pt-4 sm:px-5 sm:pt-5 md:px-6">
         <div
           className="
             flex
-            min-h-[110px]
+            min-h-25
             items-center
             rounded-2xl
-            bg-gradient-to-r
+            bg-linear-to-r
             from-[#06232C]
             via-[#0C3039]
             to-[#1B414A]
-            px-4
+            px-2
             py-5
             shadow-sm
 
-            sm:min-h-[120px]
+            sm:min-h-30
             sm:px-6
 
-            md:min-h-[132px]
+            md:min-h-33
             md:rounded-[20px]
             md:px-10
             md:py-7
           "
         >
           <div className="flex min-w-0 items-center gap-3 sm:gap-4 md:gap-5">
-            {/* Header Icon */}
             <div
               className="
                 flex
@@ -326,8 +287,8 @@ function ProfileForm({ role = "Student" }) {
                 text-white
                 shadow-md
 
-                sm:h-12
-                sm:w-12
+                sm:h-8
+                sm:w-8
 
                 md:h-14
                 md:w-14
@@ -340,13 +301,12 @@ function ProfileForm({ role = "Student" }) {
               />
             </div>
 
-            {/* Header Title */}
             <h1
               className="
                 min-w-0
                 truncate
                 text-2xl
-                font-extrabold
+                font-bold
                 tracking-tight
                 text-white
 
@@ -361,15 +321,11 @@ function ProfileForm({ role = "Student" }) {
         </div>
       </div>
 
-      {/* ========================================================
-          MAIN CONTENT
-      ======================================================== */}
-
       <div
         className="
           mx-auto
           w-full
-          max-w-[1170px]
+          max-w-292.5
           space-y-4
           px-3
           pt-5
@@ -385,10 +341,6 @@ function ProfileForm({ role = "Student" }) {
           md:pb-12
         "
       >
-        {/* ======================================================
-            PROFILE CARD
-        ====================================================== */}
-
         <div
           className="
             rounded-2xl
@@ -404,8 +356,6 @@ function ProfileForm({ role = "Student" }) {
             md:p-7
           "
         >
-          {/* TOP PROFILE SECTION */}
-
           <div
             className="
               flex
@@ -417,11 +367,7 @@ function ProfileForm({ role = "Student" }) {
               sm:justify-between
             "
           >
-            {/* USER INFORMATION */}
-
             <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-              {/* AVATAR */}
-
               <div className="relative shrink-0">
                 <div
                   className="
@@ -452,8 +398,6 @@ function ProfileForm({ role = "Student" }) {
                     <User className="h-7 w-7 text-[#14222B] sm:h-8 sm:w-8" />
                   )}
                 </div>
-
-                {/* CAMERA BUTTON */}
 
                 <label
                   htmlFor="profileImageInput"
@@ -487,8 +431,6 @@ function ProfileForm({ role = "Student" }) {
                 />
               </div>
 
-              {/* NAME */}
-
               <div className="min-w-0">
                 <h2 className="truncate text-base font-bold text-[#14222B] sm:text-lg">
                   {profile.firstName || role}
@@ -497,8 +439,6 @@ function ProfileForm({ role = "Student" }) {
                 <p className="mt-0.5 text-xs text-slate-400">{role} Account</p>
               </div>
             </div>
-
-            {/* CHANGE PASSWORD */}
 
             <button
               type="button"
@@ -530,8 +470,6 @@ function ProfileForm({ role = "Student" }) {
               <span>Change Password</span>
             </button>
           </div>
-
-          {/* IMAGE ACTIONS */}
 
           <div
             className="
@@ -620,10 +558,6 @@ function ProfileForm({ role = "Student" }) {
           </div>
         </div>
 
-        {/* ======================================================
-            PROFILE FORM CARD
-        ====================================================== */}
-
         <div
           className="
             rounded-2xl
@@ -641,8 +575,6 @@ function ProfileForm({ role = "Student" }) {
         >
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
-              {/* FIRST NAME */}
-
               <div className="min-w-0">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <label
@@ -710,8 +642,6 @@ function ProfileForm({ role = "Student" }) {
                   `}
                 />
               </div>
-
-              {/* PHONE */}
 
               <div className="min-w-0">
                 <div className="mb-2 flex items-center justify-between gap-2">
@@ -781,8 +711,6 @@ function ProfileForm({ role = "Student" }) {
                 />
               </div>
 
-              {/* NOTE */}
-
               <div className="min-w-0 md:col-span-2">
                 <label
                   htmlFor="bio"
@@ -846,8 +774,6 @@ function ProfileForm({ role = "Student" }) {
                 </div>
               </div>
             </div>
-
-            {/* SAVE BUTTON */}
 
             <div
               className="

@@ -23,11 +23,10 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
 
     const fetchData = async () => {
       try {
-        const contentResponse =
-          await progressService.getProgressContent(
-            "cp",
-            week || undefined
-          );
+        const contentResponse = await progressService.getProgressContent(
+          "cp",
+          week || undefined,
+        );
 
         if (cancelled) return;
 
@@ -35,11 +34,10 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
         setContent(contentItems);
 
         if (studentView) {
-          const progressResponse =
-            await progressService.getStudentProgress(
-              "cp",
-              week || undefined
-            );
+          const progressResponse = await progressService.getStudentProgress(
+            "cp",
+            week || undefined,
+          );
 
           if (cancelled) return;
 
@@ -47,8 +45,7 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
           const progressMap = {};
 
           progressItems.forEach((item) => {
-            const contentId =
-              item.content?._id || item.content;
+            const contentId = item.content?._id || item.content;
 
             if (contentId) {
               progressMap[contentId] = item;
@@ -63,10 +60,7 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
         setError("");
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err.response?.data?.message ||
-              "Failed to load CP progress"
-          );
+          setError(err.response?.data?.message || "Failed to load CP progress");
         }
       } finally {
         if (!cancelled) {
@@ -89,18 +83,14 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
 
       const existing = progress[contentId] || {};
 
-      const response =
-        await progressService.updateStudentProgress(
-          contentId,
-          {
-            status,
-            watched: true,
-            attempts:
-              status === "done"
-                ? Math.max(existing.attempts || 0, 1)
-                : existing.attempts || 0,
-          }
-        );
+      const response = await progressService.updateStudentProgress(contentId, {
+        status,
+        watched: true,
+        attempts:
+          status === "done"
+            ? Math.max(existing.attempts || 0, 1)
+            : existing.attempts || 0,
+      });
 
       const updated = response?.data;
 
@@ -109,10 +99,7 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
         [contentId]: updated,
       }));
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to update progress"
-      );
+      setError(err.response?.data?.message || "Failed to update progress");
     } finally {
       setUpdatingId(null);
     }
@@ -162,14 +149,12 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
   };
 
   const completedCount = content.filter(
-    (item) => getStatus(item._id) === "done"
+    (item) => getStatus(item._id) === "done",
   ).length;
 
   const progressPercentage =
     content.length > 0
-      ? Math.round(
-          (completedCount / content.length) * 100
-        )
+      ? Math.round((completedCount / content.length) * 100)
       : 0;
 
   return (
@@ -200,10 +185,7 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
             <option value="">All Weeks</option>
 
             {Array.from({ length: 20 }, (_, index) => (
-              <option
-                key={index + 1}
-                value={index + 1}
-              >
+              <option key={index + 1} value={index + 1}>
                 Week {index + 1}
               </option>
             ))}
@@ -242,18 +224,12 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
 
       <div className="p-6">
         {loading ? (
-          <div className="flex min-h-[220px] items-center justify-center">
-            <RefreshCw
-              size={28}
-              className="animate-spin text-slate-500"
-            />
+          <div className="flex min-h-55 items-center justify-center">
+            <RefreshCw size={28} className="animate-spin text-slate-500" />
           </div>
         ) : content.length === 0 ? (
-          <div className="flex min-h-[220px] flex-col items-center justify-center text-center">
-            <Code2
-              size={42}
-              className="mb-3 text-slate-400"
-            />
+          <div className="flex min-h-55 flex-col items-center justify-center text-center">
+            <Code2 size={42} className="mb-3 text-slate-400" />
 
             <h3 className="font-semibold text-slate-800 dark:text-slate-200">
               No CP content found
@@ -287,7 +263,7 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
                         {studentView && (
                           <span
                             className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${getStatusClasses(
-                              status
+                              status,
                             )}`}
                           >
                             {getStatusIcon(status)}
@@ -309,9 +285,7 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
                       {item.publishedAt && (
                         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                           Published{" "}
-                          {new Date(
-                            item.publishedAt
-                          ).toLocaleDateString()}
+                          {new Date(item.publishedAt).toLocaleDateString()}
                         </p>
                       )}
                     </div>
@@ -323,14 +297,8 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
                           target="_blank"
                           rel="noreferrer"
                           onClick={() => {
-                            if (
-                              studentView &&
-                              status === "not_started"
-                            ) {
-                              updateProgress(
-                                item._id,
-                                "in_progress"
-                              );
+                            if (studentView && status === "not_started") {
+                              updateProgress(item._id, "in_progress");
                             }
                           }}
                           className="flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -345,49 +313,32 @@ const CpProgress = ({ studentView = false, selectedWeek = "" }) => {
                           {status !== "done" && (
                             <button
                               type="button"
-                              disabled={
-                                updatingId === item._id
-                              }
-                              onClick={() =>
-                                updateProgress(
-                                  item._id,
-                                  "done"
-                                )
-                              }
+                              disabled={updatingId === item._id}
+                              onClick={() => updateProgress(item._id, "done")}
                               className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {updatingId === item._id ? (
-                                <RefreshCw
-                                  size={16}
-                                  className="animate-spin"
-                                />
+                                <RefreshCw size={16} className="animate-spin" />
                               ) : (
                                 <CheckCircle2 size={16} />
                               )}
-
                               Complete
                             </button>
                           )}
 
-                          {status !== "need_help" &&
-                            status !== "done" && (
-                              <button
-                                type="button"
-                                disabled={
-                                  updatingId === item._id
-                                }
-                                onClick={() =>
-                                  updateProgress(
-                                    item._id,
-                                    "need_help"
-                                  )
-                                }
-                                className="flex items-center gap-2 rounded-lg border border-orange-300 px-4 py-2.5 text-sm font-medium text-orange-700 transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-950/30"
-                              >
-                                <HelpCircle size={16} />
-                                Need Help
-                              </button>
-                            )}
+                          {status !== "need_help" && status !== "done" && (
+                            <button
+                              type="button"
+                              disabled={updatingId === item._id}
+                              onClick={() =>
+                                updateProgress(item._id, "need_help")
+                              }
+                              className="flex items-center gap-2 rounded-lg border border-orange-300 px-4 py-2.5 text-sm font-medium text-orange-700 transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-950/30"
+                            >
+                              <HelpCircle size={16} />
+                              Need Help
+                            </button>
+                          )}
                         </>
                       )}
                     </div>

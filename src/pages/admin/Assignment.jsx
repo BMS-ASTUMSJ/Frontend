@@ -4,20 +4,15 @@ import toast from "react-hot-toast";
 
 import {
   ClipboardList,
-  PlusCircle,
-  Calendar,
-  Trophy,
   FileText,
   Trash2,
   Loader2,
-  Clock,
-  Users,
   Link as LinkIcon,
   Upload,
   X,
   Pencil,
-  Download,
   ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
@@ -52,20 +47,18 @@ const AdminAssignment = () => {
   const [editingAssignment, setEditingAssignment] = useState(null);
   const [replaceFiles, setReplaceFiles] = useState(false);
 
-  // ============================================================
-  // FETCH ASSIGNMENTS
-  // ============================================================
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+
+  const [deadlineError, setDeadlineError] = useState("");
 
   const fetchAssignments = async () => {
     try {
       setLoading(true);
-
       const res = await api.get("/assignments");
-
       setAssignments(res.data?.assignments || []);
     } catch (err) {
       console.error("FETCH ASSIGNMENTS ERROR:", err);
-
       toast.error(err.response?.data?.message || "Failed to load assignments");
     } finally {
       setLoading(false);
@@ -76,10 +69,6 @@ const AdminAssignment = () => {
     fetchAssignments();
   }, []);
 
-  // ============================================================
-  // HANDLE FORM CHANGE
-  // ============================================================
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -87,11 +76,11 @@ const AdminAssignment = () => {
       ...prev,
       [name]: value,
     }));
-  };
 
-  // ============================================================
-  // RESET FORM
-  // ============================================================
+    if (name === "deadline") {
+      setDeadlineError("");
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -102,284 +91,147 @@ const AdminAssignment = () => {
       maxScore: 100,
       link: "",
     });
-
     setSelectedFiles([]);
     setEditingAssignment(null);
     setReplaceFiles(false);
+    setDeadlineError("");
   };
-
-  // ============================================================
-  // GET MINIMUM DATETIME
-  // Used when creating a new assignment
-  // ============================================================
 
   const getMinDateTime = () => {
     const now = new Date();
-
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
     const hours = String(now.getHours()).padStart(2, "0");
     const minutes = String(now.getMinutes()).padStart(2, "0");
-
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  // ============================================================
-  // CHECK WHETHER DEADLINE IS IN THE PAST
-  // ============================================================
-
   const isDeadlineInPast = (deadline) => {
     if (!deadline) return false;
-
     const deadlineDate = new Date(deadline);
-
-    if (Number.isNaN(deadlineDate.getTime())) {
-      return false;
-    }
-
+    if (Number.isNaN(deadlineDate.getTime())) return false;
     return deadlineDate.getTime() <= Date.now();
   };
 
-  // ============================================================
-  // FORMAT DATE FOR DATETIME-LOCAL INPUT
-  // ============================================================
-
   const formatDateTimeForInput = (date) => {
     if (!date) return "";
-
     const parsedDate = new Date(date);
-
-    if (Number.isNaN(parsedDate.getTime())) {
-      return "";
-    }
-
+    if (Number.isNaN(parsedDate.getTime())) return "";
     const year = parsedDate.getFullYear();
     const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
     const day = String(parsedDate.getDate()).padStart(2, "0");
     const hours = String(parsedDate.getHours()).padStart(2, "0");
     const minutes = String(parsedDate.getMinutes()).padStart(2, "0");
-
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  // ============================================================
-  // CONVERT LOCAL DATETIME TO ISO
-  // ============================================================
-
   const convertLocalDateTimeToISO = (value) => {
     if (!value) return "";
-
     const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-      return "";
-    }
-
+    if (Number.isNaN(date.getTime())) return "";
     return date.toISOString();
   };
 
-  // ============================================================
-  // FILE VALIDATION
-  // ============================================================
-
   const validateFile = (file) => {
     const extension = "." + file.name.split(".").pop().toLowerCase();
-
     if (!allowedExtensions.includes(extension)) {
       toast.error(
         `${file.name}: Unsupported file type. Allowed: PDF, Word, PowerPoint, Excel, TXT, ZIP and RAR.`,
       );
-
       return false;
     }
-
     if (file.size > MAX_FILE_SIZE) {
       toast.error(`${file.name} is larger than the 20 MB limit.`);
-
       return false;
     }
-
     return true;
   };
 
-  // ============================================================
-  // FILE CHANGE
-  // ============================================================
-
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
-
     if (files.length === 0) return;
-
     const validFiles = files.filter(validateFile);
-
     setSelectedFiles((prev) => {
       const existingNames = new Set(
         prev.map((file) => `${file.name}-${file.size}`),
       );
-
       const newFiles = validFiles.filter(
         (file) => !existingNames.has(`${file.name}-${file.size}`),
       );
-
       return [...prev, ...newFiles];
     });
-
     e.target.value = "";
   };
-
-  // ============================================================
-  // REMOVE SELECTED FILE
-  // ============================================================
 
   const removeSelectedFile = (index) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // ============================================================
-  // SUBMIT
-  // ============================================================
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // ----------------------------------------------------------
-    // BASIC VALIDATION
-    // ----------------------------------------------------------
-
     if (!formData.title.trim()) {
       toast.error("Assignment title is required");
       return;
     }
-
     if (!formData.description.trim()) {
       toast.error("Assignment description is required");
       return;
     }
-
     if (!formData.instructorName.trim()) {
       toast.error("Instructor name is required");
       return;
     }
-
     if (!formData.deadline) {
       toast.error("Deadline is required");
       return;
     }
-
-    // ----------------------------------------------------------
-    // DEADLINE VALIDATION
-    // ----------------------------------------------------------
-
     const deadlineDate = new Date(formData.deadline);
-
     if (Number.isNaN(deadlineDate.getTime())) {
       toast.error("Please enter a valid deadline");
       return;
     }
-
     if (!editingAssignment && isDeadlineInPast(formData.deadline)) {
-      toast.error("Deadline must be today or a future date and time");
+      setDeadlineError(
+        "Please select the current date or a future date for the deadline.",
+      );
       return;
     }
-
-    if (editingAssignment) {
-      const originalDeadline = editingAssignment.deadline
-        ? new Date(editingAssignment.deadline).getTime()
-        : null;
-
-      const newDeadline = deadlineDate.getTime();
-
-      const deadlineWasChanged =
-        originalDeadline !== null &&
-        Math.abs(originalDeadline - newDeadline) > 1000;
-
-      if (deadlineWasChanged && isDeadlineInPast(formData.deadline)) {
-        toast.error("A changed deadline must be in the future");
-        return;
-      }
-    }
-
-    // ----------------------------------------------------------
-    // SCORE VALIDATION
-    // ----------------------------------------------------------
-
-    if (Number(formData.maxScore) <= 0) {
-      toast.error("Maximum score must be greater than 0");
-      return;
-    }
-
-    // ----------------------------------------------------------
-    // SAVE
-    // ----------------------------------------------------------
 
     try {
       setSubmitting(true);
-
       const data = new FormData();
-
       data.append("title", formData.title.trim());
       data.append("description", formData.description.trim());
       data.append("instructorName", formData.instructorName.trim());
-
       data.append("deadline", convertLocalDateTimeToISO(formData.deadline));
-
       data.append("maxScore", Number(formData.maxScore));
       data.append("link", formData.link.trim());
-
-      selectedFiles.forEach((file) => {
-        data.append("files", file);
-      });
-
-      // --------------------------------------------------------
-      // UPDATE
-      // --------------------------------------------------------
+      selectedFiles.forEach((file) => data.append("files", file));
 
       if (editingAssignment) {
         data.append("replaceFiles", replaceFiles);
-
         await api.put(`/assignments/${editingAssignment._id}`, data, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         });
-
         toast.success("Assignment updated successfully");
-      }
-
-      // --------------------------------------------------------
-      // CREATE
-      // --------------------------------------------------------
-      else {
+      } else {
         await api.post("/assignments", data, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         });
-
         toast.success("Assignment published successfully");
       }
-
       resetForm();
-
       await fetchAssignments();
     } catch (err) {
-      console.error("ASSIGNMENT SAVE ERROR:", err);
-
       toast.error(err.response?.data?.message || "Failed to save assignment");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // ============================================================
-  // EDIT
-  // ============================================================
-
   const handleEdit = (assignment) => {
     setEditingAssignment(assignment);
-
     setFormData({
       title: assignment.title || "",
       description: assignment.description || "",
@@ -388,732 +240,464 @@ const AdminAssignment = () => {
       maxScore: assignment.maxScore || 100,
       link: assignment.link || "",
     });
-
     setSelectedFiles([]);
     setReplaceFiles(false);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ============================================================
-  // DELETE
-  // ============================================================
+  const handleDeleteTrigger = (id) => {
+    setDeleteTargetId(id);
+    setShowDeleteModal(true);
+  };
 
-  const handleDelete = async (id) => {
-    if (!id) return;
-
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this assignment? Uploaded files will also be deleted.",
-    );
-
-    if (!confirmed) return;
-
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
     try {
-      await api.delete(`/assignments/${id}`);
-
+      await api.delete(`/assignments/${deleteTargetId}`);
       toast.success("Assignment deleted successfully");
-
-      if (editingAssignment?._id === id) {
-        resetForm();
-      }
-
+      if (editingAssignment?._id === deleteTargetId) resetForm();
       await fetchAssignments();
     } catch (err) {
-      console.error("DELETE ASSIGNMENT ERROR:", err);
-
       toast.error(err.response?.data?.message || "Failed to delete assignment");
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteTargetId(null);
     }
   };
-
-  // ============================================================
-  // BATCH NAME
-  // ============================================================
 
   const getBatchName = (assignment) => {
-    if (!assignment?.batch) {
-      return "No batch";
-    }
-
-    if (typeof assignment.batch === "object") {
-      return assignment.batch.name || "Unknown batch";
-    }
-
-    return "Unknown batch";
+    if (!assignment?.batch) return "No batch";
+    return typeof assignment.batch === "object"
+      ? assignment.batch.name || "Unknown batch"
+      : "Unknown batch";
   };
-
-  // ============================================================
-  // EXPIRED
-  // ============================================================
 
   const [currentTime] = useState(() => Date.now());
-
-  const isExpired = (deadline) => {
-    if (!deadline) return false;
-    return new Date(deadline).getTime() < currentTime;
-  };
-
-  // ============================================================
-  // FORMAT FILE SIZE
-  // ============================================================
-
-  const formatFileSize = (bytes) => {
-    if (!bytes) return "0 KB";
-
-    if (bytes < 1024) {
-      return `${bytes} B`;
-    }
-
-    if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`;
-    }
-
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  // ============================================================
-  // FILE URL
-  // ============================================================
+  const isExpired = (deadline) =>
+    deadline && new Date(deadline).getTime() < currentTime;
 
   const getFileUrl = (fileUrl) => {
     if (!fileUrl) return "#";
-
+    if (fileUrl.startsWith("http")) return fileUrl;
     const baseURL = api.defaults?.baseURL || "";
-
     const serverURL = baseURL.replace(/\/api\/?$/, "");
-
-    if (fileUrl.startsWith("http")) {
-      return fileUrl;
-    }
-
     return `${serverURL}${fileUrl}`;
   };
 
-  // ============================================================
-  // RENDER
-  // ============================================================
-
   return (
-    <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
-
-        <div className="rounded-3xl bg-[#0A1931] p-6 text-white shadow-sm md:p-7">
-          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
-            <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-[#1A3D63] p-3">
-                <ClipboardList size={28} className="text-[#B3CFE5]" />
-              </div>
-
-              <div>
-                <h1 className="text-2xl font-bold md:text-3xl">
-                  Assignment Management
-                </h1>
-
-                <p className="mt-1 text-sm text-[#B3CFE5]">
-                  Create and manage student assignments.
-                </p>
-              </div>
+    <div className="min-h-screen bg-[#F4F8FA] py-8">
+      <div className="mx-auto max-w-7xl px-4 space-y-6">
+        <div className="bg-linear-to-r from-[#1b3c47] via-[#0f2b34] to-[#071b23] rounded-2xl p-6 md:p-8 shadow-lg border border-[#1b3c47]">
+          <div className="flex items-center gap-5">
+            <div className="rounded-xl bg-[#00A8CC] p-2 shadow-lg shadow-[#00A8CC]/20">
+              <ClipboardList size={28} className="text-[#FFFFFF]" />
             </div>
-
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <Trophy size={18} className="text-yellow-400" />
-              {assignments.length} Assignment
-              {assignments.length !== 1 ? "s" : ""}
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-[#FFFFFF]">
+                Assignment Management
+              </h1>
             </div>
           </div>
         </div>
-
-        {/* ======================================================
-            CREATE / EDIT FORM
-        ====================================================== */}
-
-        <div className="border-b border-[#B3CFE5] pb-6">
-          <div className="mb-5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-[#EAF3F9] p-2">
-                {editingAssignment ? (
-                  <Pencil size={20} className="text-[#1A3D63]" />
-                ) : (
-                  <PlusCircle size={20} className="text-[#1A3D63]" />
-                )}
-              </div>
-
+        <div className="bg-[#FFFFFF] rounded-2xl shadow-xl overflow-hidden border border-[#B4D7E2]">
+          <div className="p-8 border-b border-[#F4F8FA]">
+            <div className="mb-8 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-[#0A1931]">
-                  {editingAssignment ? "Edit Assignment" : "New Assignment"}
+                <h2 className="text-xl font-bold text-[#14222B]">
+                  {editingAssignment ? "Modify Assignment" : "New Assignment"}
                 </h2>
-
-                <p className="text-xs text-gray-500">
-                  {editingAssignment
-                    ? "Update the assignment details below."
-                    : "Publish a new assignment to the current batch."}
+                <p className="text-sm text-[#8FA3B0] mt-1 font-medium">
+                  Configure parameters for student deliverables
                 </p>
               </div>
+              {editingAssignment && (
+                <button
+                  onClick={resetForm}
+                  className="flex items-center gap-2 text-xs font-bold text-red-500 hover:bg-red-50 px-4 py-2 rounded-xl transition-all"
+                >
+                  <X size={18} /> CANCEL EDITING
+                </button>
+              )}
             </div>
 
-            {editingAssignment && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
-                title="Cancel editing"
-              >
-                <X size={20} />
-              </button>
-            )}
-          </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                    Project Title
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    required
+                    className="w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-3.5 text-sm font-semibold text-[#14222B] outline-none focus:ring-2 focus:ring-[#00A8CC]/10 transition-all"
+                    placeholder="e.g. React System Design"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                    Instructor Name
+                  </label>
+                  <input
+                    type="text"
+                    name="instructorName"
+                    value={formData.instructorName}
+                    onChange={handleChange}
+                    required
+                    className="w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-3.5 text-sm font-semibold text-[#14222B] outline-none focus:ring-2 focus:ring-[#00A8CC]/10 transition-all"
+                    placeholder="e.g. Abebe Kebede"
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    required
+                    className="h-28 w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-3.5 text-sm font-semibold text-[#14222B] outline-none focus:ring-2 focus:ring-[#00A8CC]/10 transition-all resize-none"
+                    placeholder="Provide detailed project requirements..."
+                  />
+                </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* ==================================================
-                  TITLE
-              ================================================== */}
+                <div className="md:col-span-2 space-y-1.5">
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                    <LinkIcon size={14} />
+                    Link (optional)
+                  </label>
+                  <input
+                    type="url"
+                    name="link"
+                    value={formData.link}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-3.5 text-sm font-semibold text-[#14222B] outline-none focus:ring-2 focus:ring-[#00A8CC]/10"
+                    placeholder="https://example.com/resource"
+                  />
+                </div>
 
-              <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
-                  Project Title
-                </label>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B] mb-2">
+                    Assignment
+                  </label>
+                  <label className="flex cursor-pointer items-center justify-center gap-4 rounded-xl border-2 border-dashed border-[#B4D7E2] bg-[#E3F5F9]/30 p-5 transition hover:bg-[#E3F5F9]/60 group">
+                    <div className="rounded-lg bg-white p-2 text-[#00A8CC] group-hover:scale-110 transition-transform">
+                      <Upload size={20} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-bold text-[#14222B]">
+                        Click to select files from your device
+                      </p>
+                      <p className="text-[10px] text-[#8FA3B0] font-medium uppercase tracking-tighter">
+                        PDF, Word, TXT, ZIP, RAR • Max 20 MB per file
+                      </p>
+                    </div>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </label>
 
-                <input
-                  type="text"
-                  name="title"
-                  placeholder="e.g. React & Tailwind Portfolio"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-                />
-              </div>
-
-              {/* ==================================================
-                  INSTRUCTOR
-              ================================================== */}
-
-              <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
-                  Instructor Name
-                </label>
-
-                <input
-                  type="text"
-                  name="instructorName"
-                  placeholder="e.g. Abebe Kebede"
-                  value={formData.instructorName}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-                />
-              </div>
-
-              {/* ==================================================
-                  DESCRIPTION
-              ================================================== */}
-
-              <div className="md:col-span-2">
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
-                  Description
-                </label>
-
-                <textarea
-                  name="description"
-                  placeholder="Provide detailed project requirements..."
-                  value={formData.description}
-                  onChange={handleChange}
-                  required
-                  className="h-24 w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-                />
-              </div>
-
-              {/* ==================================================
-                  LINK
-              ================================================== */}
-
-              <div className="md:col-span-2">
-                <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500">
-                  <LinkIcon size={14} />
-                  External Link
-                  <span className="font-normal normal-case tracking-normal text-gray-400">
-                    optional
-                  </span>
-                </label>
-
-                <input
-                  type="url"
-                  name="link"
-                  placeholder="https://example.com/resource"
-                  value={formData.link}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-                />
-              </div>
-
-              {/* ==================================================
-                  FILE UPLOAD
-              ================================================== */}
-
-              <div className="md:col-span-2">
-                <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500">
-                  <Upload size={14} />
-                  Assignment Files
-                  <span className="font-normal normal-case tracking-normal text-gray-400">
-                    optional
-                  </span>
-                </label>
-
-                <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-[#B3CFE5] bg-white p-4 transition hover:border-[#1A3D63] hover:bg-[#F6FAFD]">
-                  <div className="rounded-xl bg-[#EAF3F9] p-3">
-                    <Upload size={22} className="text-[#4A7FA7]" />
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-bold text-[#0A1931]">
-                      Click to select files
-                    </p>
-
-                    <p className="mt-1 text-xs text-gray-500">
-                      PDF, Word, PowerPoint, Excel, TXT, ZIP, RAR • Max 20 MB
-                      per file
-                    </p>
-                  </div>
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {selectedFiles.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-[#B4D7E2] text-[11px] font-bold text-[#14222B]"
+                        >
+                          <FileText size={14} className="text-[#00A8CC]" />
+                          <span className="truncate max-w-37.5">
+                            {file.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeSelectedFile(idx)}
+                            className="text-red-400 hover:text-red-600 ml-1"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                    Deadline
+                  </label>
 
                   <input
-                    type="file"
-                    multiple
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar"
+                    type="date"
+                    name="deadline"
+                    value={formData.deadline}
+                    min={!editingAssignment ? getMinDateTime() : undefined}
+                    onChange={handleChange}
+                    required
+                    className={`w-full rounded-xl bg-[#F4F8FA] p-3.5 text-sm font-semibold text-[#14222B] outline-none transition ${
+                      deadlineError
+                        ? "border border-red-500"
+                        : "border border-[#B4D7E2]"
+                    }`}
                   />
-                </label>
 
-                {/* SELECTED FILES */}
-
-                {selectedFiles.length > 0 && (
-                  <div className="mt-3 grid gap-2 md:grid-cols-2">
-                    {selectedFiles.map((file, index) => (
-                      <div
-                        key={`${file.name}-${index}`}
-                        className="flex items-center justify-between rounded-xl border border-[#B3CFE5] bg-white p-3"
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <FileText
-                            size={18}
-                            className="shrink-0 text-[#1A3D63]"
-                          />
-
-                          <div className="min-w-0">
-                            <p className="truncate text-xs font-bold text-[#0A1931]">
-                              {file.name}
-                            </p>
-
-                            <p className="text-[10px] text-gray-500">
-                              {formatFileSize(file.size)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => removeSelectedFile(index)}
-                          className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                  {deadlineError && (
+                    <p className="mt-1 text-xs font-medium text-red-500">
+                      {deadlineError}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
+                    Maximum Points
+                  </label>
+                  <input
+                    type="number"
+                    name="maxScore"
+                    value={formData.maxScore}
+                    onChange={handleChange}
+                    required
+                    className="w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-3.5 text-sm font-semibold text-[#14222B] outline-none"
+                  />
+                </div>
               </div>
-
-              {/* ==================================================
-                  DEADLINE
-              ================================================== */}
-
-              <div>
-                <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-gray-500">
-                  <Calendar size={14} />
-                  Deadline
-                </label>
-
-                <input
-                  type="date"
-                  name="deadline"
-                  value={formData.deadline}
-                  min={!editingAssignment ? getMinDateTime() : undefined}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63] focus:ring-2 focus:ring-[#B3CFE5]"
-                />
-
-                <p className="mt-1 text-xs text-gray-400">
-                  Select the exact date and time students must submit.
-                </p>
-              </div>
-
-              {/* ==================================================
-                  POINTS
-              ================================================== */}
-
-              <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">
-                  Maximum Points
-                </label>
-
-                <input
-                  type="number"
-                  name="maxScore"
-                  min="1"
-                  value={formData.maxScore}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-xl border border-[#B3CFE5] bg-white p-3 text-sm outline-none transition focus:border-[#1A3D63]"
-                />
-              </div>
-
-              {/* ==================================================
-                  EXISTING FILES
-              ================================================== */}
 
               {editingAssignment &&
                 (editingAssignment.files || []).length > 0 && (
-                  <div className="md:col-span-2">
-                    <div className="rounded-xl border border-[#B3CFE5] bg-white p-4">
-                      <p className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-500">
-                        Existing Files
-                      </p>
-
-                      <div className="grid gap-2 md:grid-cols-2">
-                        {editingAssignment.files.map((file, index) => (
-                          <a
-                            key={`${file.fileName}-${index}`}
-                            href={getFileUrl(file.fileUrl)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-3 rounded-xl border border-gray-100 p-3 transition hover:bg-[#F6FAFD]"
-                          >
-                            <FileText
-                              size={18}
-                              className="shrink-0 text-[#1A3D63]"
-                            />
-
-                            <div className="min-w-0">
-                              <p className="truncate text-xs font-bold text-[#0A1931]">
-                                {file.originalName}
-                              </p>
-
-                              <p className="text-[10px] text-gray-500">
-                                {formatFileSize(file.size)}
-                              </p>
-                            </div>
-
-                            <Download
-                              size={16}
-                              className="ml-auto shrink-0 text-[#4A7FA7]"
-                            />
-                          </a>
-                        ))}
-                      </div>
-
-                      <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
-                        <input
-                          type="checkbox"
-                          checked={replaceFiles}
-                          onChange={(e) => setReplaceFiles(e.target.checked)}
-                          className="mt-1"
-                        />
-
-                        <div>
-                          <p className="text-xs font-bold text-red-700">
-                            Replace existing files
-                          </p>
-
-                          <p className="mt-1 text-[10px] text-red-600">
-                            Existing files will be deleted and replaced with the
-                            newly selected files.
-                          </p>
-                        </div>
-                      </label>
-                    </div>
+                  <div className="rounded-xl border border-[#B4D7E2] bg-gray-50 p-4">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                      Legacy Assets
+                    </p>
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={replaceFiles}
+                        onChange={(e) => setReplaceFiles(e.target.checked)}
+                        className="rounded border-gray-300 text-[#00A8CC] focus:ring-[#00A8CC]"
+                      />
+                      <span className="text-xs font-bold text-red-500 group-hover:underline">
+                        Purge and replace existing files on update
+                      </span>
+                    </label>
                   </div>
                 )}
-            </div>
 
-            {/* ====================================================
-                SUBMIT
-            ==================================================== */}
-
-            <div className="mt-5 flex gap-3">
-              {editingAssignment && (
+              <div className="flex justify-end pt-4">
                 <button
-                  type="button"
-                  onClick={resetForm}
-                  className="rounded-xl border border-[#B3CFE5] px-5 py-3 text-sm font-bold text-[#0A1931] transition hover:bg-[#F6FAFD]"
+                  type="submit"
+                  disabled={submitting}
+                  className="px-12 py-4 bg-[#00A8CC] hover:bg-[#0088A6] text-[#FFFFFF] rounded-2xl font-black text-xs transition disabled:opacity-50 uppercase tracking-[0.15em] shadow-xl shadow-[#00A8CC]/20 flex items-center gap-2"
                 >
-                  Cancel
-                </button>
-              )}
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1A3D63] py-3 text-sm font-bold text-white transition hover:bg-[#0A1931] disabled:cursor-not-allowed disabled:bg-gray-400"
-              >
-                {submitting ? (
-                  <>
+                  {submitting ? (
                     <Loader2 size={18} className="animate-spin" />
-
-                    {editingAssignment ? "Updating..." : "Publishing..."}
-                  </>
-                ) : (
-                  <>
-                    {editingAssignment ? (
-                      <>
-                        <Pencil size={17} />
-                        Update Assignment
-                      </>
-                    ) : (
-                      <>
-                        <FileText size={17} />
-                        Publish Assignment
-                      </>
-                    )}
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* ======================================================
-            ASSIGNMENT LIST
-        ====================================================== */}
-
-        <div>
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="flex items-center gap-2 text-xl font-bold text-[#0A1931]">
-                <Clock size={20} className="text-[#4A7FA7]" />
-                Recent Assignments
-              </h2>
-
-              <p className="mt-1 text-xs text-gray-500">
-                {assignments.length} assignment
-                {assignments.length !== 1 ? "s" : ""}
-              </p>
-            </div>
+                  ) : editingAssignment ? (
+                    "Update Assignment"
+                  ) : (
+                    "Publish Assignment"
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
 
-          {loading ? (
-            <div className="flex h-40 items-center justify-center">
-              <Loader2 className="h-7 w-7 animate-spin text-[#1A3D63]" />
+          <div className="p-8">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-[#14222B]">
+                  Assignment Directory
+                </h2>
+              </div>
+              <button
+                onClick={fetchAssignments}
+                className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#00A8CC] hover:text-[#0088A6]"
+              >
+                <RefreshCw size={14} /> Refresh Terminal
+              </button>
             </div>
-          ) : assignments.length === 0 ? (
-            <div className="border-y border-dashed border-[#B3CFE5] py-12 text-center">
-              <FileText size={42} className="mx-auto mb-3 text-[#B3CFE5]" />
 
-              <p className="font-semibold text-[#0A1931]">
-                No assignments yet.
-              </p>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Create your first assignment above.
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto border-y border-[#B3CFE5]">
-              <table className="w-full min-w-262.5">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-separate border-spacing-y-4">
                 <thead>
-                  <tr className="border-b border-[#B3CFE5] bg-[#F6FAFD] text-left text-xs uppercase tracking-wide text-gray-500">
-                    <th className="px-4 py-3">Assignment</th>
-
-                    <th className="px-4 py-3">Batch</th>
-
-                    <th className="px-4 py-3">Instructor</th>
-
-                    <th className="px-4 py-3">Deadline</th>
-
-                    <th className="px-4 py-3">Points</th>
-
-                    <th className="px-4 py-3">Files</th>
-
-                    <th className="px-4 py-3">Status</th>
-
-                    <th className="px-4 py-3 text-right">Actions</th>
+                  <tr className="text-[#8FA3B0] text-[10px] font-bold uppercase tracking-[0.2em]">
+                    <th className="px-6 pb-2">Deliverable</th>
+                    <th className="px-6 pb-2">Instructor</th>
+                    <th className="px-6 pb-2">Lock Date</th>
+                    <th className="px-6 pb-2 text-center">Score</th>
+                    <th className="px-6 pb-2 text-center">Resources</th>
+                    <th className="px-6 pb-2">Status</th>
+                    <th className="px-6 pb-2 text-right">
+                      Operational Actions
+                    </th>
                   </tr>
                 </thead>
-
-                <tbody>
-                  {assignments.map((assignment) => {
-                    const expired = isExpired(assignment.deadline);
-
-                    return (
-                      <tr
-                        key={assignment._id}
-                        className="border-b border-gray-100 transition last:border-0 hover:bg-[#F6FAFD]"
+                <tbody className="divide-y-0">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="7" className="py-20 text-center">
+                        <Loader2 className="animate-spin inline-block text-[#00A8CC]" />
+                      </td>
+                    </tr>
+                  ) : assignments.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan="7"
+                        className="py-20 text-center text-[#8FA3B0] font-bold bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100"
                       >
-                        {/* ASSIGNMENT */}
-
-                        <td className="px-4 py-4">
-                          <div className="max-w-xs">
-                            <p className="font-semibold text-[#0A1931]">
-                              {assignment.title}
+                        No assignment blueprints detected.
+                      </td>
+                    </tr>
+                  ) : (
+                    assignments.map((item) => {
+                      const expired = isExpired(item.deadline);
+                      const initials = item.title.substring(0, 2).toUpperCase();
+                      return (
+                        <tr
+                          key={item._id}
+                          className="hover:translate-x-1 transition-transform group"
+                        >
+                          <td className="px-6 py-5 bg-white rounded-l-2xl border-l-4 border-[#00A8CC] shadow-sm">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-lg bg-[#E3F5F9] text-[#00A8CC] flex items-center justify-center font-bold text-[11px] shadow-inner">
+                                {initials}
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-[#14222B] leading-tight">
+                                  {item.title}
+                                </p>
+                                <p className="text-[10px] font-bold text-[#00A8CC] uppercase tracking-tighter mt-1">
+                                  {getBatchName(item)}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5 bg-white shadow-sm text-xs font-bold text-gray-600">
+                            {item.instructorName}
+                          </td>
+                          <td className="px-6 py-5 bg-white shadow-sm">
+                            <p className="text-[11px] font-bold text-[#14222B]">
+                              {new Date(item.deadline).toLocaleDateString()}
                             </p>
-
-                            <p className="mt-1 line-clamp-1 text-xs text-gray-500">
-                              {assignment.description}
+                            <p className="text-[10px] text-[#8FA3B0] font-medium mt-0.5">
+                              {new Date(item.deadline).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </p>
+                          </td>
+                          <td className="px-6 py-5 bg-white shadow-sm text-center text-sm font-black text-[#14222B]">
+                            {item.maxScore}
+                          </td>
+                          <td className="px-6 py-5 bg-white shadow-sm text-center">
+                            {item.link || (item.files || []).length > 0 ? (
+                              <div className="flex justify-center gap-2">
+                                {item.link && (
+                                  <a
+                                    href={item.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 bg-gray-50 text-gray-400 hover:text-[#00A8CC] rounded-lg transition"
+                                    title="External Resource"
+                                  >
+                                    <ExternalLink size={16} />
+                                  </a>
+                                )}
 
-                            {assignment.link && (
-                              <a
-                                href={assignment.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mt-2 flex w-fit items-center gap-1 text-xs font-semibold text-[#1A3D63] hover:underline"
-                              >
-                                <LinkIcon size={12} />
-                                External Link
-                                <ExternalLink size={11} />
-                              </a>
+                                {(item.files || []).length > 0 && (
+                                  <div className="flex gap-1">
+                                    {item.files.map((file, i) => (
+                                      <a
+                                        key={i}
+                                        href={getFileUrl(file.fileUrl)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2 bg-gray-50 text-gray-400 hover:text-[#00A8CC] rounded-lg transition"
+                                        title={file.originalName}
+                                      >
+                                        <FileText size={16} />
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xl font-bold text-gray-400">
+                                --
+                              </span>
                             )}
-                          </div>
-                        </td>
-
-                        {/* BATCH */}
-
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-2 text-sm font-semibold text-[#1A3D63]">
-                            <Users size={15} />
-
-                            {getBatchName(assignment)}
-                          </div>
-                        </td>
-
-                        {/* INSTRUCTOR */}
-
-                        <td className="px-4 py-4 text-sm text-gray-600">
-                          {assignment.instructorName || "-"}
-                        </td>
-
-                        {/* DEADLINE */}
-
-                        <td className="px-4 py-4">
-                          <div className="flex items-start gap-2">
-                            <Calendar
-                              size={15}
-                              className="mt-0.5 shrink-0 text-[#4A7FA7]"
-                            />
-
-                            <div>
-                              <p className="text-sm font-semibold text-gray-700">
-                                {assignment.deadline
-                                  ? new Date(
-                                      assignment.deadline,
-                                    ).toLocaleDateString(undefined, {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    })
-                                  : "-"}
-                              </p>
-
-                              <p className="mt-1 text-xs text-gray-500">
-                                {assignment.deadline
-                                  ? new Date(
-                                      assignment.deadline,
-                                    ).toLocaleTimeString(undefined, {
-                                      hour: "numeric",
-                                      minute: "2-digit",
-                                    })
-                                  : "-"}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* POINTS */}
-
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-2 text-sm font-semibold text-[#4A7FA7]">
-                            <Trophy size={15} />
-
-                            {assignment.maxScore}
-                          </div>
-                        </td>
-
-                        {/* FILES */}
-
-                        <td className="px-4 py-4">
-                          {(assignment.files || []).length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              <a
-                                href={getFileUrl(assignment.files[0]?.fileUrl)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title={`${assignment.files.length} file(s)`}
-                                className="flex items-center gap-1 rounded-lg bg-[#EAF3F9] px-2 py-1 text-xs font-semibold text-[#1A3D63] hover:bg-[#B3CFE5]"
+                          </td>
+                          <td className="px-6 py-5 bg-white shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`w-2.5 h-2.5 rounded-full ring-4 ${expired ? "bg-orange-500 ring-orange-100" : "bg-emerald-500 ring-emerald-100"}`}
+                              />
+                              <span
+                                className={`text-[10px] font-black uppercase tracking-widest ${expired ? "text-orange-600" : "text-emerald-600"}`}
                               >
-                                <FileText size={13} />
-
-                                {assignment.files.length}
-                              </a>
+                                {expired ? "EXPIRED" : "Active"}
+                              </span>
                             </div>
-                          ) : (
-                            <span className="text-xs text-gray-400">
-                              No files
-                            </span>
-                          )}
-                        </td>
-
-                        {/* STATUS */}
-
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
-                              expired
-                                ? "bg-red-100 text-red-700"
-                                : "bg-green-100 text-green-700"
-                            }`}
-                          >
-                            {expired ? "Expired" : "Live"}
-                          </span>
-                        </td>
-
-                        {/* ACTIONS */}
-
-                        <td className="px-4 py-4">
-                          <div className="flex justify-end gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(assignment)}
-                              className="rounded-lg p-2 text-gray-400 transition hover:bg-blue-50 hover:text-[#1A3D63]"
-                              title="Edit assignment"
-                            >
-                              <Pencil size={17} />
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(assignment._id)}
-                              className="rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
-                              title="Delete assignment"
-                            >
-                              <Trash2 size={17} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td className="px-6 py-5 bg-white rounded-r-2xl shadow-sm text-right">
+                            <div className="flex justify-end gap-5">
+                              <button
+                                onClick={() => handleEdit(item)}
+                                className="text-[#00A8CC] hover:opacity-70 transition flex items-center gap-1.5 text-[10px] font-black uppercase"
+                              >
+                                <Pencil size={14} /> EDIT
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTrigger(item._id)}
+                                className="text-red-500 hover:opacity-70 transition flex items-center gap-1.5 text-[10px] font-black uppercase"
+                              >
+                                <Trash2 size={14} /> DELETE
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
       </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-[#14222B]/80 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-4xl p-8 shadow-2xl border border-[#B4D7E2] animate-in fade-in zoom-in duration-200">
+            <div className="flex flex-col items-center text-center">
+              <h3 className="text-2xl font-bold text-[#14222B] mb-2">
+                Delete Assignment?
+              </h3>
+              <p className="text-[#8FA3B0] text-sm leading-relaxed mb-8 px-4">
+                This action cannot be undone. All associated files and student
+                submissions data for this assignment will be permanently
+                removed.
+              </p>
+              <div className="flex w-full gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 py-2 rounded-xl border border-[#B4D7E2] text-sm font-bold text-[#1C2E3A] hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-2 rounded-xl bg-rose-500 text-white text-sm font-black uppercase hover:bg-rose-400 shadow-lg shadow-mist-300 transition"
+                >
+                  DELETE NOW
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

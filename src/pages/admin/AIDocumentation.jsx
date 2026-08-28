@@ -23,27 +23,28 @@ function AIDocumentation() {
   // =========================================================
   // STATE
   // =========================================================
-
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [processingId, setProcessingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [search, setSearch] = useState("");
-
   const [showModal, setShowModal] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
-
   const [title, setTitle] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [dragging, setDragging] = useState(false);
+
+  // =========================================================
+  // DELETE CONFIRMATION STATE
+  // =========================================================
+  const [deleteDocumentId, setDeleteDocumentId] = useState(null);
 
   const fileInputRef = useRef(null);
 
   // =========================================================
   // LOAD DOCUMENTS
   // =========================================================
-
   const loadDocuments = async () => {
     try {
       setLoading(true);
@@ -73,7 +74,6 @@ function AIDocumentation() {
   // =========================================================
   // OPEN CREATE
   // =========================================================
-
   const handleCreate = () => {
     setEditingDocument(null);
     setTitle("");
@@ -90,7 +90,6 @@ function AIDocumentation() {
   // =========================================================
   // OPEN EDIT
   // =========================================================
-
   const handleEdit = (document) => {
     setEditingDocument(document);
     setTitle(document.title || "");
@@ -107,7 +106,6 @@ function AIDocumentation() {
   // =========================================================
   // CLOSE MODAL
   // =========================================================
-
   const closeModal = () => {
     if (saving) {
       return;
@@ -127,7 +125,6 @@ function AIDocumentation() {
   // =========================================================
   // FILE VALIDATION
   // =========================================================
-
   const validateFile = (file) => {
     if (!file) {
       return false;
@@ -140,18 +137,15 @@ function AIDocumentation() {
     ];
 
     const extension = `.${file.name.split(".").pop().toLowerCase()}`;
-
     const allowedExtensions = [".pdf", ".docx", ".txt"];
 
     if (!allowedExtensions.includes(extension)) {
       toast.error("Only PDF, DOCX, and TXT files are allowed.");
-
       return false;
     }
 
     if (file.size > 20 * 1024 * 1024) {
       toast.error("File size cannot exceed 20 MB.");
-
       return false;
     }
 
@@ -169,7 +163,6 @@ function AIDocumentation() {
   // =========================================================
   // SELECT FILE
   // =========================================================
-
   const handleFileSelect = (file) => {
     if (!validateFile(file)) {
       return;
@@ -179,7 +172,6 @@ function AIDocumentation() {
 
     if (!title.trim()) {
       const filename = file.name.replace(/\.[^/.]+$/, "");
-
       setTitle(filename);
     }
   };
@@ -187,7 +179,6 @@ function AIDocumentation() {
   // =========================================================
   // FILE INPUT
   // =========================================================
-
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
 
@@ -199,7 +190,6 @@ function AIDocumentation() {
   // =========================================================
   // DRAG & DROP
   // =========================================================
-
   const handleDragOver = (event) => {
     event.preventDefault();
     setDragging(true);
@@ -224,7 +214,6 @@ function AIDocumentation() {
   // =========================================================
   // CREATE / UPDATE
   // =========================================================
-
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -239,7 +228,6 @@ function AIDocumentation() {
       // =====================================================
       // EDIT EXISTING DOCUMENT
       // =====================================================
-
       if (editingDocument) {
         const response = await api.put(`/documents/${editingDocument._id}`, {
           title: title.trim(),
@@ -276,17 +264,14 @@ function AIDocumentation() {
       // =====================================================
       // CREATE NEW UPLOAD
       // =====================================================
-
       if (!selectedFile) {
         toast.error("Please select a PDF, DOCX, or TXT file.");
-
         return;
       }
 
       const formData = new FormData();
 
       formData.append("file", selectedFile);
-
       formData.append("title", title.trim());
 
       const response = await api.post("/documents/upload", formData);
@@ -298,7 +283,6 @@ function AIDocumentation() {
         // ===================================================
         // UPDATE UI IMMEDIATELY
         // ===================================================
-
         if (newDocument) {
           setDocuments((current) => [
             newDocument,
@@ -326,7 +310,6 @@ function AIDocumentation() {
       // =====================================================
       // DUPLICATE DOCUMENT
       // =====================================================
-
       if (error.response?.status === 409) {
         toast.error(
           error.response?.data?.message ||
@@ -339,7 +322,6 @@ function AIDocumentation() {
       // =====================================================
       // VOYAGE RATE LIMIT
       // =====================================================
-
       if (error.response?.status === 429) {
         toast.error(
           "Voyage AI rate limit reached. Please wait a moment and try again.",
@@ -351,7 +333,6 @@ function AIDocumentation() {
       // =====================================================
       // GENERAL ERROR
       // =====================================================
-
       toast.error(
         error.response?.data?.message ||
           error.response?.data?.error ||
@@ -365,7 +346,6 @@ function AIDocumentation() {
   // =========================================================
   // REPROCESS
   // =========================================================
-
   const handleReprocess = async (documentId) => {
     try {
       setProcessingId(documentId);
@@ -373,7 +353,6 @@ function AIDocumentation() {
       // =====================================================
       // UPDATE UI IMMEDIATELY
       // =====================================================
-
       setDocuments((current) =>
         current.map((document) =>
           document._id === documentId
@@ -421,7 +400,6 @@ function AIDocumentation() {
       // =====================================================
       // SHOW FAILED STATE WITHOUT RELOAD
       // =====================================================
-
       setDocuments((current) =>
         current.map((document) =>
           document._id === documentId
@@ -454,30 +432,21 @@ function AIDocumentation() {
   };
 
   // =========================================================
-  // DELETE
+  // DELETE DOCUMENT
   // =========================================================
-
   const handleDelete = async (documentId) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this document? Its RAG chunks and uploaded file will also be deleted.",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     try {
       setDeletingId(documentId);
 
       const response = await api.delete(`/documents/${documentId}`);
 
       if (response.data?.success) {
+        // Success confirmation
         toast.success("Document deleted successfully.");
 
         // ===================================================
         // REMOVE FROM UI IMMEDIATELY
         // ===================================================
-
         setDocuments((current) =>
           current.filter((document) => document._id !== documentId),
         );
@@ -494,9 +463,43 @@ function AIDocumentation() {
   };
 
   // =========================================================
+  // OPEN DELETE CONFIRMATION
+  // =========================================================
+  const openDeleteConfirmation = (documentId) => {
+    setDeleteDocumentId(documentId);
+  };
+
+  // =========================================================
+  // CANCEL DELETE
+  // =========================================================
+  const cancelDelete = () => {
+    if (deletingId) {
+      return;
+    }
+
+    setDeleteDocumentId(null);
+  };
+
+  // =========================================================
+  // CONFIRM DELETE
+  // =========================================================
+  const confirmDelete = async () => {
+    if (!deleteDocumentId) {
+      return;
+    }
+
+    const documentId = deleteDocumentId;
+
+    // Close confirmation modal
+    setDeleteDocumentId(null);
+
+    // Perform actual deletion
+    await handleDelete(documentId);
+  };
+
+  // =========================================================
   // FILTER
   // =========================================================
-
   const filteredDocuments = documents.filter((document) => {
     const query = search.toLowerCase().trim();
 
@@ -515,7 +518,6 @@ function AIDocumentation() {
   // =========================================================
   // STATUS
   // =========================================================
-
   const renderStatus = (status) => {
     if (status === "processed") {
       return (
@@ -554,7 +556,6 @@ function AIDocumentation() {
   // =========================================================
   // FORMAT FILE SIZE
   // =========================================================
-
   const formatFileSize = (bytes) => {
     if (!bytes) {
       return "";
@@ -574,13 +575,11 @@ function AIDocumentation() {
   // =========================================================
   // RENDER
   // =========================================================
-
   return (
     <div className="min-h-screen bg-[#F4F8FA] px-4 py-5 sm:px-6 lg:px-8">
       {/* =====================================================
           HEADER
       ====================================================== */}
-
       <div className="mb-6 overflow-hidden rounded-b-2xl bg-[#092F38] shadow-lg">
         <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <div className="flex items-center gap-4">
@@ -613,12 +612,10 @@ function AIDocumentation() {
       {/* =====================================================
           MAIN
       ====================================================== */}
-
       <div className="mx-auto max-w-[1250px]">
         {/* ===================================================
             OVERVIEW
         ==================================================== */}
-
         <div className="mb-5 rounded-2xl border border-[#D5E2E7] bg-white p-5 shadow-sm sm:p-6">
           <div className="mb-5">
             <h2 className="text-lg font-extrabold text-[#142F38]">
@@ -632,7 +629,6 @@ function AIDocumentation() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {/* TOTAL */}
-
             <div className="rounded-xl border border-[#D9E6EA] bg-[#F8FBFC] p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -652,7 +648,6 @@ function AIDocumentation() {
             </div>
 
             {/* PROCESSED */}
-
             <div className="rounded-xl border border-[#D9E6EA] bg-[#F8FBFC] p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -676,7 +671,6 @@ function AIDocumentation() {
             </div>
 
             {/* FAILED */}
-
             <div className="rounded-xl border border-[#D9E6EA] bg-[#F8FBFC] p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -704,7 +698,6 @@ function AIDocumentation() {
         {/* ===================================================
             SEARCH
         ==================================================== */}
-
         <div className="mb-5 rounded-2xl border border-[#D5E2E7] bg-white p-5 shadow-sm">
           <h3 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-[#173942]">
             Search Documentation
@@ -726,7 +719,6 @@ function AIDocumentation() {
         {/* ===================================================
             DOCUMENT LIST
         ==================================================== */}
-
         <div className="overflow-hidden rounded-2xl border border-[#D5E2E7] bg-white shadow-sm">
           <div className="flex flex-col gap-3 border-b border-[#E3ECEF] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -753,7 +745,6 @@ function AIDocumentation() {
           </div>
 
           {/* LOADING */}
-
           {loading ? (
             <div className="flex min-h-[260px] items-center justify-center">
               <div className="flex flex-col items-center gap-3 text-slate-400">
@@ -789,7 +780,6 @@ function AIDocumentation() {
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     {/* INFO */}
-
                     <div className="flex min-w-0 items-start gap-4">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#E8F8FB] text-[#00A8CC]">
                         {document.type === "pdf" ? (
@@ -838,8 +828,8 @@ function AIDocumentation() {
                     </div>
 
                     {/* ACTIONS */}
-
                     <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                      {/* EDIT */}
                       <button
                         type="button"
                         onClick={() => handleEdit(document)}
@@ -854,6 +844,7 @@ function AIDocumentation() {
                         Edit Title
                       </button>
 
+                      {/* REPROCESS */}
                       <button
                         type="button"
                         onClick={() => handleReprocess(document._id)}
@@ -874,27 +865,23 @@ function AIDocumentation() {
                           : "Reprocess"}
                       </button>
 
+                      {/* DELETE */}
                       <button
                         type="button"
-                        onClick={() => handleDelete(document._id)}
+                        onClick={() => openDeleteConfirmation(document._id)}
                         disabled={
                           deletingId === document._id ||
                           processingId === document._id
                         }
                         className="inline-flex items-center gap-1.5 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {deletingId === document._id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-3.5 w-3.5" />
-                        )}
+                        <Trash2 className="h-3.5 w-3.5" />
                         Delete
                       </button>
                     </div>
                   </div>
 
                   {/* PROCESSING ERROR */}
-
                   {document.status === "failed" && document.processingError ? (
                     <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3">
                       <div className="flex items-start gap-2">
@@ -922,12 +909,10 @@ function AIDocumentation() {
       {/* =====================================================
           UPLOAD / EDIT MODAL
       ====================================================== */}
-
       {showModal && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
             {/* MODAL HEADER */}
-
             <div className="flex items-center justify-between bg-[#092F38] px-5 py-4 text-white sm:px-6">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#00A8CC]">
@@ -964,14 +949,12 @@ function AIDocumentation() {
             </div>
 
             {/* FORM */}
-
             <form
               onSubmit={handleSubmit}
               className="max-h-[calc(90vh-110px)] overflow-y-auto p-5 sm:p-6"
             >
               <div className="space-y-5">
                 {/* TITLE */}
-
                 <div>
                   <label className="mb-2 block text-xs font-extrabold uppercase tracking-wide text-[#173942]">
                     Document Title
@@ -988,7 +971,6 @@ function AIDocumentation() {
                 </div>
 
                 {/* FILE UPLOAD */}
-
                 {!editingDocument && (
                   <div>
                     <label className="mb-2 block text-xs font-extrabold uppercase tracking-wide text-[#173942]">
@@ -1070,7 +1052,6 @@ function AIDocumentation() {
                 )}
 
                 {/* EDIT INFO */}
-
                 {editingDocument && (
                   <div className="rounded-xl border border-[#DDE9EC] bg-[#F8FBFC] p-4">
                     <div className="flex items-start gap-3">
@@ -1098,7 +1079,6 @@ function AIDocumentation() {
                 )}
 
                 {/* PROCESSING INFORMATION */}
-
                 {!editingDocument && (
                   <div className="rounded-xl border border-[#D7EEF3] bg-[#F0FBFD] p-4">
                     <div className="flex items-start gap-3">
@@ -1122,7 +1102,6 @@ function AIDocumentation() {
                 )}
 
                 {/* BUTTONS */}
-
                 <div className="flex flex-col-reverse gap-2 border-t border-[#E2EBEE] pt-5 sm:flex-row sm:justify-end">
                   <button
                     type="button"
@@ -1158,6 +1137,78 @@ function AIDocumentation() {
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================
+          DELETE CONFIRMATION MODAL
+      ====================================================== */}
+      {deleteDocumentId && (
+        <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* HEADER */}
+            <div className="bg-[#092F38] px-6 py-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/20">
+                  <Trash2 className="h-5 w-5 text-red-400" />
+                </div>
+
+                <div>
+                  <h2 className="text-lg font-extrabold text-white">
+                    Delete Document?
+                  </h2>
+
+                  <p className="mt-0.5 text-xs font-medium text-slate-300">
+                    This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* CONTENT */}
+            <div className="p-6">
+              <p className="text-sm leading-6 text-slate-600">
+                Are you sure you want to delete this document?
+              </p>
+
+              <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+
+                  <div>
+                    <p className="text-sm font-bold text-red-700">Warning</p>
+
+                    <p className="mt-1 text-xs leading-5 text-red-600">
+                      The document and uploaded file will also be permanently
+                      deleted.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* BUTTONS */}
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={cancelDelete}
+                  disabled={deletingId !== null}
+                  className="rounded-xl border border-[#D5E2E7] px-5 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  disabled={deletingId !== null}
+                  className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

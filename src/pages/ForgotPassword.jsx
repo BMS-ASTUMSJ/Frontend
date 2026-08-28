@@ -19,7 +19,6 @@ function ForgotPassword() {
 
   const [loading, setLoading] = useState(false);
 
-  // Dynamic Password Validation Checks for UI Feedback
   const validations = {
     length: newPassword.length >= 8,
     uppercase: /[A-Z]/.test(newPassword),

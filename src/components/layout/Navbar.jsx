@@ -16,7 +16,6 @@ function Navbar() {
     { name: "Contact", href: "#contact", id: "contact", icon: Mail },
   ];
 
-  // Synchronize active indicator with page scrolling
   useEffect(() => {
     const handleObserver = (entries) => {
       entries.forEach((entry) => {
@@ -47,9 +46,7 @@ function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#0f2b34]/80 backdrop-blur-md shadow-lg transition-all">
-      {/* DESKTOP & HEADER NAVBAR */}
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-        {/* LOGO & BRAND */}
         <Link to="/" className="flex items-center gap-3">
           <div className="h-11 w-11 overflow-hidden rounded-full border-2 border-[#0a7a93] bg-white p-0.5 shadow-sm">
             <img
@@ -68,21 +65,16 @@ function Navbar() {
             </p>
           </div>
         </Link>
-
-        {/* DESKTOP NAVIGATION LINKS */}
         <div
           className="relative hidden items-center rounded-full bg-white/10 px-4 py-2 backdrop-blur-md border border-white/10 md:flex"
           onMouseLeave={() => setHoveredIndex(null)}
         >
-          {/* FLOATING ACTIVE/HOVER DOT (DESKTOP) */}
           <div
-            className="absolute -top-3.5 h-4 w-4 -translate-x-1/2 rounded-full bg-gradient-to-tr from-[#0a7a93] to-[#00bcd4] shadow-[0_0_14px_#00bcd4] ring-2 ring-white/80 transition-all duration-300 ease-out z-20"
+            className="absolute -top-3.5 h-4 w-4 -translate-x-1/2 rounded-full bg-linear-to-tr from-[#0a7a93] to-[#00bcd4] shadow-[0_0_14px_#00bcd4] ring-2 ring-white/80 transition-all duration-300 ease-out z-20"
             style={{
               left: `${(targetIndex + 0.5) * (100 / navLinks.length)}%`,
             }}
           />
-
-          {/* SINKING NOTCH / CURVED CUTOUT (DESKTOP) */}
           <div
             className="pointer-events-none absolute -top-px h-4 w-12 -translate-x-1/2 transition-all duration-300 ease-out z-10"
             style={{
@@ -116,7 +108,6 @@ function Navbar() {
           })}
         </div>
 
-        {/* CTA BUTTONS */}
         <div className="flex items-center gap-3">
           <Link
             to="/login"
@@ -133,22 +124,18 @@ function Navbar() {
           </Link>
         </div>
       </div>
-
-      {/* MOBILE FLOATING BAR */}
       <div className="block bg-[#0f2b34]/90 backdrop-blur-lg px-4 pb-4 pt-2 md:hidden">
         <div
           className="relative mx-auto flex w-full max-w-md justify-between rounded-3xl bg-white/95 backdrop-blur-md px-3 py-2 shadow-xl border border-white/20"
           onMouseLeave={() => setHoveredIndex(null)}
         >
-          {/* FLOATING ACTIVE/HOVER DOT (MOBILE) */}
           <div
-            className="absolute -top-3.5 h-4 w-4 -translate-x-1/2 rounded-full bg-gradient-to-tr from-[#0a7a93] to-[#00bcd4] shadow-[0_0_14px_#00bcd4] ring-2 ring-white/80 transition-all duration-300 ease-out z-20"
+            className="absolute -top-3.5 h-4 w-4 -translate-x-1/2 rounded-full bg-linear-to-tr from-[#0a7a93] to-[#00bcd4] shadow-[0_0_14px_#00bcd4] ring-2 ring-white/80 transition-all duration-300 ease-out z-20"
             style={{
               left: `${(targetIndex + 0.5) * (100 / navLinks.length)}%`,
             }}
           />
 
-          {/* SINKING NOTCH / CURVED CUTOUT (MOBILE) */}
           <div
             className="pointer-events-none absolute -top-px h-4 w-12 -translate-x-1/2 transition-all duration-300 ease-out z-10"
             style={{
@@ -160,7 +147,6 @@ function Navbar() {
             </svg>
           </div>
 
-          {/* NAVIGATION BUTTONS */}
           {navLinks.map((item, index) => {
             const Icon = item.icon;
             const isTarget = targetIndex === index;

@@ -9,55 +9,42 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
-  XCircle,
   Mail,
   Layers,
+  Search,
+  UserCheck,
+  ChevronDown,
+  GraduationCap,
 } from "lucide-react";
-
 import api from "../../utils/api";
 
 function ApplicantsPage() {
   const [applicants, setApplicants] = useState([]);
   const [batches, setBatches] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [loadingBatches, setLoadingBatches] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
   const [error, setError] = useState("");
 
-  // Filters
+  const [search, setSearch] = useState("");
   const [gender, setGender] = useState("");
   const [status, setStatus] = useState("");
 
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [processingId, setProcessingId] = useState(null);
-
   const [approvalMessage, setApprovalMessage] = useState(null);
-
-  // ============================================================
-  // FETCH BATCHES
-  // ============================================================
 
   const fetchBatches = async () => {
     try {
       setLoadingBatches(true);
-
       const response = await api.get("/batches");
-
       setBatches(response.data?.batches || []);
     } catch (err) {
-      console.error("FAILED TO FETCH BATCHES:", err);
-
       toast.error(err.response?.data?.message || "Failed to load batches.");
     } finally {
       setLoadingBatches(false);
     }
   };
-
-  // ============================================================
-  // FETCH APPLICANTS
-  // ============================================================
 
   const fetchApplicants = async (showLoader = true) => {
     try {
@@ -73,8 +60,6 @@ function ApplicantsPage() {
 
       setApplicants(response.data?.applicants || []);
     } catch (err) {
-      console.error("FAILED TO FETCH APPLICANTS:", err);
-
       const message =
         err.response?.data?.message || "Failed to load applicants.";
 
@@ -86,44 +71,49 @@ function ApplicantsPage() {
     }
   };
 
-  // ============================================================
-  // INITIAL LOAD
-  // ============================================================
-
   useEffect(() => {
     fetchBatches();
     fetchApplicants();
   }, []);
 
-  // ============================================================
-  // FRONTEND FILTERING
-  // ============================================================
-
   const filteredApplicants = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
     return applicants.filter((applicant) => {
+      const fullName = applicant.fullName?.toString().toLowerCase() || "";
+
+      const email = applicant.email?.toString().toLowerCase() || "";
+
+      const schoolId = applicant.schoolId?.toString().toLowerCase() || "";
+
+      const department = applicant.department?.toString().toLowerCase() || "";
+
       const applicantGender =
         applicant.gender?.toString().trim().toLowerCase() || "";
 
       const selectedGender = gender?.toString().trim().toLowerCase() || "";
-
-      const matchesGender =
-        !selectedGender || applicantGender === selectedGender;
 
       const applicantStatus =
         applicant.status?.toString().trim().toLowerCase() || "";
 
       const selectedStatus = status?.toString().trim().toLowerCase() || "";
 
+      const matchesSearch =
+        !query ||
+        fullName.includes(query) ||
+        email.includes(query) ||
+        schoolId.includes(query) ||
+        department.includes(query);
+
+      const matchesGender =
+        !selectedGender || applicantGender === selectedGender;
+
       const matchesStatus =
         !selectedStatus || applicantStatus === selectedStatus;
 
-      return matchesGender && matchesStatus;
+      return matchesSearch && matchesGender && matchesStatus;
     });
-  }, [applicants, gender, status]);
-
-  // ============================================================
-  // UPDATE STATUS
-  // ============================================================
+  }, [applicants, search, gender, status]);
 
   const updateStatus = async (applicantId, newStatus) => {
     try {
@@ -151,9 +141,7 @@ function ApplicantsPage() {
       if (newStatus === "passed") {
         const email = student?.email || updatedApplicant?.email || "";
 
-        setApprovalMessage({
-          email,
-        });
+        setApprovalMessage({ email });
 
         toast.success("Applicant approved successfully.");
       } else {
@@ -162,8 +150,6 @@ function ApplicantsPage() {
 
       setSelectedApplicant(null);
     } catch (err) {
-      console.error("FAILED TO UPDATE APPLICANT:", err);
-
       const message =
         err.response?.data?.message || "Failed to update applicant status.";
 
@@ -174,46 +160,36 @@ function ApplicantsPage() {
     }
   };
 
-  // ============================================================
-  // STATUS BADGE
-  // ============================================================
-
   const getStatusBadge = (value) => {
     switch (value) {
       case "passed":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700">
-            <CheckCircle2 size={13} />
+          <span className="inline-flex items-center gap-2 rounded-full bg-[#E5F8EF] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[#15965D]">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#16B978]" />
             Approved
           </span>
         );
 
       case "rejected":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-[11px] font-bold text-red-700">
-            <XCircle size={13} />
+          <span className="inline-flex items-center gap-2 rounded-full bg-[#FFF0F0] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[#E34D59]">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#F04444]" />
             Rejected
           </span>
         );
 
       default:
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-1 text-[11px] font-bold text-yellow-700">
-            <AlertCircle size={13} />
+          <span className="inline-flex items-center gap-2 rounded-full bg-[#FFF6E6] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[#E18A00]">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#F59E0B]" />
             Pending
           </span>
         );
     }
   };
 
-  // ============================================================
-  // GET BATCH NAME
-  // ============================================================
-
   const getBatchName = (applicant, batchList = batches) => {
-    if (!applicant?.batch) {
-      return "No batch";
-    }
+    if (!applicant?.batch) return "No batch";
 
     if (typeof applicant.batch === "object") {
       return applicant.batch.name || "Unknown batch";
@@ -223,22 +199,6 @@ function ApplicantsPage() {
 
     return batch?.name || "Unknown batch";
   };
-
-  // ============================================================
-  // GET BATCH STATUS
-  // ============================================================
-
-  const getBatchStatus = (applicant) => {
-    if (!applicant?.batch || typeof applicant.batch !== "object") {
-      return null;
-    }
-
-    return applicant.batch.status;
-  };
-
-  // ============================================================
-  // FORMAT DATE
-  // ============================================================
 
   const formatDate = (date) => {
     if (!date) return "-";
@@ -252,14 +212,13 @@ function ApplicantsPage() {
     return parsedDate.toLocaleDateString();
   };
 
-  // ============================================================
-  // RESET FILTERS
-  // ============================================================
-
   const resetFilters = () => {
+    setSearch("");
     setGender("");
     setStatus("");
   };
+
+  const hasFilters = search.trim() !== "" || gender !== "" || status !== "";
 
   return (
     <>
@@ -271,470 +230,443 @@ function ApplicantsPage() {
           style: {
             borderRadius: "12px",
             fontWeight: "600",
+            fontSize: "13px",
           },
         }}
       />
 
-      <div className="min-h-screen bg-[#F6FAFD] p-4 md:p-6 lg:p-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          {/* ==================================================
-              HEADER
-          ================================================== */}
-
-          <div className="rounded-3xl bg-[#0A1931] p-6 text-white shadow-sm md:p-7">
-            <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
-              <div className="flex items-center gap-4">
-                <div className="rounded-2xl bg-[#1A3D63] p-3">
-                  <Users size={26} />
+      <div className="min-h-screen bg-[#F4F8FA] px-4 py-3 md:px-7 lg:px-8">
+        <div className="mx-auto max-w-350">
+          <div className="overflow-hidden rounded-3xl bg-linear-to-b from-[#061E27] via-[#0B303A] to-[#173F49] shadow-sm">
+            <div className="flex min-h-22.5 items-center justify-between gap-5 px-4 py-7 md:px-9">
+              <div className="flex items-center gap-5">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#00A8CC] text-white shadow-lg shadow-[#00A8CC]/20">
+                  <GraduationCap size={29} strokeWidth={2.3} />
                 </div>
 
                 <div>
-                  <h1 className="text-2xl font-black md:text-3xl">
+                  <h1 className="text-[26px] font-bold tracking-tight text-white md:text-[32px]">
                     Applicants
                   </h1>
-
-                  <p className="mt-1 text-sm text-[#B3CFE5]">
-                    Review applicants and their assigned bootcamp batches.
-                  </p>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* ==================================================
-              ERROR
-          ================================================== */}
-
-          {error && (
-            <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              <AlertCircle size={19} />
-
-              <span>{error}</span>
 
               <button
                 type="button"
-                onClick={() => setError("")}
-                className="ml-auto rounded-lg p-1 hover:bg-red-100"
+                onClick={() => fetchApplicants(false)}
+                disabled={refreshing}
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-4 py-2.5 text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <X size={17} />
+                <RefreshCw
+                  size={15}
+                  className={refreshing ? "animate-spin" : ""}
+                />
+
+                <span className="hidden sm:inline">
+                  {refreshing ? "Refreshing..." : "Refresh"}
+                </span>
               </button>
             </div>
-          )}
-
-          {/* ==================================================
-              FILTERS
-          ================================================== */}
-
-          <div className="flex flex-col gap-3 md:flex-row">
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              className="w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm font-medium text-[#0A1931] outline-none transition focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]/40 md:w-1/2"
-            >
-              <option value="">All genders</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-            </select>
-
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full rounded-xl border border-[#B3CFE5] bg-white px-4 py-3 text-sm font-medium text-[#0A1931] outline-none transition focus:border-[#4A7FA7] focus:ring-2 focus:ring-[#B3CFE5]/40 md:w-1/2"
-            >
-              <option value="">All statuses</option>
-              <option value="pending">Pending</option>
-              <option value="passed">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
           </div>
 
-          {/* ==================================================
-              STATISTICS
-          ================================================== */}
+          <div className="mt-6 flex flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="relative flex-1">
+              <Search
+                size={17}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8CA1AA]"
+              />
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {/* TOTAL */}
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name, email, school ID or department..."
+                className="h-12 w-full rounded-xl border border-[#D5E5E9] bg-[#F8FBFC] pl-11 pr-10 text-sm font-medium text-[#172A33] outline-none transition placeholder:text-[#A7B5BA] focus:border-[#00A8CC] focus:bg-white focus:ring-2 focus:ring-[#00A8CC]/10"
+              />
 
-            <div className="rounded-2xl border border-[#B3CFE5]/70 bg-white px-4 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400">
-                    Total
-                  </p>
-
-                  <p className="mt-1 text-2xl font-black text-[#0A1931]">
-                    {filteredApplicants.length}
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-[#EAF3F9] p-2.5 text-[#1A3D63]">
-                  <Users size={18} />
-                </div>
-              </div>
-            </div>
-
-            {/* PENDING */}
-
-            <div className="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-yellow-600">
-                    Pending
-                  </p>
-
-                  <p className="mt-1 text-2xl font-black text-yellow-800">
-                    {
-                      filteredApplicants.filter(
-                        (applicant) => applicant.status === "pending",
-                      ).length
-                    }
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-yellow-100 p-2.5 text-yellow-600">
-                  <AlertCircle size={18} />
-                </div>
-              </div>
-            </div>
-
-            {/* APPROVED */}
-
-            <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-green-600">
-                    Approved
-                  </p>
-
-                  <p className="mt-1 text-2xl font-black text-green-800">
-                    {
-                      filteredApplicants.filter(
-                        (applicant) => applicant.status === "passed",
-                      ).length
-                    }
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-green-100 p-2.5 text-green-600">
-                  <CheckCircle2 size={18} />
-                </div>
-              </div>
-            </div>
-
-            {/* REJECTED */}
-
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-red-600">
-                    Rejected
-                  </p>
-
-                  <p className="mt-1 text-2xl font-black text-red-800">
-                    {
-                      filteredApplicants.filter(
-                        (applicant) => applicant.status === "rejected",
-                      ).length
-                    }
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-red-100 p-2.5 text-red-600">
-                  <XCircle size={18} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ==================================================
-              APPLICANT TABLE
-          ================================================== */}
-
-          {/* ==================================================
-    APPLICANT TABLE
-================================================== */}
-
-          <div className="space-y-3">
-            {/* TABLE HEADER */}
-
-            <div className="flex flex-col justify-between gap-2 px-1 sm:flex-row sm:items-center">
-              <div>
-                <h2 className="font-bold text-[#0A1931]">Applicant List</h2>
-
-                <p className="mt-0.5 text-xs text-gray-500">
-                  Showing {filteredApplicants.length} applicant
-                  {filteredApplicants.length !== 1 ? "s" : ""}
-                </p>
-              </div>
-
-              {(gender || status) && (
+              {search && (
                 <button
                   type="button"
-                  onClick={resetFilters}
-                  className="text-xs font-bold text-[#1A3D63] hover:underline"
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-[#8CA1AA] transition hover:bg-[#EAF5F8] hover:text-[#132832]"
                 >
-                  Reset Filters
+                  <X size={14} />
                 </button>
               )}
             </div>
 
-            {/* LOADING */}
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex items-center rounded-xl bg-[#F1F5F6] p-1">
+                {["", "male", "female"].map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGender(g)}
+                    className={`rounded-lg px-4 py-2 text-xs font-bold transition ${
+                      gender === g
+                        ? "bg-white text-[#17303A] shadow-sm"
+                        : "text-[#8CA1AA] hover:text-[#17303A]"
+                    }`}
+                  >
+                    {g === "" ? "All" : g === "male" ? "Male" : "Female"}
+                  </button>
+                ))}
+              </div>
 
-            {loading ? (
-              <div className="py-16 text-center">
-                <Loader2
-                  size={30}
-                  className="mx-auto animate-spin text-[#1A3D63]"
+              <div className="relative">
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="h-12 min-w-36.25 appearance-none rounded-xl border border-[#D5E5E9] bg-[#F8FBFC] pl-4 pr-10 text-xs font-bold text-[#17303A] outline-none transition focus:border-[#00A8CC] focus:bg-white"
+                >
+                  <option value="">All statuses</option>
+
+                  <option value="pending">Pending</option>
+
+                  <option value="passed">Approved</option>
+
+                  <option value="rejected">Rejected</option>
+                </select>
+
+                <ChevronDown
+                  size={15}
+                  className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8CA1AA]"
                 />
               </div>
-            ) : filteredApplicants.length === 0 ? (
-              /* EMPTY STATE */
+            </div>
+          </div>
+        </div>
 
-              <div className="py-16 text-center">
-                <Users size={42} className="mx-auto text-gray-300" />
+        {error && (
+          <div className="mx-6 mt-5 flex items-center justify-between gap-3 rounded-xl border border-[#FFD8D8] bg-[#FFF5F5] px-4 py-3 text-xs font-semibold text-[#C93643] md:mx-8">
+            <div className="flex items-center gap-2.5">
+              <AlertCircle size={16} className="text-[#E34D59]" />
 
-                <h3 className="mt-4 font-semibold text-gray-700">
-                  No applicants found
-                </h3>
+              <span>{error}</span>
+            </div>
 
-                <p className="mt-1 text-sm text-gray-500">
-                  Try changing your filters.
-                </p>
-              </div>
-            ) : (
-              /* TABLE */
+            <button
+              type="button"
+              onClick={() => setError("")}
+              className="rounded-lg p-1 transition hover:bg-[#FFE5E5]"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
 
-              <div className="overflow-x-auto rounded-2xl border border-[#B3CFE5] bg-white">
-                <table className="w-full min-w-275">
-                  <thead>
-                    <tr className="border-b border-[#B3CFE5] bg-[#F6FAFD] text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                      <th className="px-5 py-3.5">Applicant</th>
+        {loading ? (
+          <div className="flex min-h-105 flex-col items-center justify-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E6F7FA]">
+              <Loader2 size={27} className="animate-spin text-[#00A8CC]" />
+            </div>
 
-                      <th className="px-5 py-3.5">School ID</th>
+            <p className="mt-4 text-sm font-bold text-[#71868F]">
+              Loading applicants...
+            </p>
+          </div>
+        ) : filteredApplicants.length === 0 ? (
+          <div className="flex min-h-105 flex-col items-center justify-center px-6 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E7F7FA] text-[#00A8CC]">
+              <Users size={29} />
+            </div>
 
-                      <th className="px-5 py-3.5">Gender</th>
+            <h3 className="mt-4 text-base font-extrabold text-[#142832]">
+              No applicants found
+            </h3>
 
-                      <th className="px-5 py-3.5">Department</th>
+            <p className="mt-1 max-w-sm text-sm font-medium text-[#91A5AE]">
+              {hasFilters
+                ? "Try adjusting your filters or search keywords."
+                : "There are currently no applicant records."}
+            </p>
 
-                      <th className="px-5 py-3.5">Batch</th>
-
-                      <th className="px-5 py-3.5">Experience</th>
-
-                      <th className="px-5 py-3.5">Status</th>
-
-                      <th className="px-5 py-3.5 text-right">Action</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {filteredApplicants.map((applicant) => (
-                      <tr
-                        key={applicant._id}
-                        className="border-b border-gray-100 last:border-0 hover:bg-[#F6FAFD]"
-                      >
-                        {/* APPLICANT */}
-
-                        <td className="px-5 py-3.5">
-                          <div>
-                            <p className="text-sm font-bold text-[#0A1931]">
-                              {applicant.fullName}
-                            </p>
-
-                            <p className="mt-0.5 text-[11px] text-gray-500">
-                              {applicant.email}
-                            </p>
-                          </div>
-                        </td>
-
-                        {/* SCHOOL ID */}
-
-                        <td className="px-5 py-3.5 text-sm text-gray-700">
-                          {applicant.schoolId || "-"}
-                        </td>
-
-                        {/* GENDER */}
-
-                        <td className="px-5 py-3.5 text-sm capitalize text-gray-700">
-                          {applicant.gender || "-"}
-                        </td>
-
-                        {/* DEPARTMENT */}
-
-                        <td className="px-5 py-3.5 text-sm text-gray-700">
-                          {applicant.department || "-"}
-                        </td>
-
-                        {/* BATCH */}
-
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-2">
-                            <div className="rounded-lg bg-[#EAF3F9] p-1.5 text-[#1A3D63]">
-                              <Layers size={14} />
-                            </div>
-
-                            <div>
-                              <p className="text-sm font-semibold text-[#0A1931]">
-                                {getBatchName(applicant)}
-                              </p>
-
-                              {getBatchStatus(applicant) && (
-                                <p className="text-[10px] capitalize text-gray-500">
-                                  {getBatchStatus(applicant)}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* EXPERIENCE */}
-
-                        <td className="px-5 py-3.5 text-sm capitalize text-gray-700">
-                          {applicant.experienceLevel || "-"}
-                        </td>
-
-                        {/* STATUS */}
-
-                        <td className="px-5 py-3.5">
-                          {getStatusBadge(applicant.status)}
-                        </td>
-
-                        {/* ACTION */}
-
-                        <td className="px-5 py-3.5">
-                          <div className="flex justify-end gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedApplicant(applicant)}
-                              className="rounded-lg border border-[#B3CFE5] p-2 text-[#1A3D63] transition hover:bg-[#EAF3F9]"
-                              title="View"
-                            >
-                              <Eye size={16} />
-                            </button>
-
-                            {applicant.status !== "passed" && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateStatus(applicant._id, "passed")
-                                }
-                                disabled={processingId === applicant._id}
-                                className="rounded-lg bg-green-600 p-2 text-white transition hover:bg-green-700 disabled:opacity-50"
-                                title="Approve"
-                              >
-                                {processingId === applicant._id ? (
-                                  <Loader2 size={16} className="animate-spin" />
-                                ) : (
-                                  <Check size={16} />
-                                )}
-                              </button>
-                            )}
-
-                            {applicant.status !== "rejected" && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateStatus(applicant._id, "rejected")
-                                }
-                                disabled={processingId === applicant._id}
-                                className="rounded-lg bg-red-600 p-2 text-white transition hover:bg-red-700 disabled:opacity-50"
-                                title="Reject"
-                              >
-                                <X size={16} />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="mt-5 rounded-xl bg-[#102B34] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#173F49]"
+              >
+                Clear Filters
+              </button>
             )}
           </div>
+        ) : (
+          <div className="overflow-x-auto px-4 pb-6 pt-4 md:px-6">
+            <table className="w-full min-w-262.5 border-separate border-spacing-y-3 text-left">
+              <thead>
+                <tr>
+                  <th className="px-5 pb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#91A5AE]">
+                    Applicant
+                  </th>
+
+                  <th className="px-5 pb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#91A5AE]">
+                    School ID
+                  </th>
+
+                  <th className="px-5 pb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#91A5AE]">
+                    Gender
+                  </th>
+
+                  <th className="px-5 pb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#91A5AE]">
+                    Department
+                  </th>
+
+                  <th className="px-5 pb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#91A5AE]">
+                    Batch
+                  </th>
+
+                  <th className="px-5 pb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#91A5AE]">
+                    Status
+                  </th>
+
+                  <th className="px-5 pb-2 text-center text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#91A5AE]">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {filteredApplicants.map((applicant) => (
+                  <tr
+                    key={applicant._id}
+                    className="group transition-transform duration-200 ease-in-out hover:-translate-y-1"
+                  >
+                    <td className="rounded-l-2xl border-y border-l-4 border-[#E7EEF1] border-l-4 border-l-[#13A8C6] bg-white px-5 py-5 shadow-[0_3px_15px_rgba(18,45,55,0.04)] transition group-hover:bg-[#FCFEFF]">
+                      <div className="flex items-center gap-3.5">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#E5F5F8] font-bold text-[#00A8CC]">
+                          {applicant.fullName
+                            ? applicant.fullName
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .slice(0, 2)
+                                .toUpperCase()
+                            : "AP"}
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-[#142832]">
+                            {applicant.fullName || "-"}
+                          </p>
+
+                          <p className="mt-1 truncate text-[11px] font-medium text-[#91A5AE]">
+                            {applicant.email || "-"}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="border-y border-[#E7EEF1] bg-white px-5 py-5 text-sm font-bold text-[#445962] shadow-[0_3px_15px_rgba(18,45,55,0.04)]">
+                      {applicant.schoolId || "-"}
+                    </td>
+
+                    <td className="border-y border-[#E7EEF1] bg-white px-5 py-5 shadow-[0_3px_15px_rgba(18,45,55,0.04)]">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1.5 text-[10px] font-bold uppercase ${
+                          applicant.gender?.toLowerCase() === "female"
+                            ? "bg-[#FFF0F7] text-[#D84A82]"
+                            : "bg-[#EDF5FF] text-[#3476B8]"
+                        }`}
+                      >
+                        {applicant.gender || "-"}
+                      </span>
+                    </td>
+
+                    <td className="border-y border-[#E7EEF1] bg-white px-5 py-5 text-sm font-bold text-[#445962] shadow-[0_3px_15px_rgba(18,45,55,0.04)]">
+                      {applicant.department || "-"}
+                    </td>
+
+                    <td className="border-y border-[#E7EEF1] bg-white px-5 py-5 shadow-[0_3px_15px_rgba(18,45,55,0.04)]">
+                      <div className="flex items-center gap-2 text-sm font-bold text-[#00A0C0]">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EAF7FA]">
+                          <Layers size={14} />
+                        </div>
+
+                        <span>{getBatchName(applicant)}</span>
+                      </div>
+                    </td>
+
+                    <td className="border-y border-[#E7EEF1] bg-white px-5 py-5 shadow-[0_3px_15px_rgba(18,45,55,0.04)]">
+                      {getStatusBadge(applicant.status)}
+                    </td>
+
+                    <td className="rounded-r-2xl border-y border-r border-[#E7EEF1] bg-white px-5 py-5 shadow-[0_3px_15px_rgba(18,45,55,0.04)]">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedApplicant(applicant)}
+                          className="flex h-9 w-9 items-center justify-center rounded-lg  text-[#4D6872] transition hover:bg-[#E3F5F9] hover:text-[#00A8CC]"
+                          title="View details"
+                        >
+                          <Eye size={15} />
+                        </button>
+
+                        {applicant.status !== "passed" && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateStatus(applicant._id, "passed")
+                            }
+                            disabled={processingId === applicant._id}
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#15965D] transition hover:bg-[#D7F4E5] disabled:opacity-50"
+                            title="Approve"
+                          >
+                            {processingId === applicant._id ? (
+                              <Loader2 size={15} className="animate-spin" />
+                            ) : (
+                              <Check size={20} />
+                            )}
+                          </button>
+                        )}
+
+                        {applicant.status !== "rejected" && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateStatus(applicant._id, "rejected")
+                            }
+                            disabled={processingId === applicant._id}
+                            className="flex h-9 w-9 items-center justify-center rounded-lg  text-[#E34D59] transition hover:bg-[#FFE3E3] disabled:opacity-50"
+                            title="Reject"
+                          >
+                            <X size={20} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-2 border-t border-[#E7EEF1] px-6 py-4 md:flex-row md:items-center md:justify-between md:px-8">
+          <p className="text-xs font-semibold text-[#91A5AE]">
+            Showing{" "}
+            <span className="font-bold text-[#435A63]">
+              {filteredApplicants.length}
+            </span>{" "}
+            applicant
+            {filteredApplicants.length !== 1 ? "s" : ""}
+          </p>
+
+          <p className="text-xs font-medium text-[#A1B0B5]">
+            Total applicants:{" "}
+            <span className="font-bold text-[#435A63]">
+              {applicants.length}
+            </span>
+          </p>
         </div>
       </div>
 
-      {/* ======================================================
-          APPLICANT DETAILS MODAL
-      ====================================================== */}
-
       {selectedApplicant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#B3CFE5] p-6">
-              <div>
-                <h2 className="text-xl font-bold text-[#0A1931]">
-                  Applicant Details
-                </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#071B23]/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-3xl overflow-hidden rounded-3xl border border-[#D5E5E9] bg-white shadow-2xl">
+            <div className="flex items-center justify-between bg-linear-to-r from-[#09252E] to-[#173F49] px-6 py-5 md:px-7">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#00A8CC] text-white">
+                  <UserCheck size={21} />
+                </div>
 
-                <p className="text-sm text-gray-500">
-                  {selectedApplicant.fullName}
-                </p>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    Applicant Details
+                  </h3>
+
+                  <p className="mt-0.5 text-xs font-medium text-[#A9C2CA]">
+                    {selectedApplicant.fullName}
+                  </p>
+                </div>
               </div>
 
               <button
                 type="button"
                 onClick={() => setSelectedApplicant(null)}
-                className="rounded-xl p-2 hover:bg-gray-100"
+                className="rounded-xl p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className="grid gap-5 p-6 md:grid-cols-2">
-              <Detail label="Full Name" value={selectedApplicant.fullName} />
+            <div className="max-h-[70vh] overflow-y-auto p-6 md:p-7">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Detail label="Full Name" value={selectedApplicant.fullName} />
 
-              <Detail label="Email" value={selectedApplicant.email} />
+                <Detail label="Email" value={selectedApplicant.email} />
 
-              <Detail label="Phone" value={selectedApplicant.phone} />
+                <Detail label="Phone" value={selectedApplicant.phone} />
 
-              <Detail label="School ID" value={selectedApplicant.schoolId} />
+                <Detail label="School ID" value={selectedApplicant.schoolId} />
 
-              <Detail label="Gender" value={selectedApplicant.gender} />
+                <Detail label="Gender" value={selectedApplicant.gender} />
 
-              <Detail label="Year" value={selectedApplicant.year} />
+                <Detail label="Year" value={selectedApplicant.year} />
 
-              <Detail label="Department" value={selectedApplicant.department} />
+                <Detail
+                  label="Department"
+                  value={selectedApplicant.department}
+                />
 
-              <Detail
-                label="Experience"
-                value={selectedApplicant.experienceLevel}
-              />
+                <Detail
+                  label="Experience"
+                  value={selectedApplicant.experienceLevel}
+                />
 
-              <Detail label="Batch" value={getBatchName(selectedApplicant)} />
+                <Detail label="Batch" value={getBatchName(selectedApplicant)} />
 
-              <Detail label="GitHub" value={selectedApplicant.githubUrl} />
+                <Detail
+                  label="GitHub"
+                  value={selectedApplicant.githubUrl}
+                  isLink
+                />
 
-              <Detail label="LeetCode" value={selectedApplicant.leetcodeUrl} />
+                <Detail
+                  label="LeetCode"
+                  value={selectedApplicant.leetcodeUrl}
+                  isLink
+                />
 
-              <Detail
-                label="Codeforces"
-                value={selectedApplicant.codeforcesUrl}
-              />
+                <Detail
+                  label="Codeforces"
+                  value={selectedApplicant.codeforcesUrl}
+                  isLink
+                />
 
-              <Detail
-                label="Applied"
-                value={formatDate(selectedApplicant.createdAt)}
-              />
+                <Detail
+                  label="Applied On"
+                  value={formatDate(selectedApplicant.createdAt)}
+                />
 
-              <div className="md:col-span-2">
-                <Detail label="About" value={selectedApplicant.about} />
-              </div>
+                <div className="sm:col-span-2">
+                  <div className="rounded-xl border border-[#E0EAED] bg-[#F7FAFB] p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#91A5AE]">
+                      About Candidate
+                    </p>
 
-              <div className="md:col-span-2">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Status
-                </p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm font-medium leading-6 text-[#344D57]">
+                      {selectedApplicant.about ||
+                        "No extra information provided."}
+                    </p>
+                  </div>
+                </div>
 
-                {getStatusBadge(selectedApplicant.status)}
+                <div className="sm:col-span-2 flex items-center justify-between rounded-xl border border-[#E0EAED] bg-[#F7FAFB] p-4">
+                  <span className="text-xs font-bold uppercase tracking-wide text-[#91A5AE]">
+                    Status
+                  </span>
+
+                  {getStatusBadge(selectedApplicant.status)}
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-[#B3CFE5] p-6 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-[#E7EEF1] bg-[#F8FAFB] px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
               <button
                 type="button"
                 onClick={() => setSelectedApplicant(null)}
-                className="rounded-xl border border-[#B3CFE5] px-5 py-3 font-semibold text-[#0A1931]"
+                className="rounded-xl border border-[#D2E2E6] bg-white px-5 py-2.5 text-xs font-bold text-[#344B55] transition hover:bg-[#EDF6F8]"
               >
                 Close
               </button>
@@ -746,9 +678,8 @@ function ApplicantsPage() {
                     updateStatus(selectedApplicant._id, "rejected")
                   }
                   disabled={processingId === selectedApplicant._id}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                  className="rounded-xl bg-[#FFF0F0] px-5 py-2.5 text-xs font-bold text-[#E34D59] transition hover:bg-[#FFE2E2] disabled:opacity-50"
                 >
-                  <X size={18} />
                   Reject
                 </button>
               )}
@@ -758,10 +689,11 @@ function ApplicantsPage() {
                   type="button"
                   onClick={() => updateStatus(selectedApplicant._id, "passed")}
                   disabled={processingId === selectedApplicant._id}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                  className="rounded-xl bg-[#00A8CC] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#008EAD] disabled:opacity-50"
                 >
-                  <Check size={18} />
-                  Approve
+                  {processingId === selectedApplicant._id
+                    ? "Processing..."
+                    : "Approve Applicant"}
                 </button>
               )}
             </div>
@@ -769,43 +701,41 @@ function ApplicantsPage() {
         </div>
       )}
 
-      {/* ======================================================
-          APPROVAL MESSAGE
-      ====================================================== */}
-
       {approvalMessage && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-              <CheckCircle2 size={32} />
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-[#071B23]/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-[#D5E5E9] bg-white p-7 text-center shadow-2xl">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F8F0] text-[#15965D]">
+              <CheckCircle2 size={28} />
             </div>
 
-            <h2 className="text-center text-xl font-bold text-[#0A1931]">
-              Applicant Approved Successfully
-            </h2>
+            <h3 className="mt-4 text-lg font-bold text-[#142832]">
+              Applicant Approved
+            </h3>
 
-            <div className="mt-6 rounded-2xl border border-[#B3CFE5] bg-[#F6FAFD] p-5">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 text-[#1A3D63]">
-                  <Mail size={22} />
-                </div>
+            <p className="mx-auto mt-2 max-w-sm text-sm font-medium leading-6 text-[#91A5AE]">
+              The applicant has been successfully accepted into the batch.
+            </p>
 
-                <div>
-                  <p className="text-sm font-semibold text-[#0A1931]">
-                    Email will be sent to
-                  </p>
+            <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#E0EAED] bg-[#F7FAFB] p-4 text-left">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E6F7FA] text-[#00A8CC]">
+                <Mail size={18} />
+              </div>
 
-                  <p className="mt-1 break-all text-sm text-gray-600">
-                    {approvalMessage.email}
-                  </p>
-                </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-[#91A5AE]">
+                  Confirmation Email
+                </p>
+
+                <p className="mt-1 truncate text-sm font-bold text-[#142832]">
+                  {approvalMessage.email || "Applicant email"}
+                </p>
               </div>
             </div>
 
             <button
               type="button"
               onClick={() => setApprovalMessage(null)}
-              className="mt-6 w-full rounded-2xl bg-[#0A1931] py-3 text-sm font-bold text-white transition hover:bg-[#1A3D63]"
+              className="mt-6 w-full rounded-xl bg-[#00A8CC] py-3 text-xs font-bold text-white transition hover:bg-[#008EAD]"
             >
               Done
             </button>
@@ -816,20 +746,27 @@ function ApplicantsPage() {
   );
 }
 
-// ============================================================
-// DETAIL COMPONENT
-// ============================================================
-
-function Detail({ label, value }) {
+function Detail({ label, value, isLink = false }) {
   return (
-    <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+    <div className="rounded-xl border border-[#E0EAED] bg-[#F7FAFB] p-4">
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#91A5AE]">
         {label}
       </p>
 
-      <p className="mt-1 wrap-break-word text-sm text-[#0A1931]">
-        {value || "-"}
-      </p>
+      {isLink && value ? (
+        <a
+          href={value.startsWith("http") ? value : `https://${value}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1.5 block truncate text-sm font-bold text-[#00A0C0] hover:underline"
+        >
+          {value}
+        </a>
+      ) : (
+        <p className="mt-1.5 truncate text-sm font-bold text-[#263E48]">
+          {value || "-"}
+        </p>
+      )}
     </div>
   );
 }

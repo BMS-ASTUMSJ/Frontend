@@ -5,234 +5,210 @@ import {
   BarChart3,
   Megaphone,
   AlertCircle,
-  CheckCircle2,
-  Clock3,
+  GraduationCap,
+  Users,
+  TrendingUp,
+  Activity,
 } from "lucide-react";
+
 import api from "../../utils/api";
 
 function StudentDashboard() {
-  // ============================================================
-  // STATE
-  // ============================================================
-
-  const [student, setStudent] = useState(null);
-
-  const [risk, setRisk] = useState({
-    attendanceIssues: 0,
-    assignmentIssues: 0,
-    totalIssues: 0,
-    absenceCount: 0,
-    missedAssignmentCount: 0,
-    attendanceAtRisk: false,
-    assignmentAtRisk: false,
-    isAtRisk: false,
-    reason: [],
-    message: "Checking your current status...",
-  });
-
+  const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ============================================================
-  // FETCH STUDENT PROFILE + RISK STATUS
-  // ============================================================
-
   useEffect(() => {
-    const fetchStudentData = async () => {
+    const fetchDashboard = async () => {
       try {
-        setLoading(true);
+        const response = await api.get("/users/student-dashboard");
 
-        // --------------------------------------------------------
-        // GET LOGGED-IN STUDENT PROFILE
-        // --------------------------------------------------------
-
-        const profileResponse = await api.get("/users/profile");
-
-        if (profileResponse.data.success) {
-          setStudent(profileResponse.data.user);
-        }
-
-        // --------------------------------------------------------
-        // GET STUDENT RISK STATUS
-        // --------------------------------------------------------
-
-        const riskResponse = await api.get("/at-risk/my-status");
-
-        if (riskResponse.data.success) {
-          setRisk(riskResponse.data.risk);
+        if (response.data.success) {
+          setDashboard(response.data.dashboard);
         }
       } catch (error) {
-        console.error("Error fetching student dashboard:", error);
+        console.log(error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStudentData();
+    fetchDashboard();
   }, []);
-
-  // ============================================================
-  // STUDENT NAME
-  // ============================================================
-
-  const studentName = student
-    ? `${student.firstName || ""} ${student.lastName || ""}`.trim()
-    : "Student";
-
-  // ============================================================
-  // STATUS
-  // ============================================================
-
-  const isAtRisk = risk.isAtRisk;
-
-  const status = isAtRisk ? "At Risk" : "On Track";
-
-  // ============================================================
-  // STATS
-  // ============================================================
-
-  const stats = [
-    {
-      title: "Attendance Issues",
-      value: risk.attendanceIssues || 0,
-      icon: ClipboardCheck,
-    },
-    {
-      title: "Missed Assignments",
-      value: risk.assignmentIssues || 0,
-      icon: FileText,
-    },
-    {
-      title: "Total Issues",
-      value: risk.totalIssues || 0,
-      icon: BarChart3,
-    },
-    {
-      title: "Status",
-      value: status,
-      icon: isAtRisk ? Clock3 : CheckCircle2,
-    },
-  ];
-
-  // ============================================================
-  // LOADING
-  // ============================================================
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F6FAFD]">
-        <p className="text-sm font-medium text-[#4A7FA7]">
-          Loading dashboard...
-        </p>
+      <div className="flex min-h-screen items-center justify-center bg-[#EEF4F7]">
+        <div className="flex items-center gap-2.5 rounded-2xl border border-cyan-100/60 bg-white p-6 shadow-xl shadow-cyan-950/5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E3F5F9]">
+            <Activity className="h-5 w-5 animate-pulse text-[#00A8CC]" />
+          </div>
+
+          <span className="text-sm font-semibold tracking-wide text-[#14222B]">
+            Loading dashboard overview...
+          </span>
+        </div>
       </div>
     );
   }
 
-  // ============================================================
-  // RETURN
-  // ============================================================
+  if (!dashboard) return null;
+
+  const {
+    student = {},
+    attendance = {},
+    progress = {},
+    assignments = {},
+    grades = {},
+    announcements = [],
+    risk = {},
+  } = dashboard;
+
+  const stats = [
+    {
+      title: "Attendance",
+      value: `${attendance?.percentage || 0}%`,
+      icon: ClipboardCheck,
+      subtitle: "Attendance rate",
+    },
+    {
+      title: "Assignments",
+      value: `${assignments?.submitted || 0}/${assignments?.total || 0}`,
+      icon: FileText,
+      subtitle: "Completed tasks",
+    },
+    {
+      title: "Progress",
+      value: `${progress?.completed || 0}/${progress?.total || 0}`,
+      icon: BarChart3,
+      subtitle: progress?.percentage
+        ? `${progress.percentage}% learning progress`
+        : "Learning progress",
+    },
+    {
+      title: "Average Grade",
+      value: `${grades?.average || 0}%`,
+      icon: GraduationCap,
+      subtitle: "Academic performance",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#F6FAFD]">
-      {/* ========================================================
-          STATUS / PENDING INDICATOR
-      ======================================================== */}
+    <div className="min-h-screen bg-[#EEF4F7] p-4 font-sans antialiased text-slate-800 sm:p-6 lg:p-8">
+      <div className="mx-auto w-full max-w-6xl space-y-6">
+        <div className="group relative overflow-hidden rounded-2xl border border-[#293E4C]/40 bg-linear-to-b from-[#1b3c47] via-[#0f2b34] to-[#071b23] p-5 text-white shadow-xl shadow-cyan-950/20 sm:p-6">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#00A8CC]/20 opacity-50 blur-3xl transition-opacity duration-500 group-hover:opacity-80" />
 
-      {isAtRisk && (
-        <div className="mx-8 mt-6 flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-amber-100 p-2">
-              <AlertCircle className="h-5 w-5 text-amber-600" />
+          <div className="pointer-events-none absolute -bottom-20 left-1/3 h-32 w-32 rounded-full bg-cyan-400/10 blur-3xl" />
+
+          <div className="relative z-10 flex items-center gap-3.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#00A8CC] text-white shadow-md shadow-[#00A8CC]/30 transition-transform duration-300 group-hover:scale-105">
+              <Users size={22} strokeWidth={2.2} />
             </div>
 
             <div>
-              <p className="font-semibold text-amber-800">Status: At Risk</p>
+              <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+                Student Dashboard
+              </h1>
 
-              <p className="mt-1 text-sm text-amber-700">
-                Your current performance requires attention.
+              <p className="mt-0.5 text-[11px] font-medium text-cyan-200/70">
+                Personal learning overview
               </p>
-
-              {risk.reason?.length > 0 && (
-                <p className="mt-1 text-sm text-amber-700">
-                  {risk.reason.join(" and ")}
-                </p>
-              )}
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2 self-start rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white sm:self-auto">
-            <Clock3 className="h-4 w-4" />
-            At Risk
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition-all duration-300 hover:border-[#00A8CC]/30 hover:shadow-lg hover:shadow-cyan-900/5 sm:p-6">
+          <div className="pointer-events-none absolute bottom-0 left-0 h-0.75 w-0 bg-[#00A8CC] transition-all duration-500 group-hover:w-full" />
+
+          <div className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-cyan-100/40 blur-3xl transition-opacity duration-500 group-hover:opacity-80" />
+
+          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <span className="inline-flex rounded-full border border-cyan-100 bg-[#EAF7FA] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#00A8CC]">
+                Student Portal
+              </span>
+
+              <h2 className="mt-3 text-2xl font-bold tracking-tight text-[#0F172A]">
+                Welcome back, {student?.firstName || "Student"}
+              </h2>
+
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                Track your assignments, attendance and learning progress.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-[#F6FAFC] p-3.5 transition-all duration-300 group-hover:border-[#00A8CC]/30 group-hover:bg-[#EAF7FA]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#12313B] text-sm font-black text-white shadow-md shadow-slate-900/10">
+                {student?.firstName?.[0] || "S"}
+                {student?.lastName?.[0] || ""}
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-[#0F172A]">
+                  {student?.firstName || "Student"} {student?.lastName || ""}
+                </p>
+
+                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[#00A8CC]">
+                  Student
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* ========================================================
-          HEADER
-      ======================================================== */}
+        {risk?.isAtRisk && (
+          <div className="group relative overflow-hidden rounded-2xl border border-amber-200/80 bg-amber-50/90 p-5 shadow-sm transition-all duration-300 hover:shadow-md">
+            <div className="absolute bottom-0 left-0 h-0.75 w-0 bg-amber-400 transition-all duration-500 group-hover:w-full" />
 
-      <header className="border-b border-[#D6D6D6] bg-white px-8 py-6">
-        <p className="text-sm font-medium text-[#4A7FA7]">Student Dashboard</p>
+            <div className="relative flex gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 shadow-sm">
+                <AlertCircle size={21} />
+              </div>
 
-        <h1 className="mt-1 text-2xl font-bold text-[#0A1931]">
-          Welcome back, {studentName}
-        </h1>
+              <div>
+                <h3 className="font-bold text-amber-800">Performance Alert</h3>
 
-        <p className="mt-1 text-sm text-gray-500">
-          Keep learning, complete your assignments and track your progress.
-        </p>
-      </header>
+                {risk?.reasons?.map((reason, index) => (
+                  <p
+                    key={index}
+                    className="mt-1 text-xs font-medium text-amber-700"
+                  >
+                    • {reason}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
-      {/* ========================================================
-          CONTENT
-      ======================================================== */}
-
-      <div className="p-8">
-        {/* ======================================================
-            STATS
-        ====================================================== */}
-
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {stats.map((item) => {
+            const Icon = item.icon;
 
             return (
               <div
-                key={stat.title}
-                className={`rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md ${
-                  stat.title === "Status" && isAtRisk
-                    ? "border-amber-200"
-                    : "border-[#D6D6D6]"
-                }`}
+                key={item.title}
+                className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#00A8CC]/40 hover:shadow-lg hover:shadow-cyan-900/5"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">{stat.title}</p>
+                <div className="pointer-events-none absolute bottom-0 left-0 h-0.75 w-0 bg-[#00A8CC] transition-all duration-500 group-hover:w-full" />
 
-                    <h2
-                      className={`mt-3 text-2xl font-bold ${
-                        stat.title === "Status" && isAtRisk
-                          ? "text-amber-600"
-                          : "text-[#0A1931]"
-                      }`}
-                    >
-                      {stat.value}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      {item.title}
+                    </p>
+
+                    <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0F172A] transition-colors duration-300 group-hover:text-[#00A8CC]">
+                      {item.value}
                     </h2>
+
+                    <p className="mt-1 text-[11px] font-medium text-slate-400">
+                      {item.subtitle}
+                    </p>
                   </div>
 
-                  <div
-                    className={`rounded-xl p-3 ${
-                      stat.title === "Status" && isAtRisk
-                        ? "bg-amber-100"
-                        : "bg-[#B3CFE5]/40"
-                    }`}
-                  >
-                    <Icon
-                      className={`h-5 w-5 ${
-                        stat.title === "Status" && isAtRisk
-                          ? "text-amber-600"
-                          : "text-[#1A3D63]"
-                      }`}
-                    />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EAF7FA] text-[#00A8CC] transition-all duration-300 group-hover:scale-110 group-hover:bg-[#00A8CC] group-hover:text-white group-hover:shadow-md group-hover:shadow-[#00A8CC]/30">
+                    <Icon size={20} />
                   </div>
                 </div>
               </div>
@@ -240,167 +216,156 @@ function StudentDashboard() {
           })}
         </div>
 
-        {/* ======================================================
-            RISK DETAILS
-        ====================================================== */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:border-[#00A8CC]/30 hover:shadow-md">
+            <div className="pointer-events-none absolute bottom-0 left-0 h-0.75 w-0 bg-[#00A8CC] transition-all duration-500 group-hover:w-full" />
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          {/* ====================================================
-              PERFORMANCE STATUS
-          ==================================================== */}
+            <div className="relative flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E3F5F9] text-[#00A8CC] transition-transform duration-300 group-hover:scale-105">
+                  <ClipboardCheck size={18} />
+                </div>
 
-          <div
-            className={`rounded-2xl border bg-white p-6 shadow-sm ${
-              isAtRisk ? "border-amber-200" : "border-[#D6D6D6]"
-            }`}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-bold text-[#0A1931]">
-                  Performance Status
-                </h2>
+                <div>
+                  <h2 className="text-sm font-bold text-[#0F172A]">
+                    Attendance Overview
+                  </h2>
 
-                <p className="mt-1 text-sm text-gray-500">
-                  Your current bootcamp performance overview.
+                  <p className="mt-0.5 text-[10px] font-medium text-[#8FA3B0]">
+                    Your attendance statistics
+                  </p>
+                </div>
+              </div>
+
+              <TrendingUp
+                size={16}
+                className="text-[#00A8CC] transition-transform duration-300 group-hover:translate-x-0.5"
+              />
+            </div>
+
+            <div className="relative mt-6 grid grid-cols-2 gap-4">
+              <div className="group/stat rounded-xl border border-emerald-100 bg-emerald-50/80 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-slate-500">
+                    Present
+                  </p>
+
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                </div>
+
+                <p className="mt-2 text-2xl font-extrabold text-emerald-700">
+                  {attendance?.present || 0}
                 </p>
               </div>
 
-              {isAtRisk ? (
-                <div className="rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-semibold text-amber-700">
-                  At Risk
-                </div>
-              ) : (
-                <div className="rounded-lg bg-green-100 px-3 py-1.5 text-sm font-semibold text-green-700">
-                  On Track
-                </div>
-              )}
-            </div>
+              <div className="group/stat rounded-xl border border-rose-100 bg-rose-50/80 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-slate-500">Absent</p>
 
-            <div className="mt-6 space-y-4">
-              {/* ATTENDANCE */}
-
-              <div className="flex items-center justify-between rounded-xl bg-[#F6FAFD] p-4">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-[#B3CFE5]/40 p-2">
-                    <ClipboardCheck className="h-5 w-5 text-[#1A3D63]" />
-                  </div>
-
-                  <div>
-                    <p className="font-semibold text-[#0A1931]">
-                      Attendance Issues
-                    </p>
-
-                    <p className="text-xs text-gray-500">Absences recorded</p>
-                  </div>
+                  <span className="h-2 w-2 rounded-full bg-rose-500" />
                 </div>
 
-                <span
-                  className={`text-lg font-bold ${
-                    risk.attendanceAtRisk ? "text-amber-600" : "text-[#0A1931]"
-                  }`}
-                >
-                  {risk.attendanceIssues || 0}
-                </span>
+                <p className="mt-2 text-2xl font-extrabold text-rose-700">
+                  {attendance?.absent || 0}
+                </p>
               </div>
 
-              {/* ASSIGNMENTS */}
+              <div className="group/stat rounded-xl border border-blue-100 bg-blue-50/80 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-slate-500">
+                    Total Sessions
+                  </p>
 
-              <div className="flex items-center justify-between rounded-xl bg-[#F6FAFD] p-4">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-[#B3CFE5]/40 p-2">
-                    <FileText className="h-5 w-5 text-[#1A3D63]" />
-                  </div>
-
-                  <div>
-                    <p className="font-semibold text-[#0A1931]">
-                      Missed Assignments
-                    </p>
-
-                    <p className="text-xs text-gray-500">
-                      Past deadline without submission
-                    </p>
-                  </div>
+                  <span className="h-2 w-2 rounded-full bg-blue-500" />
                 </div>
 
-                <span
-                  className={`text-lg font-bold ${
-                    risk.assignmentAtRisk ? "text-amber-600" : "text-[#0A1931]"
-                  }`}
-                >
-                  {risk.assignmentIssues || 0}
-                </span>
+                <p className="mt-2 text-2xl font-extrabold text-blue-700">
+                  {attendance?.total || 0}
+                </p>
+              </div>
+
+              <div className="group/stat rounded-xl border border-amber-100 bg-amber-50/80 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-slate-500">
+                    Excused
+                  </p>
+
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                </div>
+
+                <p className="mt-2 text-2xl font-extrabold text-amber-700">
+                  {attendance?.excused || 0}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* ====================================================
-              ANNOUNCEMENT
-          ==================================================== */}
+          <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:border-[#00A8CC]/30 hover:shadow-md">
+            <div className="pointer-events-none absolute bottom-0 left-0 h-0.75 w-0 bg-[#00A8CC] transition-all duration-500 group-hover:w-full" />
 
-          <div className="rounded-2xl border border-[#D6D6D6] bg-white p-6 shadow-sm">
-            <div className="flex items-start gap-4">
-              <div className="rounded-xl bg-[#B3CFE5]/40 p-3">
-                <Megaphone className="h-5 w-5 text-[#1A3D63]" />
+            <div className="relative flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E3F5F9] text-[#00A8CC] transition-transform duration-300 group-hover:scale-105">
+                  <Megaphone size={18} />
+                </div>
+
+                <div>
+                  <h2 className="text-sm font-bold text-[#0F172A]">
+                    Announcements
+                  </h2>
+
+                  <p className="mt-0.5 text-[10px] font-medium text-[#8FA3B0]">
+                    Latest bootcamp updates
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <h2 className="text-lg font-bold text-[#0A1931]">
-                  Latest Announcement
-                </h2>
+              <Megaphone
+                size={16}
+                className="text-[#00A8CC] transition-transform duration-300 group-hover:scale-110"
+              />
+            </div>
 
-                <p className="mt-2 text-sm leading-6 text-gray-500">
-                  Check the announcements section regularly for important
-                  updates from the bootcamp administration.
+            {announcements?.length === 0 ? (
+              <div className="flex min-h-40 flex-col items-center justify-center py-8 text-center">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+                  <Megaphone size={19} />
+                </div>
+
+                <p className="mt-3 text-xs font-bold text-slate-600">
+                  No announcements
                 </p>
 
-                <button className="mt-4 rounded-xl bg-[#0A1931] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1A3D63]">
-                  View Announcements
-                </button>
+                <p className="mt-1 text-[10px] text-slate-400">
+                  New announcements will appear here.
+                </p>
               </div>
-            </div>
-          </div>
-        </div>
+            ) : (
+              <div className="mt-5 space-y-3">
+                {announcements.map((a) => (
+                  <div
+                    key={a._id}
+                    className="group/announcement rounded-xl border border-slate-200 border-l-4 border-l-[#00A8CC] bg-[#F8FBFC] p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-sm"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E3F5F9] text-[#00A8CC] transition-colors duration-300 group-hover/announcement:bg-[#00A8CC] group-hover/announcement:text-white">
+                        <Megaphone size={14} />
+                      </div>
 
-        {/* ======================================================
-            KEEP LEARNING
-        ====================================================== */}
+                      <div className="min-w-0">
+                        <h3 className="text-xs font-bold text-[#0F172A] transition-colors duration-200 group-hover/announcement:text-[#00A8CC]">
+                          {a.title}
+                        </h3>
 
-        <h2 className="mt-5 text-lg font-bold text-[#0A1931]">Keep Learning</h2>
-
-        <p className="mt-1 text-sm text-gray-500">
-          Stay consistent with your bootcamp activities.
-        </p>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {/* ATTENDANCE */}
-
-          <div className="rounded-xl bg-[#F6FAFD] p-5">
-            <h3 className="font-semibold text-[#0A1931]">Attendance</h3>
-
-            <p className="mt-2 text-sm leading-6 text-gray-500">
-              Attend sessions regularly to maintain good progress.
-            </p>
-          </div>
-
-          {/* ASSIGNMENTS */}
-
-          <div className="rounded-xl bg-[#F6FAFD] p-5">
-            <h3 className="font-semibold text-[#0A1931]">Assignments</h3>
-
-            <p className="mt-2 text-sm leading-6 text-gray-500">
-              Complete your assignments and submit them before the deadline.
-            </p>
-          </div>
-
-          {/* PROGRESS */}
-
-          <div className="rounded-xl bg-[#F6FAFD] p-5">
-            <h3 className="font-semibold text-[#0A1931]">Stay Consistent</h3>
-
-            <p className="mt-2 text-sm leading-6 text-gray-500">
-              Regular participation and timely submissions help you stay on
-              track.
-            </p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                          {a.body || a.message}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

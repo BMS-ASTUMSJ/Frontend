@@ -4,9 +4,6 @@ import {
   User,
   Loader2,
   AlertCircle,
-  CheckCircle2,
-  Clock3,
-  XCircle,
   CalendarDays,
   Trophy,
   Shield,
@@ -35,10 +32,6 @@ const StudentAttendance = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // ============================================================
-  // FETCH ATTENDANCE
-  // ============================================================
 
   const fetchRecords = async () => {
     try {
@@ -81,17 +74,9 @@ const StudentAttendance = () => {
     }
   };
 
-  // ============================================================
-  // INITIAL LOAD
-  // ============================================================
-
   useEffect(() => {
     fetchRecords();
   }, []);
-
-  // ============================================================
-  // SAFE RATES
-  // ============================================================
 
   const safeOverallRate = Number.isFinite(overallRate)
     ? overallRate.toFixed(1)
@@ -104,10 +89,6 @@ const StudentAttendance = () => {
   const safeTeamRate = Number.isFinite(teamRate)
     ? teamRate.toFixed(1)
     : "100.0";
-
-  // ============================================================
-  // LOADING
-  // ============================================================
 
   if (loading) {
     return (
@@ -127,18 +108,10 @@ const StudentAttendance = () => {
     );
   }
 
-  // ============================================================
-  // MAIN UI
-  // ============================================================
-
   return (
     <div className="min-h-screen bg-[#F4F8FA] py-8">
       <div className="mx-auto max-w-7xl space-y-6 px-4">
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
-
-        <div className="rounded-2xl border border-[#1b3c47] bg-gradient-to-r from-[#071b23] via-[#0f2b34] to-[#1b3c47] p-6 shadow-lg md:p-8">
+        <div className="rounded-2xl border border-[#1b3c47] bg-linear-to-r from-[#071b23] via-[#0f2b34] to-[#1b3c47] p-6 shadow-lg md:p-8">
           <div className="flex items-center gap-5">
             <div className="rounded-xl bg-[#00A8CC] p-3 shadow-lg shadow-[#00A8CC]/20">
               <ShieldCheck size={28} className="text-white" />
@@ -151,10 +124,6 @@ const StudentAttendance = () => {
             </div>
           </div>
         </div>
-
-        {/* ======================================================
-            ERROR
-        ====================================================== */}
 
         {error && (
           <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-5">
@@ -178,15 +147,7 @@ const StudentAttendance = () => {
           </div>
         )}
 
-        {/* ======================================================
-            MAIN WHITE CARD
-        ====================================================== */}
-
         <div className="overflow-hidden rounded-2xl border border-[#B4D7E2] bg-white shadow-xl">
-          {/* ====================================================
-              ATTENDANCE RATES
-          ==================================================== */}
-
           <div className="border-b border-[#F4F8FA] p-6 md:p-8">
             <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
               <div>
@@ -209,11 +170,7 @@ const StudentAttendance = () => {
               </button>
             </div>
 
-            {/* RATE CARDS */}
-
             <div className="grid gap-5 md:grid-cols-3">
-              {/* GENERAL */}
-
               <AttendanceRateCard
                 title="General Cohort Rate"
                 value={safeGeneralRate}
@@ -223,8 +180,6 @@ const StudentAttendance = () => {
                 progressClass="bg-[#00A8CC]"
               />
 
-              {/* TEAM */}
-
               <AttendanceRateCard
                 title="Team Mentorship Rate"
                 value={safeTeamRate}
@@ -233,8 +188,6 @@ const StudentAttendance = () => {
                 valueClass="text-purple-700"
                 progressClass="bg-purple-600"
               />
-
-              {/* OVERALL */}
 
               <AttendanceRateCard
                 title="Overall Cumulative"
@@ -263,11 +216,6 @@ const StudentAttendance = () => {
               />
             </div>
           </div>
-
-          {/* ====================================================
-              CHECKS OVERVIEW
-          ==================================================== */}
-
           <div className="border-b border-[#F4F8FA] p-6 md:p-8">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-[#14222B]">
@@ -292,27 +240,15 @@ const StudentAttendance = () => {
             </div>
           </div>
 
-          {/* ====================================================
-              STATUS SUMMARY
-          ==================================================== */}
-
-          {/* ====================================================
-              ATTENDANCE DIRECTORY
-          ==================================================== */}
-
           <div className="p-6 md:p-8">
-            {/* DIRECTORY HEADER */}
-
             <div className="mb-8">
               <h2 className="text-xl font-bold text-[#14222B]">
                 Attendance Directory
               </h2>
             </div>
 
-            {/* TABLE */}
-
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] border-separate border-spacing-y-4 text-left">
+              <table className="w-full min-w-225 border-separate border-spacing-y-4 text-left">
                 <thead>
                   <tr className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8FA3B0]">
                     <th className="px-6 pb-2">Date</th>
@@ -369,10 +305,6 @@ const StudentAttendance = () => {
   );
 };
 
-// ============================================================
-// ATTENDANCE RATE CARD
-// ============================================================
-
 const AttendanceRateCard = ({
   title,
   value,
@@ -401,7 +333,7 @@ const AttendanceRateCard = ({
       <div className="mt-5">
         <h3 className={`text-3xl font-black ${valueClass}`}>{value}%</h3>
 
-        <p className="mt-1 min-h-[32px] text-xs font-medium text-[#8FA3B0]">
+        <p className="mt-1 min-h-8 text-xs font-medium text-[#8FA3B0]">
           {description}
         </p>
       </div>
@@ -417,10 +349,6 @@ const AttendanceRateCard = ({
     </div>
   );
 };
-
-// ============================================================
-// ATTENDANCE TABLE ROW
-// ============================================================
 
 const AttendanceTableRow = ({ record }) => {
   const rawDate = record?.date ? new Date(record.date) : null;
@@ -447,8 +375,6 @@ const AttendanceTableRow = ({ record }) => {
 
   return (
     <tr className="group transition-transform hover:translate-x-1">
-      {/* DATE */}
-
       <td className="rounded-l-2xl border-l-4 border-[#00A8CC] bg-white px-6 py-5 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E3F5F9] text-[#00A8CC]">
@@ -477,21 +403,17 @@ const AttendanceTableRow = ({ record }) => {
         </div>
       </td>
 
-      {/* SESSION */}
-
       <td className="bg-white px-6 py-5 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F1F7F9] text-[#00A8CC]">
             <User size={13} />
           </div>
 
-          <span className="max-w-[180px] truncate text-xs font-bold text-[#14222B]">
+          <span className="max-w-45 truncate text-xs font-bold text-[#14222B]">
             {record?.sessionName || record?.sessionType || "Attendance Session"}
           </span>
         </div>
       </td>
-
-      {/* TRACK TYPE */}
 
       <td className="bg-white px-6 py-5 shadow-sm">
         <span
@@ -507,19 +429,13 @@ const AttendanceTableRow = ({ record }) => {
         </span>
       </td>
 
-      {/* FIRST CHECK */}
-
       <td className="bg-white px-6 py-5 text-center shadow-sm">
         <RecordStatus status={firstStatus} />
       </td>
 
-      {/* SECOND CHECK */}
-
       <td className="bg-white px-6 py-5 text-center shadow-sm">
         <RecordStatus status={secondStatus} />
       </td>
-
-      {/* OVERALL STATUS */}
 
       <td className="rounded-r-2xl bg-white px-6 py-5 text-center shadow-sm">
         <OverallStatus status={overallStatus} />
@@ -527,10 +443,6 @@ const AttendanceTableRow = ({ record }) => {
     </tr>
   );
 };
-
-// ============================================================
-// RECORD STATUS
-// ============================================================
 
 const RecordStatus = ({ status }) => {
   const styles = {
@@ -547,16 +459,12 @@ const RecordStatus = ({ status }) => {
 
   return (
     <span
-      className={`inline-flex min-w-[70px] items-center justify-center rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-wide ${statusStyle}`}
+      className={`inline-flex min-w-17.5 items-center justify-center rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-wide ${statusStyle}`}
     >
       {displayStatus}
     </span>
   );
 };
-
-// ============================================================
-// OVERALL STATUS
-// ============================================================
 
 const OverallStatus = ({ status }) => {
   const styles = {
@@ -569,7 +477,7 @@ const OverallStatus = ({ status }) => {
 
   return (
     <span
-      className={`inline-flex min-w-[85px] items-center justify-center rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-wide ${
+      className={`inline-flex min-w-21.25 items-center justify-center rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-wide ${
         styles[status] || styles["Not Marked"]
       }`}
     >
@@ -577,10 +485,6 @@ const OverallStatus = ({ status }) => {
     </span>
   );
 };
-
-// ============================================================
-// SUMMARY ITEM
-// ============================================================
 
 const SummaryItem = ({ label, value }) => (
   <div className="rounded-2xl border border-[#B4D7E2] bg-[#F4F8FA] p-4 transition hover:border-[#00A8CC]/30">
@@ -591,10 +495,6 @@ const SummaryItem = ({ label, value }) => (
     <p className="mt-2 text-2xl font-black text-[#14222B]">{value ?? 0}</p>
   </div>
 );
-
-// ============================================================
-// STATUS SUMMARY
-// ============================================================
 
 const StatusSummary = ({ icon, label, value, className, iconBg }) => (
   <div className="rounded-2xl border border-[#B4D7E2] bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">

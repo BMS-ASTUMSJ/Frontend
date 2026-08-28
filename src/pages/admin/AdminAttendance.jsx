@@ -81,10 +81,7 @@ const AdminAttendance = () => {
   return (
     <div className="min-h-screen bg-[#F4F8FA] py-8">
       <div className="mx-auto max-w-7xl px-4 space-y-6">
-        {/* =========================================================
-            TOP DARK THEME BANNER
-        ========================================================= */}
-        <div className="rounded-2xl bg-gradient-to-r from-[#071b23] via-[#0f2b34] to-[#1b3c47] p-6 shadow-lg border border-[#1b3c47] md:p-8">
+        <div className="rounded-2xl bg-linear-to-r from-[#071b23] via-[#0f2b34] to-[#1b3c47] p-6 shadow-lg border border-[#1b3c47] md:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-5">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#00A8CC] text-white shadow-lg shadow-[#00A8CC]/20">
@@ -109,13 +106,7 @@ const AdminAttendance = () => {
           </div>
         </div>
 
-        {/* =========================================================
-            MAIN WHITE CARD
-        ========================================================= */}
         <div className="overflow-hidden rounded-2xl border border-[#B4D7E2] bg-white shadow-xl">
-          {/* =======================================================
-              SECTION HEADER
-          ======================================================= */}
           <div className="border-b border-[#F4F8FA] p-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
@@ -142,13 +133,7 @@ const AdminAttendance = () => {
             </div>
           </div>
 
-          {/* =======================================================
-              CONTENT
-          ======================================================= */}
           <div className="p-8">
-            {/* =====================================================
-                ERROR STATE
-            ===================================================== */}
             {error && (
               <div className="mb-6 flex items-start gap-4 rounded-2xl border border-red-200 bg-red-50 p-5 shadow-sm">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100">
@@ -174,11 +159,8 @@ const AdminAttendance = () => {
               </div>
             )}
 
-            {/* =====================================================
-                LOADING STATE
-            ===================================================== */}
             {loading ? (
-              <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#B4D7E2] bg-[#F4F8FA]">
+              <div className="flex min-h-100 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#B4D7E2] bg-[#F4F8FA]">
                 <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#E3F5F9]">
                   <Loader2 size={28} className="animate-spin text-[#00A8CC]" />
                 </div>
@@ -192,10 +174,7 @@ const AdminAttendance = () => {
                 </p>
               </div>
             ) : batches.length === 0 && !error ? (
-              /* ===================================================
-                 EMPTY STATE
-              =================================================== */
-              <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#B4D7E2] bg-[#F4F8FA] p-10 text-center">
+              <div className="flex min-h-100 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#B4D7E2] bg-[#F4F8FA] p-10 text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#E3F5F9] text-[#00A8CC]">
                   <Users size={26} />
                 </div>
@@ -210,9 +189,6 @@ const AdminAttendance = () => {
                 </p>
               </div>
             ) : !error ? (
-              /* ===================================================
-                 BATCH DIRECTORY
-              =================================================== */
               <div>
                 {/* TABLE */}
                 <div className="overflow-x-auto">
@@ -271,9 +247,6 @@ const AdminAttendance = () => {
         </div>
       </div>
 
-      {/* =========================================================
-          REPORT MODAL
-      ========================================================= */}
       {selectedBatch && (
         <ReportModal
           batch={selectedBatch}
@@ -286,10 +259,6 @@ const AdminAttendance = () => {
     </div>
   );
 };
-
-/* ================================================================
-   BATCH ROW
-================================================================ */
 
 const BatchRow = ({
   batch,
@@ -342,7 +311,6 @@ const BatchRow = ({
         </div>
       </td>
 
-      {/* STATUS */}
       <td className="bg-white px-5 py-5 text-center shadow-sm">
         <span
           className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider ${
@@ -355,22 +323,18 @@ const BatchRow = ({
         </span>
       </td>
 
-      {/* STUDENTS */}
       <td className="bg-white px-5 py-5 text-center text-sm font-black text-[#14222B] shadow-sm">
         {Number(batch.totalStudents || 0)}
       </td>
 
-      {/* SESSIONS */}
       <td className="bg-white px-5 py-5 text-center text-sm font-bold text-gray-600 shadow-sm">
         {Number(batch.totalSessions || 0)}
       </td>
 
-      {/* CHECKS */}
       <td className="bg-white px-5 py-5 text-center text-sm font-bold text-gray-600 shadow-sm">
         {Number(batch.totalApplicableChecks || 0)}
       </td>
 
-      {/* OVERALL RATE */}
       <td className="bg-white px-5 py-5 text-center shadow-sm">
         <span
           className={`inline-block rounded-lg border px-2.5 py-1 text-[11px] font-black ${getRateStyle(
@@ -381,25 +345,22 @@ const BatchRow = ({
         </span>
       </td>
 
-      {/* FEMALE RATE */}
       <td className="bg-white px-5 py-5 text-center shadow-sm">
         <span className="text-xs font-bold text-pink-600">
           {femaleRate.toFixed(1)}%
         </span>
       </td>
 
-      {/* MALE RATE */}
       <td className="bg-white px-5 py-5 text-center shadow-sm">
         <span className="text-xs font-bold text-blue-600">
           {maleRate.toFixed(1)}%
         </span>
       </td>
 
-      {/* ACTION */}
       <td className="rounded-r-2xl bg-white px-5 py-5 text-right shadow-sm">
         <button
           onClick={() => onViewReport(batch)}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#00A8CC] px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-white shadow-md shadow-[#00A8CC]/20 transition hover:bg-[#0088A6]"
+          className="inline-flex items-center gap-2 rounded-xl border bg-white border-[#00A8CC] px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-[#00A8CC] shadow-md shadow-[#00A8CC]/20 transition hover:bg-[#0088A1] hover:text-white"
         >
           <FileText size={14} />
           View Report
@@ -409,25 +370,18 @@ const BatchRow = ({
   );
 };
 
-/* ================================================================
-   REPORT MODAL
-================================================================ */
-
 const ReportModal = ({ batch, report, loading, error, onClose }) => {
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#14222B]/80 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-100 flex items-center justify-center bg-[#14222B]/80 p-4 backdrop-blur-sm"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
         }
       }}
     >
-      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-[#B4D7E2] bg-white shadow-2xl">
-        {/* =======================================================
-            MODAL HEADER
-        ======================================================= */}
-        <div className="flex items-center justify-between bg-gradient-to-r from-[#071b23] via-[#0f2b34] to-[#1b3c47] px-6 py-5 text-white md:px-8">
+      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-4xl border border-[#B4D7E2] bg-white shadow-2xl">
+        <div className="flex items-center justify-between bg-linear-to-r from-[#071b23] via-[#0f2b34] to-[#1b3c47] px-6 py-5 text-white md:px-8">
           <div className="flex items-center gap-4">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#00A8CC] shadow-lg shadow-[#00A8CC]/20">
               <FileText size={21} />
@@ -452,12 +406,9 @@ const ReportModal = ({ batch, report, loading, error, onClose }) => {
           </button>
         </div>
 
-        {/* =======================================================
-            MODAL BODY
-        ======================================================= */}
         <div className="overflow-y-auto bg-[#F4F8FA] p-6 md:p-8">
           {loading ? (
-            <div className="flex min-h-[350px] flex-col items-center justify-center rounded-2xl border border-[#B4D7E2] bg-white">
+            <div className="flex min-h-87.5 flex-col items-center justify-center rounded-2xl border border-[#B4D7E2] bg-white">
               <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#E3F5F9]">
                 <Loader2 size={27} className="animate-spin text-[#00A8CC]" />
               </div>
@@ -471,7 +422,7 @@ const ReportModal = ({ batch, report, loading, error, onClose }) => {
               </p>
             </div>
           ) : error ? (
-            <div className="flex min-h-[350px] flex-col items-center justify-center rounded-2xl border border-red-200 bg-white p-8 text-center">
+            <div className="flex min-h-87.5 flex-col items-center justify-center rounded-2xl border border-red-200 bg-white p-8 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-red-50">
                 <XCircle size={28} className="text-red-500" />
               </div>
@@ -493,19 +444,12 @@ const ReportModal = ({ batch, report, loading, error, onClose }) => {
   );
 };
 
-/* ================================================================
-   FULL REPORT
-================================================================ */
-
 const FullReport = ({ report }) => {
   const summary = report.summary || {};
   const students = report.students || [];
 
   return (
     <div className="space-y-6">
-      {/* =========================================================
-          SUMMARY
-      ========================================================= */}
       <div>
         <div className="mb-4">
           <h3 className="text-lg font-bold text-[#14222B]">
@@ -577,9 +521,6 @@ const FullReport = ({ report }) => {
         </div>
       </div>
 
-      {/* =========================================================
-          STATUS LEGEND
-      ========================================================= */}
       <div className="rounded-2xl border border-[#B4D7E2] bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -611,9 +552,6 @@ const FullReport = ({ report }) => {
         </div>
       </div>
 
-      {/* =========================================================
-          STUDENT DIRECTORY
-      ========================================================= */}
       <div className="overflow-hidden rounded-2xl border border-[#B4D7E2] bg-white shadow-sm">
         <div className="border-b border-[#F4F8FA] p-6">
           <h3 className="text-lg font-bold text-[#14222B]">
@@ -682,10 +620,6 @@ const FullReport = ({ report }) => {
   );
 };
 
-/* ================================================================
-   STAT CARD
-================================================================ */
-
 const StatCard = ({ title, value, icon: Icon, color, highlight }) => {
   const colorStyles = {
     teal: "bg-[#F0F7F9] text-[#184E5A] border-[#D2E7EC]",
@@ -698,7 +632,7 @@ const StatCard = ({ title, value, icon: Icon, color, highlight }) => {
 
   return (
     <div
-      className={`flex min-h-[85px] flex-col justify-between rounded-xl border p-3 ${
+      className={`flex min-h-21.25 flex-col justify-between rounded-xl border p-3 ${
         colorStyles[color]
       } ${highlight ? "ring-2 ring-[#00A8CC]/30" : ""}`}
     >
@@ -714,10 +648,6 @@ const StatCard = ({ title, value, icon: Icon, color, highlight }) => {
     </div>
   );
 };
-
-/* ================================================================
-   STUDENT REPORT ROW
-================================================================ */
 
 const StudentReportRow = ({ student }) => {
   const attendance = Number(student.percentage ?? student.attendanceRate ?? 0);
@@ -784,47 +714,40 @@ const StudentReportRow = ({ student }) => {
         </div>
       </td>
 
-      {/* GENDER */}
       <td className="px-5 py-4 text-xs font-semibold text-gray-500">
         {student.gender || "-"}
       </td>
 
-      {/* PRESENT */}
       <td className="px-5 py-4 text-center">
         <span className="text-xs font-black text-emerald-600">
           {student.presentChecks ?? 0}
         </span>
       </td>
 
-      {/* LATE */}
       <td className="px-5 py-4 text-center">
         <span className="text-xs font-black text-amber-600">
           {student.lateChecks ?? 0}
         </span>
       </td>
 
-      {/* ABSENT */}
       <td className="px-5 py-4 text-center">
         <span className="text-xs font-black text-red-600">
           {student.absentChecks ?? 0}
         </span>
       </td>
 
-      {/* EXCUSED */}
       <td className="px-5 py-4 text-center">
         <span className="text-xs font-black text-blue-600">
           {student.excusedChecks ?? 0}
         </span>
       </td>
 
-      {/* RATE */}
       <td className="px-5 py-4 text-center">
         <span className="text-xs font-black text-[#14222B]">
           {attendance.toFixed(1)}%
         </span>
       </td>
 
-      {/* STATUS */}
       <td className="px-5 py-4 text-center">
         <span
           className={`inline-block rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-wider ${styles.badge}`}

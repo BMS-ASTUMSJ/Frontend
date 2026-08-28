@@ -7,8 +7,6 @@ import {
   Send,
   Trash2,
   Pencil,
-  CalendarDays,
-  Bell,
   Loader2,
   AlertCircle,
   User,
@@ -17,10 +15,6 @@ import {
 } from "lucide-react";
 
 function Announcements() {
-  // ============================================================
-  // USER / ROLE
-  // ============================================================
-
   const storedUser = localStorage.getItem("user");
 
   let user = { role: "admin" };
@@ -36,26 +30,14 @@ function Announcements() {
   const role = String(user?.role || "admin").toLowerCase();
   const isAdmin = role === "admin";
 
-  // ============================================================
-  // ANNOUNCEMENTS
-  // ============================================================
-
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // ============================================================
-  // CREATE FORM
-  // ============================================================
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [audience, setAudience] = useState("all");
   const [isPublishing, setIsPublishing] = useState(false);
-
-  // ============================================================
-  // EDIT
-  // ============================================================
 
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
@@ -63,16 +45,8 @@ function Announcements() {
   const [editAudience, setEditAudience] = useState("all");
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // ============================================================
-  // DELETE MODAL
-  // ============================================================
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
-
-  // ============================================================
-  // LOAD ANNOUNCEMENTS
-  // ============================================================
 
   const loadAnnouncements = async () => {
     try {
@@ -104,10 +78,6 @@ function Announcements() {
   useEffect(() => {
     loadAnnouncements();
   }, []);
-
-  // ============================================================
-  // CREATE ANNOUNCEMENT
-  // ============================================================
 
   const handlePublish = async (e) => {
     e.preventDefault();
@@ -163,10 +133,6 @@ function Announcements() {
     }
   };
 
-  // ============================================================
-  // START EDIT
-  // ============================================================
-
   const startEdit = (item) => {
     setEditingId(item._id);
     setEditTitle(item.title || "");
@@ -187,20 +153,12 @@ function Announcements() {
     }, 100);
   };
 
-  // ============================================================
-  // CANCEL EDIT
-  // ============================================================
-
   const cancelEdit = () => {
     setEditingId(null);
     setEditTitle("");
     setEditBody("");
     setEditAudience("all");
   };
-
-  // ============================================================
-  // UPDATE
-  // ============================================================
 
   const handleUpdate = async (id) => {
     if (!editTitle.trim()) {
@@ -252,20 +210,12 @@ function Announcements() {
     }
   };
 
-  // ============================================================
-  // DELETE TRIGGER
-  // ============================================================
-
   const handleDeleteTrigger = (id) => {
     if (!id) return;
 
     setDeleteTargetId(id);
     setShowDeleteModal(true);
   };
-
-  // ============================================================
-  // DELETE
-  // ============================================================
 
   const confirmDelete = async () => {
     if (!deleteTargetId) return;
@@ -302,10 +252,6 @@ function Announcements() {
     }
   };
 
-  // ============================================================
-  // DATE FORMAT
-  // ============================================================
-
   const formatDate = (date) => {
     if (!date) return "N/A";
 
@@ -337,10 +283,6 @@ function Announcements() {
     });
   };
 
-  // ============================================================
-  // AUDIENCE
-  // ============================================================
-
   const getAudienceLabel = (announcementAudience) => {
     if (announcementAudience === "all") {
       return "EVERYONE";
@@ -357,10 +299,6 @@ function Announcements() {
     return String(announcementAudience || "UNKNOWN").toUpperCase();
   };
 
-  // ============================================================
-  // CREATOR
-  // ============================================================
-
   const getCreatorName = (item) => {
     if (!item?.createdBy) {
       return "Admin";
@@ -374,10 +312,6 @@ function Announcements() {
     return fullName || "Admin";
   };
 
-  // ============================================================
-  // INITIALS
-  // ============================================================
-
   const getInitials = (titleValue) => {
     if (!titleValue) return "AN";
 
@@ -390,18 +324,10 @@ function Announcements() {
     return titleValue.substring(0, 2).toUpperCase();
   };
 
-  // ============================================================
-  // MAIN UI
-  // ============================================================
-
   return (
     <div className="min-h-screen bg-[#F4F8FA] py-8">
       <div className="mx-auto max-w-7xl space-y-6 px-4">
-        {/* ======================================================
-            TOP NAVBAR / HEADER
-        ====================================================== */}
-
-        <div className="rounded-2xl border border-[#1b3c47] bg-gradient-to-r from-[#071b23] via-[#0f2b34] to-[#1b3c47] p-6 shadow-lg md:p-8">
+        <div className="rounded-2xl border border-[#1b3c47] bg-linear-to-r from-[#071b23] via-[#0f2b34] to-[#1b3c47] p-6 shadow-lg md:p-8">
           <div className="flex items-center gap-5">
             <div className="rounded-xl bg-[#00A8CC] p-3 shadow-lg shadow-[#00A8CC]/20">
               <Megaphone size={28} className="text-white" />
@@ -415,15 +341,7 @@ function Announcements() {
           </div>
         </div>
 
-        {/* ======================================================
-            MAIN WHITE CARD
-        ====================================================== */}
-
         <div className="overflow-hidden rounded-2xl border border-[#B4D7E2] bg-white shadow-xl">
-          {/* ====================================================
-              CREATE / EDIT SECTION
-          ==================================================== */}
-
           {isAdmin && (
             <div className="border-b border-[#F4F8FA] p-6 md:p-8">
               <div className="mb-8 flex items-center justify-between gap-4">
@@ -452,15 +370,9 @@ function Announcements() {
                 )}
               </div>
 
-              {/* ================================================
-                  CREATE FORM
-              ================================================ */}
-
               {!editingId ? (
                 <form onSubmit={handlePublish} className="space-y-6">
                   <div className="grid gap-6 md:grid-cols-2">
-                    {/* TITLE */}
-
                     <div className="space-y-1.5 md:col-span-2">
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
                         Announcement Title
@@ -475,8 +387,6 @@ function Announcements() {
                         className="w-full rounded-xl border border-[#B4D7E2] bg-[#F4F8FA] p-3.5 text-sm font-semibold text-[#14222B] outline-none transition-all focus:ring-2 focus:ring-[#00A8CC]/10"
                       />
                     </div>
-
-                    {/* MESSAGE */}
 
                     <div className="space-y-1.5 md:col-span-2">
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
@@ -493,8 +403,6 @@ function Announcements() {
                       />
                     </div>
 
-                    {/* AUDIENCE */}
-
                     <div className="space-y-1.5 md:col-span-2">
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
                         Audience
@@ -506,7 +414,7 @@ function Announcements() {
                           onClick={() => setAudience("all")}
                           className={`flex-1 rounded-lg px-5 py-3 text-[10px] font-black transition-all ${
                             audience === "all"
-                              ? "bg-[#00A8CC] text-white shadow-sm"
+                              ? "bg-white text-[#00A8CC] border border-[#00A8CC] shadow-sm"
                               : "text-gray-500 hover:text-[#0D2A38]"
                           }`}
                         >
@@ -518,7 +426,7 @@ function Announcements() {
                           onClick={() => setAudience("mentor")}
                           className={`flex-1 rounded-lg px-5 py-3 text-[10px] font-black transition-all ${
                             audience === "mentor"
-                              ? "bg-[#00A8CC] text-white shadow-sm"
+                              ? "bg-white border border-[#00A8CC] text-[#00A8CC] shadow-sm"
                               : "text-gray-500 hover:text-[#0D2A38]"
                           }`}
                         >
@@ -527,8 +435,6 @@ function Announcements() {
                       </div>
                     </div>
                   </div>
-
-                  {/* PUBLISH BUTTON */}
 
                   <div className="flex justify-end pt-4">
                     <button
@@ -551,17 +457,11 @@ function Announcements() {
                   </div>
                 </form>
               ) : (
-                /* ================================================
-                   EDIT FORM
-                ================================================ */
-
                 <div
                   id={`announcement-edit-${editingId}`}
                   className="space-y-6"
                 >
                   <div className="grid gap-6 md:grid-cols-2">
-                    {/* EDIT TITLE */}
-
                     <div className="space-y-1.5 md:col-span-2">
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
                         Announcement Title
@@ -576,8 +476,6 @@ function Announcements() {
                       />
                     </div>
 
-                    {/* EDIT BODY */}
-
                     <div className="space-y-1.5 md:col-span-2">
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
                         Message
@@ -591,8 +489,6 @@ function Announcements() {
                         placeholder="Announcement message"
                       />
                     </div>
-
-                    {/* EDIT AUDIENCE */}
 
                     <div className="space-y-1.5 md:col-span-2">
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#14222B]">
@@ -627,8 +523,6 @@ function Announcements() {
                     </div>
                   </div>
 
-                  {/* EDIT BUTTONS */}
-
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       type="button"
@@ -657,13 +551,7 @@ function Announcements() {
             </div>
           )}
 
-          {/* ====================================================
-              DIRECTORY SECTION
-          ==================================================== */}
-
           <div className="p-6 md:p-8">
-            {/* DIRECTORY HEADER */}
-
             <div className="mb-8 flex flex-col items-end justify-between gap-4 md:flex-row">
               <div>
                 <h2 className="text-xl font-bold text-[#14222B]">
@@ -685,8 +573,6 @@ function Announcements() {
               </button>
             </div>
 
-            {/* ERROR */}
-
             {error && (
               <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-600">
                 <AlertCircle size={17} />
@@ -695,14 +581,8 @@ function Announcements() {
               </div>
             )}
 
-            {/* ==================================================
-                TABLE
-            ================================================== */}
-
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[950px] border-separate border-spacing-y-4 text-left">
-                {/* TABLE HEADER */}
-
+              <table className="w-full min-w-237.5 border-separate border-spacing-y-4 text-left">
                 <thead>
                   <tr className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8FA3B0]">
                     <th className="px-6 pb-2">Announcement</th>
@@ -723,11 +603,7 @@ function Announcements() {
                   </tr>
                 </thead>
 
-                {/* TABLE BODY */}
-
                 <tbody>
-                  {/* LOADING */}
-
                   {loading ? (
                     <tr>
                       <td
@@ -742,8 +618,6 @@ function Announcements() {
                       </td>
                     </tr>
                   ) : announcements.length === 0 ? (
-                    /* EMPTY */
-
                     <tr>
                       <td
                         colSpan={isAdmin ? 6 : 5}
@@ -757,8 +631,6 @@ function Announcements() {
                       </td>
                     </tr>
                   ) : (
-                    /* DATA */
-
                     announcements.map((item) => {
                       const initials = getInitials(item.title);
 
@@ -767,23 +639,15 @@ function Announcements() {
                           key={item._id}
                           className="group transition-transform hover:translate-x-1"
                         >
-                          {/* ==================================
-                              ANNOUNCEMENT
-                          ================================== */}
-
                           <td className="rounded-l-2xl border-l-4 border-[#00A8CC] bg-white px-6 py-5 shadow-sm">
                             <div className="flex items-center gap-4">
-                              {/* ICON */}
-
                               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E3F5F9] text-[11px] font-bold text-[#00A8CC] shadow-inner">
                                 {initials}
                               </div>
 
-                              {/* TITLE */}
-
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <p className="max-w-[300px] truncate text-sm font-bold leading-tight text-[#14222B]">
+                                  <p className="max-w-75 truncate text-sm font-bold leading-tight text-[#14222B]">
                                     {item.title}
                                   </p>
 
@@ -794,16 +658,12 @@ function Announcements() {
                                   )}
                                 </div>
 
-                                <p className="mt-1 max-w-[360px] truncate text-[10px] font-medium text-[#8FA3B0]">
+                                <p className="mt-1 max-w-90 truncate text-[10px] font-medium text-[#8FA3B0]">
                                   {item.body}
                                 </p>
                               </div>
                             </div>
                           </td>
-
-                          {/* ==================================
-                              AUDIENCE
-                          ================================== */}
 
                           <td className="bg-white px-6 py-5 shadow-sm">
                             <span
@@ -817,25 +677,17 @@ function Announcements() {
                             </span>
                           </td>
 
-                          {/* ==================================
-                              CREATOR
-                          ================================== */}
-
                           <td className="bg-white px-6 py-5 shadow-sm">
                             <div className="flex items-center gap-2">
                               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E3F5F9] text-[#00A8CC]">
                                 <User size={13} />
                               </div>
 
-                              <span className="max-w-[130px] truncate text-xs font-bold text-gray-600">
+                              <span className="max-w-32.5 truncate text-xs font-bold text-gray-600">
                                 {getCreatorName(item)}
                               </span>
                             </div>
                           </td>
-
-                          {/* ==================================
-                              DATE
-                          ================================== */}
 
                           <td className="bg-white px-6 py-5 shadow-sm">
                             <p className="text-[11px] font-bold text-[#14222B]">
@@ -847,10 +699,6 @@ function Announcements() {
                             </p>
                           </td>
 
-                          {/* ==================================
-                              STATUS
-                          ================================== */}
-
                           <td className="bg-white px-6 py-5 shadow-sm">
                             <div className="flex items-center gap-2">
                               <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-100" />
@@ -861,15 +709,9 @@ function Announcements() {
                             </div>
                           </td>
 
-                          {/* ==================================
-                              ACTIONS
-                          ================================== */}
-
                           {isAdmin && (
                             <td className="rounded-r-2xl bg-white px-6 py-5 text-right shadow-sm">
                               <div className="flex justify-end gap-5">
-                                {/* EDIT */}
-
                                 <button
                                   type="button"
                                   onClick={() => startEdit(item)}
@@ -878,8 +720,6 @@ function Announcements() {
                                   <Pencil size={14} />
                                   EDIT
                                 </button>
-
-                                {/* DELETE */}
 
                                 <button
                                   type="button"
@@ -903,34 +743,18 @@ function Announcements() {
         </div>
       </div>
 
-      {/* ========================================================
-          DELETE CONFIRMATION MODAL
-      ======================================================== */}
-
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#14222B]/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[2rem] border border-[#B4D7E2] bg-white p-8 shadow-2xl">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-[#14222B]/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-4xl border border-[#B4D7E2] bg-white p-8 shadow-2xl">
             <div className="flex flex-col items-center text-center">
-              {/* ICON */}
-
-              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-500">
-                <Trash2 size={28} />
-              </div>
-
-              {/* TITLE */}
-
               <h3 className="mb-2 text-2xl font-bold text-[#14222B]">
                 Delete Announcement?
               </h3>
-
-              {/* DESCRIPTION */}
 
               <p className="mb-8 px-4 text-sm leading-relaxed text-[#8FA3B0]">
                 This action cannot be undone. This announcement will be
                 permanently removed from the system.
               </p>
-
-              {/* BUTTONS */}
 
               <div className="flex w-full gap-3">
                 <button
@@ -939,7 +763,7 @@ function Announcements() {
                     setShowDeleteModal(false);
                     setDeleteTargetId(null);
                   }}
-                  className="flex-1 rounded-xl border border-[#B4D7E2] py-4 text-sm font-bold text-[#1C2E3A] transition hover:bg-gray-50"
+                  className="flex-1 rounded-xl border border-[#B4D7E2] py-2 text-sm font-bold text-[#1C2E3A] transition hover:bg-gray-50"
                 >
                   Cancel
                 </button>
@@ -947,9 +771,9 @@ function Announcements() {
                 <button
                   type="button"
                   onClick={confirmDelete}
-                  className="flex-1 rounded-xl bg-red-500 py-4 text-sm font-black uppercase text-white shadow-lg shadow-red-200 transition hover:bg-red-600"
+                  className="flex-1 rounded-xl bg-rose-500 py-2 text-sm font-black uppercase text-white shadow-lg shadow-rose-200 transition hover:bg-rose-600"
                 >
-                  DELETE NOW
+                  DELETE
                 </button>
               </div>
             </div>

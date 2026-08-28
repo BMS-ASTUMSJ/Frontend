@@ -441,22 +441,6 @@ const AIAssistant = () => {
     setMessages([]);
   };
 
-  // ======================================================
-  // FORMAT SCORE
-  // ======================================================
-
-  const formatScore = (score) => {
-    if (score === undefined || score === null) {
-      return "";
-    }
-
-    return `${(Number(score) * 100).toFixed(1)}%`;
-  };
-
-  // ======================================================
-  // FORMAT CHAT DATE
-  // ======================================================
-
   const formatChatDate = (chat) => {
     const date = chat?.updatedAt || chat?.createdAt || chat?.date;
 
@@ -492,7 +476,7 @@ const AIAssistant = () => {
             fixed
             bottom-6
             right-6
-            z-[9999]
+            z-9999
             flex
             h-16
             w-16
@@ -548,11 +532,11 @@ const AIAssistant = () => {
             fixed
             bottom-4
             right-4
-            z-[9999]
+            z-9999
             flex
-            h-[620px]
+            h-155
             max-h-[calc(100vh-32px)]
-            w-[440px]
+            w-110
             max-w-[calc(100vw-32px)]
             flex-col
             overflow-hidden
@@ -653,7 +637,7 @@ const AIAssistant = () => {
                   className="
                     flex
                     min-h-0
-                    w-[155px]
+                    w-38.75
                     shrink-0
                     flex-col
                     border-r
@@ -928,7 +912,7 @@ const AIAssistant = () => {
                     /* Empty State */
 
                     <div className="flex h-full items-center justify-center">
-                      <div className="max-w-[280px] text-center">
+                      <div className="max-w-70 text-center">
                         <div
                           className="
                             mx-auto
@@ -1143,7 +1127,7 @@ const AIAssistant = () => {
                       disabled={loading}
                       className="
                         max-h-24
-                        min-h-[40px]
+                        min-h-10
                         flex-1
                         resize-none
                         border-0

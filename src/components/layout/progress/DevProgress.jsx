@@ -10,10 +10,7 @@ import {
 } from "lucide-react";
 import progressService from "../../../services/progressService";
 
-const DevProgress = ({
-  studentView = false,
-  selectedWeek = "",
-}) => {
+const DevProgress = ({ studentView = false, selectedWeek = "" }) => {
   const [content, setContent] = useState([]);
   const [progress, setProgress] = useState({});
   const [week, setWeek] = useState(selectedWeek || "");
@@ -26,31 +23,26 @@ const DevProgress = ({
       setLoading(true);
       setError("");
 
-      const contentResponse =
-        await progressService.getProgressContent(
-          "dev",
-          week || undefined
-        );
+      const contentResponse = await progressService.getProgressContent(
+        "dev",
+        week || undefined,
+      );
 
       const items = contentResponse?.data || [];
 
       setContent(items);
 
       if (studentView) {
-        const progressResponse =
-          await progressService.getStudentProgress(
-            "dev",
-            week || undefined
-          );
+        const progressResponse = await progressService.getStudentProgress(
+          "dev",
+          week || undefined,
+        );
 
         const progressItems = progressResponse?.data || [];
         const progressMap = {};
 
         progressItems.forEach((item) => {
-          const contentId =
-            item.content?._id ||
-            item.contentId ||
-            item.content;
+          const contentId = item.content?._id || item.contentId || item.content;
 
           if (contentId) {
             progressMap[contentId] = item;
@@ -63,8 +55,7 @@ const DevProgress = ({
       }
     } catch (error) {
       setError(
-        error.response?.data?.message ||
-          "Failed to load development progress"
+        error.response?.data?.message || "Failed to load development progress",
       );
     } finally {
       setLoading(false);
@@ -86,18 +77,14 @@ const DevProgress = ({
 
       const existing = progress[contentId] || {};
 
-      const response =
-        await progressService.updateStudentProgress(
-          contentId,
-          {
-            status,
-            watched: true,
-            attempts:
-              status === "done"
-                ? Math.max(existing.attempts || 0, 1)
-                : existing.attempts || 0,
-          }
-        );
+      const response = await progressService.updateStudentProgress(contentId, {
+        status,
+        watched: true,
+        attempts:
+          status === "done"
+            ? Math.max(existing.attempts || 0, 1)
+            : existing.attempts || 0,
+      });
 
       const updated = response?.data;
 
@@ -106,10 +93,7 @@ const DevProgress = ({
         [contentId]: updated,
       }));
     } catch (error) {
-      setError(
-        error.response?.data?.message ||
-          "Failed to update progress"
-      );
+      setError(error.response?.data?.message || "Failed to update progress");
     } finally {
       setUpdatingId(null);
     }
@@ -168,14 +152,12 @@ const DevProgress = ({
   };
 
   const completedCount = content.filter(
-    (item) => getStatus(item._id) === "done"
+    (item) => getStatus(item._id) === "done",
   ).length;
 
   const progressPercentage =
     content.length > 0
-      ? Math.round(
-          (completedCount / content.length) * 100
-        )
+      ? Math.round((completedCount / content.length) * 100)
       : 0;
 
   return (
@@ -200,24 +182,16 @@ const DevProgress = ({
 
           <select
             value={week}
-            onChange={(event) =>
-              setWeek(event.target.value)
-            }
+            onChange={(event) => setWeek(event.target.value)}
             className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           >
             <option value="">All Weeks</option>
 
-            {Array.from(
-              { length: 20 },
-              (_, index) => (
-                <option
-                  key={index + 1}
-                  value={index + 1}
-                >
-                  Week {index + 1}
-                </option>
-              )
-            )}
+            {Array.from({ length: 20 }, (_, index) => (
+              <option key={index + 1} value={index + 1}>
+                Week {index + 1}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -253,18 +227,12 @@ const DevProgress = ({
 
       <div className="p-6">
         {loading ? (
-          <div className="flex min-h-[220px] items-center justify-center">
-            <RefreshCw
-              size={28}
-              className="animate-spin text-slate-500"
-            />
+          <div className="flex min-h-55 items-center justify-center">
+            <RefreshCw size={28} className="animate-spin text-slate-500" />
           </div>
         ) : content.length === 0 ? (
-          <div className="flex min-h-[220px] flex-col items-center justify-center text-center">
-            <Code2
-              size={42}
-              className="mb-3 text-slate-400"
-            />
+          <div className="flex min-h-55 flex-col items-center justify-center text-center">
+            <Code2 size={42} className="mb-3 text-slate-400" />
 
             <h3 className="font-semibold text-slate-800 dark:text-slate-200">
               No development content found
@@ -298,7 +266,7 @@ const DevProgress = ({
                         {studentView && (
                           <span
                             className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${getStatusClasses(
-                              status
+                              status,
                             )}`}
                           >
                             {getStatusIcon(status)}
@@ -320,9 +288,7 @@ const DevProgress = ({
                       {item.publishedAt && (
                         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                           Published{" "}
-                          {new Date(
-                            item.publishedAt
-                          ).toLocaleDateString()}
+                          {new Date(item.publishedAt).toLocaleDateString()}
                         </p>
                       )}
                     </div>
@@ -334,14 +300,8 @@ const DevProgress = ({
                           target="_blank"
                           rel="noreferrer"
                           onClick={() => {
-                            if (
-                              studentView &&
-                              status === "not_started"
-                            ) {
-                              updateProgress(
-                                item._id,
-                                "in_progress"
-                              );
+                            if (studentView && status === "not_started") {
+                              updateProgress(item._id, "in_progress");
                             }
                           }}
                           className="flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -356,49 +316,32 @@ const DevProgress = ({
                           {status !== "done" && (
                             <button
                               type="button"
-                              disabled={
-                                updatingId === item._id
-                              }
-                              onClick={() =>
-                                updateProgress(
-                                  item._id,
-                                  "done"
-                                )
-                              }
+                              disabled={updatingId === item._id}
+                              onClick={() => updateProgress(item._id, "done")}
                               className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {updatingId === item._id ? (
-                                <RefreshCw
-                                  size={16}
-                                  className="animate-spin"
-                                />
+                                <RefreshCw size={16} className="animate-spin" />
                               ) : (
                                 <CheckCircle2 size={16} />
                               )}
-
                               Complete
                             </button>
                           )}
 
-                          {status !== "need_help" &&
-                            status !== "done" && (
-                              <button
-                                type="button"
-                                disabled={
-                                  updatingId === item._id
-                                }
-                                onClick={() =>
-                                  updateProgress(
-                                    item._id,
-                                    "need_help"
-                                  )
-                                }
-                                className="flex items-center gap-2 rounded-lg border border-orange-300 px-4 py-2.5 text-sm font-medium text-orange-700 transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-950/30"
-                              >
-                                <HelpCircle size={16} />
-                                Need Help
-                              </button>
-                            )}
+                          {status !== "need_help" && status !== "done" && (
+                            <button
+                              type="button"
+                              disabled={updatingId === item._id}
+                              onClick={() =>
+                                updateProgress(item._id, "need_help")
+                              }
+                              className="flex items-center gap-2 rounded-lg border border-orange-300 px-4 py-2.5 text-sm font-medium text-orange-700 transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-950/30"
+                            >
+                              <HelpCircle size={16} />
+                              Need Help
+                            </button>
+                          )}
                         </>
                       )}
                     </div>

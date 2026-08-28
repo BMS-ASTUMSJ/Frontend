@@ -279,35 +279,7 @@ const ChangePassword = () => {
                         ) : (
                           <X size={13} />
                         )}
-                        1 Uppercase
-                      </span>
-                      <span
-                        className={`flex items-center gap-1.5 ${
-                          validations.lowercase
-                            ? "text-[#0088A6] font-semibold"
-                            : "text-[#8FA3B0]"
-                        }`}
-                      >
-                        {validations.lowercase ? (
-                          <Check size={13} className="text-[#00A8CC]" />
-                        ) : (
-                          <X size={13} />
-                        )}
-                        1 Lowercase
-                      </span>
-                      <span
-                        className={`flex items-center gap-1.5 ${
-                          validations.number
-                            ? "text-[#0088A6] font-semibold"
-                            : "text-[#8FA3B0]"
-                        }`}
-                      >
-                        {validations.number ? (
-                          <Check size={13} className="text-[#00A8CC]" />
-                        ) : (
-                          <X size={13} />
-                        )}
-                        1 Number
+                        Uppercase
                       </span>
                       <span
                         className={`flex items-center gap-1.5 ${

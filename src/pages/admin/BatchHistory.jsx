@@ -132,48 +132,64 @@ const AdminBatchHistory = () => {
     });
   };
 
-  const getStatusStyle = (status) => {
-    switch (String(status || "").toLowerCase()) {
-      case "active":
-        return "bg-emerald-50 text-emerald-700 border-emerald-200";
-      case "completed":
-        return "bg-[#e6f4f8] text-[#008ba3] border-[#bce3ed]";
-      case "upcoming":
-        return "bg-amber-50 text-amber-700 border-amber-200";
-      default:
-        return "bg-slate-100 text-slate-600 border-slate-200";
+  const getStatusBadge = (status) => {
+    const isCompleted = String(status || "").toLowerCase() === "completed";
+    const isActive = String(status || "").toLowerCase() === "active";
+
+    if (isActive) {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black tracking-wider text-emerald-600">
+          <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+          ACTIVE
+        </span>
+      );
     }
+
+    if (isCompleted) {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E0F7FA] px-3 py-1 text-xs font-black tracking-wider text-[#008ba3]">
+          <span className="h-2 w-2 rounded-full bg-[#008ba3]"></span>
+          COMPLETED
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-black tracking-wider text-amber-600">
+        <span className="h-2 w-2 rounded-full bg-amber-500"></span>
+        {String(status || "UPCOMING").toUpperCase()}
+      </span>
+    );
+  };
+
+  const getInitials = (name) => {
+    if (!name) return "BA";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   };
 
   return (
-    <div className="min-h-screen bg-[#EBF3F6] text-[#1c2c30] pb-12">
-      {/* GRADIENT HERO BANNER */}
-      <div className="bg-gradient-to-b from-[#1b3c47] via-[#0f2b34] to-[#071b23] pb-24 pt-10 px-6 md:px-12">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="min-h-screen bg-[#f3f7f8] px-4 py-5 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="rounded-[20px] bg-[#0c2e3a] px-8 py-6 shadow-md">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              {/* BRAND GRADIENT APPLIED TO MAIN HEADER ICON */}
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-b from-[#1b3c47] via-[#0f2b34] to-[#071b23] text-white shadow-md border border-white/10">
-                <Archive className="h-7 w-7 text-white" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#00a8cc] text-white shadow-sm">
+                <Archive className="h-6 w-6 text-white" />
               </div>
-              <div>
-                <span className="inline-block rounded-full bg-white/10 px-3 py-0.5 text-xs font-semibold uppercase tracking-wider text-[#a3cbcf] mb-1 border border-white/10">
-                  Administration
-                </span>
-                <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                  Batch History
-                </h1>
-                <p className="text-sm text-[#a3cbcf] mt-0.5">
-                  View past & active cohorts and inspect assigned members
-                </p>
-              </div>
+              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                Batch History
+              </h1>
             </div>
 
             <button
               type="button"
               onClick={fetchBatches}
               disabled={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-bold text-white shadow-sm backdrop-blur-sm transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold text-white shadow-sm backdrop-blur-sm transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
               Refresh Batches
@@ -182,15 +198,13 @@ const AdminBatchHistory = () => {
         </div>
       </div>
 
-      {/* OVERLAPPING MAIN CONTENT AREA */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-14">
+      <div className="mx-auto max-w-7xl pt-6">
         {error && (
-          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm text-xs font-semibold text-red-700">
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700 shadow-sm">
             {error}
           </div>
         )}
 
-        {/* SEARCH BAR */}
         <div className="mb-6 rounded-3xl border border-[#D0E2EB] bg-white p-3.5 shadow-md">
           <div className="relative">
             <Search
@@ -207,18 +221,16 @@ const AdminBatchHistory = () => {
           </div>
         </div>
 
-        {/* TABLE CONTENT */}
         {loading ? (
-          <div className="flex min-h-[350px] flex-col items-center justify-center rounded-3xl border border-[#D0E2EB] bg-white shadow-sm">
+          <div className="flex min-h-87.5 flex-col items-center justify-center rounded-3xl border border-[#D0E2EB] bg-white shadow-sm">
             <Loader2 className="h-8 w-8 animate-spin text-[#0f2b34]" />
             <p className="mt-4 text-sm font-semibold text-[#0D2A38]">
               Loading batch history...
             </p>
           </div>
         ) : filteredBatches.length === 0 ? (
-          <div className="flex min-h-[350px] flex-col items-center justify-center rounded-3xl border border-[#D0E2EB] bg-white p-10 text-center shadow-sm">
-            {/* BRAND GRADIENT APPLIED TO EMPTY STATE ICON CONTAINER */}
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-b from-[#1b3c47] via-[#0f2b34] to-[#071b23] text-white">
+          <div className="flex min-h-87.5 flex-col items-center justify-center rounded-3xl border border-[#D0E2EB] bg-white p-10 text-center shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-b from-[#1b3c47] via-[#0f2b34] to-[#071b23] text-white">
               <Archive className="h-6 w-6" />
             </div>
             <h3 className="mt-4 text-base font-bold text-[#0D2A38]">
@@ -229,93 +241,83 @@ const AdminBatchHistory = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-3xl border border-[#D0E2EB] bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-[#D0E2EB] bg-[#F4F9FB] text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    <th className="px-6 py-3.5">Batch</th>
-                    <th className="px-6 py-3.5">Description</th>
-                    <th className="px-6 py-3.5">Start Date</th>
-                    <th className="px-6 py-3.5">End Date</th>
-                    <th className="px-6 py-3.5 text-center">Status</th>
-                    <th className="px-6 py-3.5 text-right">Action</th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-[#EBF3F6]">
-                  {filteredBatches.map((batch) => (
-                    <tr
-                      key={batch._id}
-                      className="transition hover:bg-[#F4F9FB]"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {/* BRAND GRADIENT APPLIED TO TABLE ROW ICON */}
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-b from-[#1b3c47] via-[#0f2b34] to-[#071b23] text-white shadow-sm">
-                            <Archive size={18} />
-                          </div>
-                          <div>
-                            <p className="font-bold text-[#0D2A38] text-sm">
-                              {batch.name}
-                            </p>
-                            <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                              Cohort
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="max-w-xs px-6 py-4">
-                        <p className="line-clamp-2 text-xs leading-5 text-slate-500">
-                          {batch.description || "No description provided"}
-                        </p>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                          <CalendarDays size={14} className="text-[#1b3c47]" />
-                          {formatDate(batch.startDate)}
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                          <CalendarDays size={14} className="text-[#1b3c47]" />
-                          {formatDate(batch.endDate)}
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4 text-center">
-                        <span
-                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(
-                            batch.status,
-                          )}`}
-                        >
-                          {batch.status || "Unknown"}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => openBatch(batch)}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-[#B3E5FC] bg-[#E0F7FA] px-3.5 py-1.5 text-xs font-bold text-[#008ba3] transition hover:bg-[#0088A6] hover:text-white hover:border-[#0f2b34]"
-                        >
-                          View Members
-                          <ChevronRight size={15} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="space-y-4">
+            <div className="hidden grid-cols-12 gap-4 px-8 text-[11px] font-black uppercase tracking-wider text-slate-400 lg:grid">
+              <div className="col-span-3">Batch Name</div>
+              <div className="col-span-3">Description</div>
+              <div className="col-span-2">Start Date</div>
+              <div className="col-span-2">End Date</div>
+              <div className="col-span-1 text-center">Status</div>
+              <div className="col-span-1 text-right">Action</div>
             </div>
+
+            {filteredBatches.map((batch) => (
+              <div
+                key={batch._id}
+                className="relative overflow-hidden rounded-[20px] border border-[#e1edf2] bg-white p-5 shadow-sm transition-all hover:shadow-md"
+              >
+                <div className="absolute left-0 top-0 bottom-0 w-2.5 rounded-l-[20px] bg-[#00a8cc]" />
+
+                <div className="grid grid-cols-1 items-center gap-4 pl-3 lg:grid-cols-12">
+                  <div className="col-span-3 flex items-center gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#e3f6f9] text-sm font-black text-[#008ba3]">
+                      {getInitials(batch.name)}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-[#0c2e3a]">
+                        {batch.name}
+                      </h3>
+                      <span className="text-[11px] font-black tracking-wide text-[#00a8cc]">
+                        COHORT
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="col-span-3">
+                    <p className="line-clamp-2 text-xs font-medium leading-relaxed text-slate-500">
+                      {batch.description || "No description provided"}
+                    </p>
+                  </div>
+
+                  <div className="col-span-2">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays size={15} className="text-[#00a8cc]" />
+                      <span className="text-xs font-bold text-[#0c2e3a]">
+                        {formatDate(batch.startDate)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays size={15} className="text-[#00a8cc]" />
+                      <span className="text-xs font-bold text-[#0c2e3a]">
+                        {formatDate(batch.endDate)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="col-span-1 flex lg:justify-center">
+                    {getStatusBadge(batch.status)}
+                  </div>
+
+                  <div className="col-span-1 flex lg:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => openBatch(batch)}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[#008ba3] transition hover:text-[#0c2e3a]"
+                    >
+                      View
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* BATCH MEMBERS MODAL */}
       {selectedBatch && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[#071b23]/60 p-4 backdrop-blur-sm"
@@ -323,14 +325,13 @@ const AdminBatchHistory = () => {
             if (e.target === e.currentTarget) closeBatch();
           }}
         >
-          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl border border-[#D0E2EB]">
-            {/* MODAL HEADER WITH BRAND GRADIENT */}
-            <div className="flex items-center justify-between border-b border-[#D0E2EB] bg-gradient-to-r from-[#1b3c47] via-[#0f2b34] to-[#071b23] px-6 py-4 text-white">
+          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-[#D0E2EB] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#D0E2EB] bg-[#0c2e3a] px-6 py-4 text-white">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#92B0C0]">
                   Batch Members Overview
                 </span>
-                <h2 className="text-lg font-bold text-white mt-0.5">
+                <h2 className="mt-0.5 text-lg font-bold text-white">
                   {selectedBatch.name}
                 </h2>
                 <p className="text-xs text-[#92B0C0]">
@@ -350,15 +351,15 @@ const AdminBatchHistory = () => {
 
             <div className="overflow-y-auto p-6">
               {loadingMembers ? (
-                <div className="flex min-h-[250px] flex-col items-center justify-center">
+                <div className="flex min-h-62.5 flex-col items-center justify-center">
                   <Loader2 className="h-7 w-7 animate-spin text-[#0f2b34]" />
                   <p className="mt-3 text-xs font-semibold text-[#0D2A38]">
                     Loading batch members...
                   </p>
                 </div>
               ) : members.length === 0 ? (
-                <div className="flex min-h-[250px] flex-col items-center justify-center text-center">
-                  <Users className="h-8 w-8 text-slate-300 mb-2" />
+                <div className="flex min-h-62.5 flex-col items-center justify-center text-center">
+                  <Users className="mb-2 h-8 w-8 text-slate-300" />
                   <h3 className="text-sm font-bold text-[#0D2A38]">
                     No members found
                   </h3>
@@ -377,83 +378,51 @@ const AdminBatchHistory = () => {
                     </div>
                   </div>
 
-                  <div className="overflow-hidden rounded-2xl border border-[#D0E2EB] bg-white">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead>
-                          <tr className="border-b border-[#D0E2EB] bg-[#F4F9FB] text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                            <th className="px-5 py-3">Member</th>
-                            <th className="px-5 py-3">Email</th>
-                            <th className="px-5 py-3 text-center">Role</th>
-                            <th className="px-5 py-3 text-center">Joined</th>
-                            <th className="px-5 py-3 text-center">Status</th>
-                          </tr>
-                        </thead>
+                  <div className="space-y-3">
+                    {members.map((member) => {
+                      const initials = getInitials(
+                        `${member.firstName || ""} ${member.lastName || ""}`,
+                      );
 
-                        <tbody className="divide-y divide-[#EBF3F6]">
-                          {members.map((member) => {
-                            const initials =
-                              `${member.firstName || ""}${member.lastName || ""}`
-                                .trim()
-                                .slice(0, 2)
-                                .toUpperCase();
+                      return (
+                        <div
+                          key={`${member.userId}-${member.joinedAt}`}
+                          className="relative flex flex-col justify-between rounded-2xl border border-[#e1edf2] bg-white p-4 shadow-sm transition sm:flex-row sm:items-center"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e3f6f9] text-xs font-black text-[#008ba3]">
+                              {initials}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-[#0D2A38]">
+                                {member.firstName} {member.lastName}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {member.email}
+                              </p>
+                            </div>
+                          </div>
 
-                            return (
-                              <tr
-                                key={`${member.userId}-${member.joinedAt}`}
-                                className="transition hover:bg-[#F4F9FB]"
-                              >
-                                <td className="px-5 py-3.5">
-                                  <div className="flex items-center gap-3">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-b from-[#1b3c47] to-[#0f2b34] text-xs font-bold text-white shadow-sm">
-                                      {initials || "U"}
-                                    </div>
-                                    <div>
-                                      <p className="font-bold text-[#0D2A38] text-xs sm:text-sm">
-                                        {member.firstName} {member.lastName}
-                                      </p>
-                                      {member.schoolId && (
-                                        <p className="text-[10px] font-mono text-slate-400">
-                                          {member.schoolId}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </td>
+                          <div className="mt-3 flex items-center gap-3 sm:mt-0">
+                            <span className="rounded-full bg-[#E0F7FA] px-3 py-1 text-[11px] font-bold capitalize text-[#008ba3]">
+                              {member.roleInBatch ||
+                                member.currentRole ||
+                                "N/A"}
+                            </span>
 
-                                <td className="px-5 py-3.5 text-xs text-slate-500 font-medium">
-                                  {member.email}
-                                </td>
-
-                                <td className="px-5 py-3.5 text-center">
-                                  <span className="inline-block rounded-full bg-[#E0F7FA] px-2.5 py-0.5 text-[10px] font-bold capitalize text-[#008ba3] border border-[#B3E5FC]">
-                                    {member.roleInBatch ||
-                                      member.currentRole ||
-                                      "N/A"}
-                                  </span>
-                                </td>
-
-                                <td className="px-5 py-3.5 text-center text-xs text-slate-500 font-medium">
-                                  {formatDate(member.joinedAt)}
-                                </td>
-
-                                <td className="px-5 py-3.5 text-center">
-                                  {member.isCurrentBatch ? (
-                                    <span className="inline-block rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-                                      Current
-                                    </span>
-                                  ) : (
-                                    <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-500 border border-slate-200">
-                                      Previous
-                                    </span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
+                            {member.isCurrentBatch ? (
+                              <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                                Current
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-500">
+                                Previous
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

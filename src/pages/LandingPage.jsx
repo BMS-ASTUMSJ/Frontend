@@ -23,7 +23,6 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#eaf1f5] text-[#1c2d33] font-sans antialiased">
-      {/* Hero Section - Circle 1 */}
       <section
         id="home"
         className="relative overflow-hidden bg-[#07131e] px-6 pt-28 pb-44 md:px-12 lg:px-20 scroll-mt-24"
@@ -108,7 +107,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Quick Info Cards - Circle 2 */}
       <section className="-mt-16 relative z-20 px-6 md:px-12 lg:px-20 overflow-hidden">
         <div className="mx-auto max-w-7xl grid gap-6 md:grid-cols-3">
           <div className="rounded-2xl bg-white p-8 shadow-sm border border-slate-200/80 transition duration-300 hover:-translate-y-1 hover:shadow-md">
@@ -151,8 +149,6 @@ function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* About Section - Circle 3 */}
       <section
         id="about"
         className="relative scroll-mt-20 bg-[#eaf1f5] px-6 py-24 md:px-12 lg:px-20 overflow-hidden"
@@ -188,7 +184,7 @@ function LandingPage() {
             </p>
           </div>
 
-          <div className="flex justify-center lg:justify-end [perspective:1200px]">
+          <div className="flex justify-center lg:justify-end perspective:distant">
             <div className="relative w-full max-w-md transform-gpu transition-transform duration-500 ease-out hover:rotate-y-0 hover:rotate-x-0 [transform:rotateY(-16deg)_rotateX(8deg)_rotateZ(2deg)] rounded-tl-[80px] rounded-br-[80px] rounded-tr-2xl rounded-bl-2xl border border-cyan-400/30 bg-[#071d24]/90 p-10 text-center text-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl">
               <div className="absolute -right-8 -top-8 h-36 w-36 rounded-full bg-[#00a6c0]/20 blur-2xl pointer-events-none" />
               <div className="absolute -left-8 -bottom-8 h-36 w-36 rounded-full bg-cyan-500/10 blur-2xl pointer-events-none" />
@@ -216,7 +212,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Tracks Section - Circle 4 */}
       <section
         id="tracks"
         className="relative scroll-mt-20 bg-[#eaf1f5] px-6 pb-24 md:px-12 lg:px-20 overflow-hidden"
@@ -311,7 +306,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Mentors Section - Circle 5 */}
       <section
         id="mentors"
         className="scroll-mt-20 relative overflow-hidden bg-[#07131e] px-6 py-24 md:px-12 lg:px-20 text-white"
@@ -367,9 +361,8 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Verse Banner Section - Circle 6 */}
       <section className="bg-[#07131e] px-6 pb-20 md:px-12 lg:px-20 relative overflow-hidden">
-        <div className="absolute -bottom-40 right-[-80px] h-[440px] w-[440px] rounded-full border border-[#293E4C]/60 bg-[#293E4C]/20 pointer-events-none" />
+        <div className="absolute -bottom-40 right-20 h-110 w-110 rounded-full border border-[#293E4C]/60 bg-[#293E4C]/20 pointer-events-none" />
 
         <div className="relative z-10 mx-auto max-w-7xl">
           <div
@@ -396,7 +389,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* FAQ Section - Circle 7 */}
       <section
         id="faq"
         className="relative scroll-mt-20 bg-[#eaf1f5] px-6 py-20 md:px-12 lg:px-20 overflow-hidden"
@@ -506,7 +498,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Contact Section - Circle 8 */}
       <section
         id="contact"
         className="relative scroll-mt-20 bg-[#1a3b45] px-6 py-20 text-white md:px-12 lg:px-20 overflow-hidden"
@@ -553,7 +544,7 @@ function LandingPage() {
               href="https://instagram.com/your_username"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-[#833AB4] via-[#E1306C] to-[#F77737] text-white shadow-md transition hover:-translate-y-1 hover:shadow-lg"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-r from-[#833AB4] via-[#E1306C] to-[#F77737] text-white shadow-md transition hover:-translate-y-1 hover:shadow-lg"
               aria-label="Instagram"
             >
               <FaInstagram className="h-5 w-5" />
@@ -590,7 +581,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-white/10 bg-[#071b23] px-6 py-6 text-center">
         <p className="text-xs text-gray-500">
           © 2026 ASTU MSJ Bootcamp. All rights reserved.
