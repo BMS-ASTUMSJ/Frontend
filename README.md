@@ -450,24 +450,27 @@ If needed, you can also update the CORS settings in the backend if your frontend
 
 
  ## --Landing Page--
-![alt text](<Frontend/src/assets/Screenshot 2026-08-29 015028.png>)
 
+https://drive.google.com/file/d/15fJyTvhpq5z05VfQfsAsyRrxINEdDMew/view?usp=sharing
 
  ## --Login Page--
-![alt text](<Frontend/src/assets/Screenshot 2026-08-29 015052.png>)
 
+https://drive.google.com/file/d/1cDThwrF59XrEVoHh_lZh8GdFOXap2YCX/view?usp=sharing
 
  ## --Admin Dashboard--
-![alt text](<Frontend/src/assets/Screenshot 2026-08-29 015133.png>)
+ 
+https://drive.google.com/file/d/1HRu7scZa78AHJIHnLvMY2MpPetblP-28/view?usp=sharing
 
 
  ## --Responsive Mentor Side--
-![alt text](<Frontend/src/assets/Screenshot 2026-08-29 015238.png>)
 
+https://drive.google.com/file/d/1nlvUb4w-Y_wtp5vGmSX1Ghall0gOS2ai/view?usp=sharing
 
  ## --Responsive Dark-mode Student Dashboard--
-![alt text](<Frontend/src/assets/Screenshot 2026-08-29 015346.png>)
 
+https://drive.google.com/file/d/1b3I4AxPEVwAL7QTJtI1wo1x1cNkYAYTH/view?usp=sharing
 
  ## --Mentor Dashboard--
-![alt text](<Frontend/src/assets/Screenshot 2026-08-29 015425.png>)
+
+ https://drive.google.com/file/d/1FueQkM1C8IRBsAcNkn5IXcbLZ46aym--/view?usp=sharing
+
