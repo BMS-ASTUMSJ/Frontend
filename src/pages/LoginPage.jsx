@@ -2,7 +2,7 @@ import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../utils/api";
-import { Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "react-hot-toast";
 import logo from "./../assets/ASTUMSJ-Pp.jpg";
 
@@ -17,6 +17,9 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // NEW: inline banner state for Google login errors (e.g. not registered)
+  const [googleError, setGoogleError] = useState("");
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -24,6 +27,9 @@ function LoginPage() {
       ...prev,
       [name]: value,
     }));
+
+    // clear google error once user starts using normal login instead
+    if (googleError) setGoogleError("");
   };
 
   const fillDemoAccount = (role) => {
@@ -45,7 +51,8 @@ function LoginPage() {
     };
 
     setFormData(demoAccounts[role]);
-    setShowPassword(true);
+    setShowPassword(false);
+    setGoogleError("");
   };
 
   const redirectUser = (user) => {
@@ -89,6 +96,7 @@ function LoginPage() {
 
     try {
       setLoading(true);
+      setGoogleError("");
 
       const response = await api.post("/auth/login", {
         email: formData.email,
@@ -129,6 +137,7 @@ function LoginPage() {
   const handleGoogleLogin = async (credentialResponse) => {
     try {
       setLoading(true);
+      setGoogleError("");
 
       if (!credentialResponse?.credential) {
         toast.error("Google credential was not received.");
@@ -153,9 +162,17 @@ function LoginPage() {
       const message = err.response?.data?.message;
 
       if (err.response?.status === 404) {
-        toast.error(message || "No account exists with this Google email.");
+        // NEW: unregistered Google account -> inline banner + toast
+        const notRegisteredMessage =
+          message ||
+          "You are not registered. Please apply for an account before logging in with Google.";
+
+        setGoogleError(notRegisteredMessage);
+        toast.error(notRegisteredMessage);
       } else if (err.response?.status === 403) {
-        toast.error(message || "Your account is suspended.");
+        const suspendedMessage = message || "Your account is suspended.";
+        setGoogleError(suspendedMessage);
+        toast.error(suspendedMessage);
       } else if (!err.response) {
         toast.error(
           "Cannot connect to the server. Make sure the backend is running.",
@@ -374,12 +391,22 @@ function LoginPage() {
               <div className="h-px flex-1 bg-[#d5e0e3]" />
             </div>
 
+            {/* NEW: inline banner shown when Google login fails (not registered / suspended) */}
+            {googleError && (
+              <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-medium text-red-600">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{googleError}</span>
+              </div>
+            )}
+
             <div className="flex min-h-13 w-full items-center justify-center overflow-hidden rounded-xl border border-[#bdcbce] bg-white">
               <GoogleLogin
                 onSuccess={handleGoogleLogin}
-                onError={() =>
-                  toast.error("Google login failed. Please try again.")
-                }
+                onError={() => {
+                  const failMessage = "Google login failed. Please try again.";
+                  setGoogleError(failMessage);
+                  toast.error(failMessage);
+                }}
                 useOneTap={false}
                 width="380"
               />
